@@ -1,0 +1,15 @@
+{
+  "date": "2026-10-15T00:36:26.632Z",
+  "checks": [
+    "All migrations execute in real embedded PostgreSQL (Supabase auth/storage schema harness)",
+    "RLS isolates users and composite foreign keys reject cross-account parents",
+    "State machine, idempotency, chronology, archive and immutable history enforced",
+    "Optimistic note revision prevents stale overwrite",
+    "Storage policies, RPCs and search reject another owner",
+    "Portuguese full text search, filters and immutable audit logs",
+    "Deletion cascades records and immediately revokes file visibility; cleanup queued",
+    "Anonymous writes and search denied",
+    "Account deletion cascades data without orphan audit references"
+  ],
+  "scope": "Embedded real PostgreSQL with Supabase schema harness; does not test live Auth or Storage HTTP"
+}

@@ -1,0 +1,584 @@
+/* Ocean identity: shared surfaces remain opaque enough for productive reading. */
+:root {
+  --ocean-ice: #b8e0ff;
+  --ocean-line: #467399;
+  --ocean-glass: rgb(0 18 51 / 87%);
+  --ocean-panel: rgb(0 29 67 / 95%);
+  --ocean-shine: rgb(184 224 255 / 15%);
+  --ocean-overlay: rgb(0 18 51 / 68%);
+  --ocean-deep: rgb(0 18 51 / 96%);
+  --border: #2a4566;
+  --muted: #b8c9dd;
+  --focus: #a8d8ff;
+  --radius: 12px;
+}
+
+body {
+  font-family: "Aptos", "Segoe UI", sans-serif;
+}
+.auth-layout {
+  position: relative;
+  isolation: isolate;
+  grid-template-columns: 1.14fr 1fr;
+  min-height: 100svh;
+  overflow: clip;
+}
+.ocean-scenery {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background: var(--background) url("/images/ocean-depths.webp") center center /
+    cover no-repeat;
+}
+.ocean-scenery::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    var(--ocean-overlay) 0%,
+    rgb(0 18 51 / 22%) 43%,
+    rgb(0 18 51 / 65%) 100%
+  );
+}
+.auth-story {
+  background: transparent;
+  border: 0;
+  padding: 54px 40px 43px 7vw;
+  gap: 65px;
+  min-width: 0;
+}
+.auth-story-content {
+  max-width: 590px;
+  padding: 32px 0 12px;
+}
+.ocean-kicker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 9px;
+  letter-spacing: 2.3px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.ocean-kicker > span {
+  height: 1px;
+  width: 32px;
+  background: var(--ocean-ice);
+}
+.auth-story h1 {
+  font-size: clamp(40px, 4.6vw, 73px);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -2.8px;
+  margin: 25px 0 25px;
+}
+.auth-story em {
+  color: var(--ocean-ice);
+  font-style: normal;
+  font-weight: 350;
+}
+.auth-story-content > p {
+  max-width: 410px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.9;
+}
+.story-features {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 22px;
+  margin-top: 41px;
+  padding-top: 25px;
+  border-top: 1px solid var(--ocean-shine);
+  max-width: 500px;
+}
+.story-features > span {
+  align-items: flex-start;
+  gap: 8px;
+  flex: 1;
+}
+.story-features > span > span {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+}
+.story-features svg {
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  color: var(--ocean-ice);
+}
+.story-features strong {
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.story-features small {
+  font-size: 10px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+.ocean-signature {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: 510px;
+  color: var(--ocean-ice);
+}
+.ocean-signature > span {
+  font-size: 10px;
+  line-height: 1.8;
+  color: var(--muted);
+}
+.ocean-signature strong {
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+.ocean-rule {
+  height: 1px;
+  flex: 1;
+  background: var(--ocean-shine);
+  margin-left: 10px;
+}
+.signature-shark {
+  width: 33px;
+  height: 40px;
+
+  opacity: 0.75;
+}
+.auth-form {
+  flex-direction: column;
+  padding: 56px 6vw 40px 28px;
+  gap: 24px;
+}
+.auth-form-overline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-size: 8px;
+  letter-spacing: 1.2px;
+  text-align: center;
+}
+.auth-box {
+  max-width: 440px;
+  padding: 35px 36px 27px;
+  border: 1px solid var(--ocean-line);
+  border-radius: 18px;
+  background: var(--ocean-glass);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 18px 60px rgb(0 10 30 / 18%);
+}
+.auth-card-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 25px;
+}
+.auth-card-symbol {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 43px;
+  height: 43px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--ocean-ice);
+  background: var(--surface);
+}
+.auth-card-symbol .brand-symbol {
+  width: 28px;
+  height: 31px;
+}
+.auth-card-heading .eyebrow {
+  font-size: 9px;
+  letter-spacing: 1.6px;
+  margin: 0;
+}
+.auth-box h2 {
+  font-size: 29px;
+  font-weight: 600;
+  letter-spacing: -1px;
+  margin-bottom: 10px;
+}
+.auth-box > .muted {
+  font-size: 12px;
+  margin-bottom: 25px;
+}
+.auth-box form {
+  gap: 18px;
+}
+.auth-box label {
+  gap: 9px;
+  font-size: 11px;
+  font-weight: 500;
+}
+.auth-box input {
+  background: rgb(0 18 51 / 72%);
+  min-height: 47px;
+  padding: 13px 14px;
+  border-color: var(--border);
+  font-size: 12px;
+  border-radius: 8px;
+}
+.auth-box input:focus {
+  border-color: var(--focus);
+}
+.auth-box input::placeholder {
+  font-size: 11px;
+  opacity: 1;
+}
+.auth-box .button {
+  min-height: 45px;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 12px;
+}
+.auth-box .button.primary {
+  border-color: rgb(184 224 255 / 20%);
+}
+.auth-box .button.ghost {
+  min-height: 40px;
+  font-size: 11px;
+}
+.auth-switch {
+  font-size: 11px;
+  padding-top: 20px;
+  margin-top: 13px;
+}
+.privacy-note {
+  font-size: 9px;
+  margin-top: 25px;
+  gap: 6px;
+}
+.auth-form-caption {
+  font-size: 10px;
+  color: var(--text-secondary);
+  letter-spacing: 0.2px;
+  text-align: center;
+}
+.connection-notice {
+  display: block;
+  font-size: 11px;
+  line-height: 1.65;
+  color: var(--text-secondary);
+  background: rgb(2 62 125 / 38%);
+  padding: 12px 14px;
+  border-color: var(--border);
+  border-left: 2px solid var(--ocean-ice);
+  margin-bottom: 23px;
+}
+
+/* The sea continues into the workspace without competing with the content. */
+.app-shell {
+  isolation: isolate;
+  position: relative;
+}
+.main-shell {
+  position: relative;
+  isolation: isolate;
+}
+.main-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, var(--ocean-overlay) 0, var(--ocean-deep) 650px),
+    url("/images/ocean-depths.webp") center top / auto 850px no-repeat;
+}
+.sidebar {
+  background: rgb(0 24 69 / 98%);
+}
+.sidebar > .brand {
+  padding: 0 9px;
+  margin: 0 0 31px;
+}
+.sidebar-search {
+  border-radius: 9px;
+}
+.nav-item {
+  border: 1px solid transparent;
+  border-radius: 8px;
+}
+.nav-item.active {
+  border-color: var(--secondary);
+  background: var(--active);
+}
+.private-card {
+  background: var(--surface-soft);
+  border-radius: 10px;
+}
+.topbar {
+  background: rgb(0 18 51 / 62%);
+  border-bottom-color: var(--ocean-shine);
+  backdrop-filter: blur(12px);
+}
+.page-heading h1 {
+  font-weight: 600;
+  letter-spacing: -1.2px;
+}
+.page-heading .eyebrow {
+  color: var(--ocean-ice);
+}
+.panel {
+  background: var(--ocean-panel);
+  border-color: var(--border);
+}
+.stat {
+  border-top-color: var(--ocean-line);
+}
+.stat.in_progress {
+  border-top-color: var(--focus);
+}
+.resume-banner {
+  background: var(--surface);
+  border-color: var(--ocean-line);
+}
+.resume-icon {
+  background: var(--active);
+  border-radius: 50%;
+}
+.resume-icon::before {
+  content: "";
+  width: 27px;
+  height: 30px;
+  background: url("/brand/symbol.png") center / contain no-repeat;
+}
+.resume-icon > svg {
+  display: none;
+}
+.welcome {
+  position: relative;
+  overflow: hidden;
+  background: var(--ocean-glass);
+}
+.welcome::after {
+  content: "";
+  position: absolute;
+  right: 5%;
+  bottom: 7%;
+  width: 170px;
+  height: 190px;
+  pointer-events: none;
+  opacity: 0.1;
+
+  background: url("/brand/symbol.png") center / contain no-repeat;
+}
+.welcome > * {
+  position: relative;
+  z-index: 1;
+}
+.button {
+  transition:
+    background 0.18s,
+    border-color 0.18s;
+}
+.button.primary {
+  border-color: var(--ocean-shine);
+}
+.modal {
+  border-radius: 16px;
+  border-color: var(--ocean-line);
+}
+.app-footer {
+  color: var(--muted);
+}
+
+@media (min-width: 1600px) {
+  .auth-story {
+    padding-left: max(7vw, calc((100vw - 1450px) / 2));
+  }
+  .auth-form {
+    padding-right: max(6vw, calc((100vw - 1450px) / 2));
+  }
+}
+@media (max-width: 1100px) {
+  .auth-layout {
+    grid-template-columns: 1fr 1fr;
+  }
+  .auth-story {
+    padding: 45px 25px 35px 35px;
+    gap: 50px;
+  }
+  .auth-form {
+    padding: 45px 30px 35px 15px;
+  }
+  .auth-box {
+    padding: 28px 26px 24px;
+  }
+  .auth-story h1 {
+    font-size: 46px;
+    letter-spacing: -2px;
+  }
+  .story-features {
+    flex-wrap: wrap;
+    gap: 18px;
+  }
+  .story-features > span {
+    min-width: 120px;
+  }
+}
+@media (max-width: 800px) {
+  .auth-layout {
+    grid-template-columns: 1fr;
+  }
+  .auth-story {
+    padding: 30px 28px 20px;
+    gap: 37px;
+  }
+  .auth-layout .auth-story .auth-story-content {
+    display: block;
+    padding: 0;
+    max-width: 500px;
+  }
+  .auth-story h1 {
+    font-size: 43px;
+    margin: 19px 0 15px;
+  }
+  .auth-story-content > p {
+    font-size: 12px;
+    margin-bottom: 0;
+  }
+  .auth-story .story-features,
+  .auth-story .ocean-signature {
+    display: none;
+  }
+  .auth-form {
+    padding: 15px 22px 30px;
+    gap: 18px;
+  }
+  .auth-form-overline {
+    display: none;
+  }
+  .auth-box {
+    max-width: 500px;
+    width: 100%;
+    padding: 27px 25px 24px;
+    border-radius: 16px;
+  }
+  .auth-card-heading {
+    margin-bottom: 19px;
+  }
+  .auth-box h2 {
+    font-size: 27px;
+  }
+  .auth-box input {
+    font-size: 16px;
+  }
+  .auth-box input::placeholder {
+    font-size: 12px;
+  }
+  .auth-form-caption {
+    font-size: 9px;
+  }
+  .ocean-scenery {
+    background-position: 34% top;
+  }
+  .ocean-scenery::after {
+    background: linear-gradient(180deg, rgb(0 18 51 / 68%), var(--ocean-deep));
+  }
+  .main-shell::before {
+    background-size:
+      auto,
+      auto 550px;
+  }
+  .welcome::after {
+    width: 115px;
+    height: 130px;
+  }
+}
+@media (max-width: 380px) {
+  .auth-story {
+    padding: 25px 22px 18px;
+  }
+  .auth-story h1 {
+    font-size: 38px;
+  }
+  .auth-form {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+  .auth-box {
+    padding: 24px 20px;
+  }
+}
+
+/* Official Tasknado identity. Artwork never rotates or stretches. */
+.brand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 14px;
+  max-width: 100%;
+  flex-shrink: 0;
+}
+.brand-symbol {
+  display: block;
+  width: 64px;
+  height: auto;
+  aspect-ratio: 1;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.brand-symbol--sm {
+  width: 44px;
+}
+.brand-symbol--lg {
+  width: 90px;
+}
+.brand-wordmark {
+  display: block;
+  width: 210px;
+  aspect-ratio: 3;
+  flex-shrink: 1;
+  background: var(--text);
+  mask: url("/brand/wordmark-mask.png") center / contain no-repeat;
+}
+.brand-wordmark--sm {
+  width: 145px;
+}
+.brand-wordmark--lg {
+  width: 285px;
+}
+.brand-wordmark--blue {
+  background: var(--primary);
+}
+.brand--sm {
+  gap: 9px;
+}
+.brand--vertical {
+  flex-direction: column;
+  gap: 12px;
+}
+.brand--compact {
+  gap: 0;
+}
+.setup > .brand {
+  display: flex;
+  margin: 0 auto 32px;
+}
+.signature-shark {
+  height: auto;
+  aspect-ratio: 1;
+}
+@media (max-width: 800px) {
+  .auth-story > .brand {
+    gap: 12px;
+  }
+  .auth-story > .brand .brand-symbol {
+    width: 64px;
+  }
+  .auth-story > .brand .brand-wordmark {
+    width: min(230px, 55vw);
+  }
+}
+@media (forced-colors: active) {
+  .brand-wordmark {
+    background: CanvasText;
+  }
+}
