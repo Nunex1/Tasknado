@@ -25,6 +25,7 @@ export function actions(status: Status): EventType[] {
   )[status];
 }
 export interface Workspace {
+  category: WorkspaceCategory;
   id: string;
   name: string;
   description: string;
@@ -34,6 +35,7 @@ export interface Workspace {
   updated_at: string;
 }
 export interface Activity {
+  category_attributes: CategoryAttributes;
   id: string;
   workspace_id: string;
   title: string;
@@ -44,6 +46,7 @@ export interface Activity {
   updated_at: string;
 }
 export interface ActivityEvent {
+  edited_at: string | null;
   id: string;
   activity_id: string;
   type: EventType;
@@ -106,14 +109,62 @@ export function validateFile(file: { size: number; type: string }) {
     return "Formato não permitido. Use PDF, imagem, vídeo, texto ou documento Office.";
   return null;
 }
-export const date = (value: string) =>
-  new Intl.DateTimeFormat("pt-BR", {
-    dateStyle: "short",
-    timeStyle: "short",
-  }).format(new Date(value));
-export const bytes = (n: number) =>
-  n < 1024
-    ? `${n} B`
-    : n < 1048576
-      ? `${(n / 1024).toFixed(1)} KB`
-      : `${(n / 1048576).toFixed(1)} MB`;
+export const workspaceCategories = {
+  personal_life: "Vida Pessoal",
+  university: "Faculdade",
+  work: "Trabalho",
+  self_study: "Estudos Individuais",
+  sports: "Esporte",
+} as const;
+export type WorkspaceCategory = keyof typeof workspaceCategories;
+export interface WorkAttributes {
+  hasScheduledDate: boolean;
+  scheduledDate: string | null;
+  scheduledTime: string | null;
+  isUrgent: boolean | null;
+  isImportant: boolean | null;
+}
+export interface CategoryAttributes {
+  university?: { openedInCanvas: boolean };
+  work?: WorkAttributes;
+}
+export type Quadrant = "q1" | "q2" | "q3" | "q4" | "unclassified";
+export const quadrants: Record<Quadrant, string> = {
+  q1: "Q1 · Importante e urgente · Fazer agora",
+  q2: "Q2 · Importante e não urgente · Programar",
+  q3: "Q3 · Não importante e urgente · Simplificar ou automatizar",
+  q4: "Q4 · Não importante e não urgente · Reconsiderar ou eliminar",
+  unclassified: "Não classificadas",
+};
+export function quadrant(work?: WorkAttributes): Quadrant {
+  if (work?.isUrgent == null || work.isImportant == null) return "unclassified";
+  return work.isImportant
+    ? work.isUrgent
+      ? "q1"
+      : "q2"
+    : work.isUrgent
+      ? "q3"
+      : "q4";
+}
+export function priorityFor(q: Quadrant) {
+  return {
+    isUrgent: q === "unclassified" ? null : q === "q1" || q === "q3",
+    isImportant: q === "unclassified" ? null : q === "q1" || q === "q2",
+  };
+}
+export function isOverdue(activity: Activity, now = new Date()) {
+  const w = activity.category_attributes?.work;
+  return (
+    activity.status !== "completed" &&
+    !!w?.hasScheduledDate &&
+    !!w.scheduledDate &&
+    new Date(`${w.scheduledDate}T${w.scheduledTime || "23:59:59"}`) < now
+  );
+}
+export interface PriorityHistory {
+  id: string;
+  activity_id: string;
+  created_at: string;
+  previous: { isUrgent: boolean | null; isImportant: boolean | null };
+  current: { isUrgent: boolean | null; isImportant: boolean | null };
+}

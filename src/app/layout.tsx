@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./ocean.css";
+import { LanguageProvider } from "@/i18n/provider";
+import ptBR from "@/i18n/pt-BR.json";
 export const metadata: Metadata = {
-  title: "Tasknado · Sua memória operacional",
-  description: "Atividades, contexto e conhecimento em um espaço pessoal.",
+  title: ptBR["Tasknado · Sua memória operacional"],
+  description:
+    ptBR["Atividades, contexto e conhecimento em um espaço pessoal."],
   icons: {
     icon: [
       { url: "/brand/favicon-32.png", sizes: "32x32", type: "image/png" },
@@ -15,7 +18,9 @@ export const metadata: Metadata = {
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR">
-      <body>{children}</body>
+      <body>
+        <LanguageProvider>{children}</LanguageProvider>
+      </body>
     </html>
   );
 }

@@ -314,6 +314,8 @@ body {
   border-radius: 10px;
 }
 .topbar {
+  position: relative;
+  z-index: 10;
   background: rgb(0 18 51 / 62%);
   border-bottom-color: var(--ocean-shine);
   backdrop-filter: blur(12px);
@@ -551,6 +553,26 @@ body {
 .brand--sm {
   gap: 9px;
 }
+.brand-home-link {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: opacity 0.18s;
+}
+.brand-home-link:hover {
+  opacity: 0.8;
+}
+.brand-home-symbol {
+  flex-shrink: 0;
+}
+.brand-home-wordmark {
+  flex-shrink: 1;
+}
+.brand-home-wordmark .brand-wordmark {
+  max-width: 100%;
+}
 .brand--vertical {
   flex-direction: column;
   gap: 12px;
@@ -580,5 +602,243 @@ body {
 @media (forced-colors: active) {
   .brand-wordmark {
     background: CanvasText;
+  }
+}
+
+.profile-menu {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+}
+.profile-menu-trigger {
+  padding: 0;
+  transition:
+    background 0.18s,
+    border-color 0.18s;
+}
+.profile-menu-trigger:hover,
+.profile-menu-trigger[aria-expanded="true"] {
+  background: var(--primary);
+  border-color: var(--focus);
+}
+.profile-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 1;
+  width: min(180px, calc(100vw - 32px));
+  padding: 5px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--sidebar);
+  box-shadow: 0 12px 30px var(--background);
+  animation: profile-menu-open 0.15s ease-out;
+}
+.profile-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 13px;
+  transition: background 0.18s;
+}
+.profile-menu-item svg {
+  color: var(--focus);
+}
+.profile-menu-item:hover,
+.profile-menu-item:focus-visible {
+  background: var(--active);
+}
+.profile-menu-item:focus-visible {
+  outline-offset: -2px;
+}
+@keyframes profile-menu-open {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.profile-panel {
+  max-width: 760px;
+  padding: clamp(20px, 4vw, 32px);
+}
+.profile-summary {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 28px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--border);
+}
+.profile-avatar {
+  width: 64px;
+  height: 64px;
+  font-size: 24px;
+}
+.profile-summary > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.profile-summary p {
+  margin: 6px 0 0;
+}
+.profile-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: 24px;
+  margin: 24px 0 0;
+}
+.profile-details dt {
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.profile-details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.language-select {
+  max-width: 360px;
+  margin: 20px 0 12px;
+}
+.settings-row {
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.settings-row > .row {
+  flex-wrap: wrap;
+}
+.date-field {
+  min-width: 0;
+}
+.date-input-row {
+  position: relative;
+}
+.date-input-row input {
+  padding-right: 36px;
+}
+.date-input-row > button {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.calendar-week {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  text-align: center;
+  gap: 4px;
+}
+.calendar-week [role="columnheader"] {
+  color: var(--muted);
+  font-size: 12px;
+  padding: 8px 0;
+}
+.calendar-day {
+  width: 100%;
+  min-height: 38px;
+  border-radius: 6px;
+}
+.calendar-day:hover,
+.calendar-day:focus-visible {
+  background: var(--hover);
+}
+.calendar-day.selected {
+  background: var(--primary);
+  color: var(--text);
+}
+.calendar-day[aria-current="date"] {
+  box-shadow: inset 0 0 0 1px var(--focus);
+}
+/* Workspace extensions reuse the ocean palette and existing controls. */
+fieldset {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 16px 0;
+  min-width: 0;
+}
+legend {
+  padding: 0 8px;
+  font-weight: 600;
+}
+.category-fields,
+.category-filters {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.category-fields > label,
+.category-filters > label {
+  flex: 1;
+  min-width: 150px;
+}
+.matrix-section {
+  margin: 24px 0;
+}
+.matrix-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.matrix-quadrant {
+  padding: 20px;
+  border-top: 3px solid #38bdf8;
+}
+.matrix-quadrant.q1 {
+  border-top-color: #fb923c;
+}
+.matrix-quadrant.q2 {
+  border-top-color: #2dd4bf;
+}
+.matrix-quadrant.q4 {
+  border-top-color: #94a3b8;
+}
+.matrix-quadrant.unclassified {
+  grid-column: 1 / -1;
+}
+.matrix-card {
+  padding: 14px;
+  margin-top: 12px;
+  border: 1px solid #234b65;
+  border-radius: 10px;
+  background: #082337;
+}
+.matrix-card .text-button {
+  display: block;
+  margin-bottom: 10px;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.matrix-card select {
+  width: 100%;
+  margin-top: 8px;
+}
+.overdue {
+  color: #fdba74;
+  font-weight: 600;
+  display: block;
+}
+.activity-title .hint {
+  display: block;
+}
+@media (max-width: 760px) {
+  .matrix-grid {
+    grid-template-columns: 1fr;
   }
 }

@@ -114,6 +114,181 @@ await fails("select add_event($1,'observation','Arquivada',$2)", [
 pass(
   "State machine, idempotency, chronology, archive and immutable history enforced",
 );
+
+const university = (
+  await pg.query(
+    "insert into workspaces(name,category) values('Campus','university') returning *",
+  )
+).rows[0];
+await fails(
+  "insert into activities(workspace_id,title) values($1,'Missing choice')",
+  [university.id],
+);
+await fails(
+  "insert into activities(workspace_id,title,category_attributes) values($1,'Invalid choice',$2)",
+  [university.id, { university: { openedInCanvas: "false" } }],
+);
+const academic = (
+  await pg.query(
+    "insert into activities(workspace_id,title,category_attributes) values($1,'Essay',$2) returning *",
+    [university.id, { university: { openedInCanvas: false } }],
+  )
+).rows[0];
+assert.equal(academic.status, "not_started");
+assert.equal(academic.category_attributes.university.openedInCanvas, false);
+await pg.query("update workspaces set category='work' where id=$1", [
+  university.id,
+]);
+await fails("update activities set category_attributes='{}' where id=$1", [
+  academic.id,
+]);
+await pg.query("select set_priority($1,true,false)", [academic.id]);
+let planned = (
+  await pg.query("select * from activities where id=$1", [academic.id])
+).rows[0];
+assert.equal(planned.category_attributes.university.openedInCanvas, false);
+assert.equal(planned.category_attributes.work.isUrgent, true);
+assert.equal(planned.category_attributes.work.isImportant, false);
+assert.equal(
+  (
+    await pg.query("select * from priority_history where activity_id=$1", [
+      academic.id,
+    ])
+  ).rows.length,
+  1,
+);
+await pg.query("select set_priority($1,true,false)", [academic.id]);
+assert.equal(
+  (
+    await pg.query("select * from priority_history where activity_id=$1", [
+      academic.id,
+    ])
+  ).rows.length,
+  1,
+);
+await fails("update activities set category_attributes=$2 where id=$1", [
+  academic.id,
+  {
+    ...planned.category_attributes,
+    work: { ...planned.category_attributes.work, hasScheduledDate: true },
+  },
+]);
+await fails("update activities set category_attributes=$2 where id=$1", [
+  academic.id,
+  {
+    ...planned.category_attributes,
+    work: {
+      ...planned.category_attributes.work,
+      hasScheduledDate: true,
+      scheduledDate: "2026-02-30",
+    },
+  },
+]);
+const scheduled = {
+  ...planned.category_attributes,
+  work: {
+    ...planned.category_attributes.work,
+    hasScheduledDate: true,
+    scheduledDate: "2026-10-30",
+    scheduledTime: "14:00",
+  },
+};
+await pg.query("update activities set category_attributes=$2 where id=$1", [
+  academic.id,
+  scheduled,
+]);
+assert.equal(
+  (
+    await pg.query("select * from priority_history where activity_id=$1", [
+      academic.id,
+    ])
+  ).rows.length,
+  1,
+);
+assert.equal(
+  (await pg.query("select status from activities where id=$1", [academic.id]))
+    .rows[0].status,
+  "not_started",
+);
+await pg.query("update workspaces set category='sports' where id=$1", [
+  university.id,
+]);
+await fails("select set_priority($1,false,true)", [academic.id]);
+await pg.query("update activities set title='Still available' where id=$1", [
+  academic.id,
+]);
+assert.deepEqual(
+  (
+    await pg.query("select category_attributes from activities where id=$1", [
+      academic.id,
+    ])
+  ).rows[0].category_attributes,
+  scheduled,
+);
+await pg.query("update workspaces set category='university' where id=$1", [
+  university.id,
+]);
+pass(
+  "Explicit boolean Canvas choice, category preservation, schedule validation and independent audited priority",
+);
+const observation = (
+  await pg.query("select (add_event($1,'observation','Original',$2)).*", [
+    academic.id,
+    crypto.randomUUID(),
+  ])
+).rows[0];
+const observationFile = crypto.randomUUID();
+await pg.query(
+  "insert into attachments(id,activity_id,event_id,name,path,mime,size) values($1,$2,$3,'context.txt',$4,'text/plain',10)",
+  [observationFile, academic.id, observation.id, a + "/" + observationFile],
+);
+await pg.query("select edit_observation($1,'Edited','Original')", [
+  observation.id,
+]);
+const edited = (
+  await pg.query("select * from activity_events where id=$1", [observation.id])
+).rows[0];
+assert.equal(String(edited.created_at), String(observation.created_at));
+assert.ok(edited.edited_at);
+await fails("select edit_observation($1,'Stale','Original')", [observation.id]);
+await as(b);
+await fails("select edit_observation($1,'Intrusion','Edited')", [
+  observation.id,
+]);
+await fails("select delete_observation($1,'Edited')", [observation.id]);
+await fails("select set_priority($1,true,true)", [academic.id]);
+assert.equal((await pg.query("select * from priority_history")).rows.length, 0);
+await as(a);
+const execution = (
+  await pg.query("select (add_event($1,'check_in','Started',$2)).*", [
+    academic.id,
+    crypto.randomUUID(),
+  ])
+).rows[0];
+await fails("select edit_observation($1,'Changed','Started')", [execution.id]);
+await fails("select delete_observation($1,'Started')", [execution.id]);
+await pg.query("select delete_observation($1,'Edited')", [observation.id]);
+assert.equal(
+  (
+    await pg.query("select event_id from attachments where id=$1", [
+      observationFile,
+    ])
+  ).rows[0].event_id,
+  null,
+);
+assert.equal(
+  (
+    await pg.query("select * from activity_events where id=$1", [
+      observation.id,
+    ])
+  ).rows.length,
+  0,
+);
+pass(
+  "Observation editing preserves creation time, detects conflicts and isolates owners while execution events remain immutable",
+);
+await pg.query("select delete_workspace($1)", [university.id]);
+assert.equal((await pg.query("select * from priority_history")).rows.length, 0);
 const n = (
   await pg.query(
     "insert into notes(workspace_id,title) values($1,'Rotina de armazenagem') returning *",
@@ -192,7 +367,12 @@ assert.equal((await pg.query("select * from activity_events")).rows.length, 0);
 assert.equal((await pg.query("select * from note_entries")).rows.length, 0);
 assert.equal((await pg.query("select * from storage.objects")).rows.length, 0);
 await pg.exec("reset role");
-assert.equal((await pg.query("select * from storage_cleanup")).rows.length, 1);
+assert.deepEqual(
+  (await pg.query("select path from storage_cleanup order by path")).rows.map(
+    (row) => row.path,
+  ),
+  [path, a + "/" + observationFile].sort(),
+);
 pass(
   "Deletion cascades records and immediately revokes file visibility; cleanup queued",
 );

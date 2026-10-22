@@ -180,6 +180,178 @@ try {
     5,
   );
   pass("History persists after logout and login");
+
+  for (const category of [
+    "personal_life",
+    "university",
+    "work",
+    "self_study",
+    "sports",
+  ]) {
+    const w = ok(
+      await a
+        .from("workspaces")
+        .insert({ name: "Category integration " + category, category })
+        .select()
+        .single(),
+    );
+    if (category === "university")
+      assert.ok(
+        (
+          await a
+            .from("activities")
+            .insert({ workspace_id: w.id, title: "Missing Canvas" })
+        ).error,
+      );
+    const attrs =
+      category === "university"
+        ? { university: { openedInCanvas: false } }
+        : {};
+    const task = ok(
+      await a
+        .from("activities")
+        .insert({
+          workspace_id: w.id,
+          title: "Category task",
+          category_attributes: attrs,
+        })
+        .select()
+        .single(),
+    );
+    const observation = ok(
+      await a.rpc("add_event", {
+        p_activity: task.id,
+        p_type: "observation",
+        p_content: "Original observation",
+        p_request: crypto.randomUUID(),
+      }),
+    );
+    ok(
+      await a.rpc("edit_observation", {
+        p_id: observation.id,
+        p_content: "Edited observation",
+        p_expected: observation.content,
+      }),
+    );
+    assert.ok(
+      (
+        await b.rpc("delete_observation", {
+          p_id: observation.id,
+          p_expected: "Edited observation",
+        })
+      ).error,
+    );
+    const saved = ok(
+      await a
+        .from("activity_events")
+        .select("*")
+        .eq("id", observation.id)
+        .single(),
+    );
+    assert.equal(saved.created_at, observation.created_at);
+    assert.ok(saved.edited_at);
+    if (category === "work") {
+      const work = {
+        hasScheduledDate: true,
+        scheduledDate: "2026-10-30",
+        scheduledTime: "14:00",
+        isUrgent: null,
+        isImportant: null,
+      };
+      ok(
+        await a
+          .from("activities")
+          .update({ category_attributes: { work } })
+          .eq("id", task.id),
+      );
+      for (const [urgent, important] of [
+        [true, true],
+        [false, true],
+        [true, false],
+        [false, false],
+        [null, null],
+      ])
+        ok(
+          await a.rpc("set_priority", {
+            p_activity: task.id,
+            p_urgent: urgent,
+            p_important: important,
+          }),
+        );
+      const history = ok(
+        await a.from("priority_history").select("*").eq("activity_id", task.id),
+      );
+      assert.equal(history.length, 5);
+      assert.equal(
+        ok(
+          await b
+            .from("priority_history")
+            .select("*")
+            .eq("activity_id", task.id),
+        ).length,
+        0,
+      );
+      const savedTask = ok(
+        await a.from("activities").select("*").eq("id", task.id).single(),
+      );
+      assert.equal(
+        savedTask.category_attributes.work.scheduledDate,
+        work.scheduledDate,
+      );
+      assert.equal(savedTask.status, "not_started");
+      ok(
+        await a
+          .from("workspaces")
+          .update({ category: "sports" })
+          .eq("id", w.id),
+      );
+      assert.ok(
+        (
+          await a.rpc("set_priority", {
+            p_activity: task.id,
+            p_urgent: true,
+            p_important: true,
+          })
+        ).error,
+      );
+      ok(
+        await a.from("workspaces").update({ category: "work" }).eq("id", w.id),
+      );
+      assert.deepEqual(
+        ok(await a.from("activities").select("*").eq("id", task.id).single())
+          .category_attributes,
+        savedTask.category_attributes,
+      );
+    }
+    const reopened = makeClient();
+    ok(await reopened.auth.signInWithPassword({ email, password }));
+    assert.equal(
+      ok(
+        await reopened
+          .from("activity_events")
+          .select("*")
+          .eq("id", observation.id)
+          .single(),
+      ).content,
+      "Edited observation",
+    );
+    ok(await reopened.auth.signOut());
+    ok(
+      await a.rpc("delete_observation", {
+        p_id: observation.id,
+        p_expected: "Edited observation",
+      }),
+    );
+    assert.equal(
+      ok(await a.from("activity_events").select("*").eq("id", observation.id))
+        .length,
+      0,
+    );
+    ok(await a.rpc("delete_workspace", { p_workspace: w.id }));
+  }
+  pass(
+    "All five categories persist editable observations across sessions; Canvas validation, scheduling, all quadrants, priority history and category changes work through real authenticated APIs",
+  );
   const note = ok(
     await a
       .from("notes")

@@ -1,5 +1,8 @@
 import type {
   Workspace,
+  WorkspaceCategory,
+  CategoryAttributes,
+  PriorityHistory,
   Activity,
   ActivityEvent,
   Note,
@@ -24,6 +27,7 @@ export type Database = {
         Owned<Workspace>,
         OptionalOwnership & {
           name: string;
+          category?: WorkspaceCategory;
           description?: string;
           icon?: string;
           archived?: boolean;
@@ -33,17 +37,24 @@ export type Database = {
         Owned<Activity>,
         OptionalOwnership & {
           workspace_id: string;
+          category_attributes?: CategoryAttributes;
           title: string;
           description?: string;
           archived?: boolean;
         },
-        { title?: string; description?: string; archived?: boolean }
+        {
+          title?: string;
+          description?: string;
+          archived?: boolean;
+          category_attributes?: CategoryAttributes;
+        }
       >;
       activity_events: Table<
         Owned<ActivityEvent> & { request_id: string },
         never,
         never
       >;
+      priority_history: Table<Owned<PriorityHistory>, never, never>;
       notes: Table<
         Owned<Note>,
         OptionalOwnership & { workspace_id: string; title: string }
@@ -81,6 +92,22 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      set_priority: {
+        Args: {
+          p_activity: string;
+          p_urgent: boolean | null;
+          p_important: boolean | null;
+        };
+        Returns: undefined;
+      };
+      edit_observation: {
+        Args: { p_id: string; p_content: string; p_expected: string };
+        Returns: undefined;
+      };
+      delete_observation: {
+        Args: { p_id: string; p_expected: string };
+        Returns: undefined;
+      };
       add_event: {
         Args: {
           p_activity: string;

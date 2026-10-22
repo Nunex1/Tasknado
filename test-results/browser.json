@@ -1,0 +1,13 @@
+{
+  "date": "2026-10-22T00:49:43.914Z",
+  "checks": [
+    "Real browser authentication",
+    "Work fields, scheduled time, Q1 and overdue indication",
+    "Observation creation and editing in UI",
+    "Keyboard selector and actual drag/drop persist matrix changes",
+    "Matrix, schedule and observations survive browser reload",
+    "Observation deletion, explicit Canvas choice and Yes/No filters",
+    "English UI switches immediately and persists after reload"
+  ],
+  "errors": []
+}

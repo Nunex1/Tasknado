@@ -1,0 +1,19 @@
+{
+  "date": "2026-10-22T00:45:33.609Z",
+  "passed": 13,
+  "checks": [
+    "Two real accounts authenticate",
+    "Server enforces initial state",
+    "RLS blocks cross-account reads, forged ownership and status bypass",
+    "Atomic lifecycle, chronology, idempotency and immutable events",
+    "History persists after logout and login",
+    "All five categories persist editable observations across sessions; Canvas validation, scheduling, all quadrants, priority history and category changes work through real authenticated APIs",
+    "Autosave persists and rejects stale concurrent writes",
+    "Private Storage roundtrip preserves bytes and blocks unauthorized access",
+    "Portuguese FTS includes files and activities with private filtered results",
+    "Audit logs are populated and isolated",
+    "Archiving retains history",
+    "Workspace deletion cascades only its records",
+    "Unauthenticated search rejected"
+  ]
+}

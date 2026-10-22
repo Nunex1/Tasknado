@@ -1,5 +1,8 @@
 "use client";
+import { useI18n } from "@/i18n/provider";
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import {
   LayoutDashboard,
@@ -31,12 +34,14 @@ import {
 import { db, client, check, errorMessage } from "@/lib/supabase";
 import {
   Workspace,
+  WorkspaceCategory,
+  workspaceCategories,
+  isOverdue,
   Activity,
   Note,
   SearchResult,
   Status,
   statuses,
-  date,
 } from "@/lib/domain";
 import { Auth } from "./auth";
 import { Button } from "./ui/button";
@@ -44,7 +49,16 @@ import { Modal } from "./ui/dialog";
 import { ActivityDetail } from "./activity-detail";
 import { Notes } from "./notes";
 import { GlobalSearch } from "./search";
-import { BrandLogo } from "./brand";
+import { BrandLogo, BrandSymbol, BrandWordmark } from "./brand";
+import { ProfileMenu } from "./profile-menu";
+import { Profile } from "./profile";
+import { LanguageSettings } from "./language-settings";
+import {
+  CategoryFields,
+  attributesFromForm,
+  Schedule,
+} from "./category-fields";
+import { PriorityMatrix } from "./priority-matrix";
 type View = "dashboard" | "activities" | "notes" | "search" | "settings";
 type Editor =
   | { kind: "workspace"; item?: Workspace }
@@ -58,6 +72,10 @@ const icons: Record<string, typeof Folder> = {
   code: Code2,
 };
 export function App() {
+  const { t, date, number, locale, setAccount } = useI18n();
+  const pathname = usePathname();
+  const router = useRouter();
+  const isProfile = pathname === "/perfil";
   const [user, setUser] = useState<User | null>(null),
     [ready, setReady] = useState(false),
     [recovery, setRecovery] = useState(false),
@@ -80,7 +98,14 @@ export function App() {
     [limit, setLimit] = useState(50),
     [hasMore, setHasMore] = useState(false),
     [noteMore, setNoteMore] = useState(false);
+  const [canvasFilter, setCanvasFilter] = useState("");
+  const [scheduleFilter, setScheduleFilter] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const dirty = useRef(new Set<string>());
+  useEffect(() => {
+    if (ready) setAccount(user?.id ?? null);
+  }, [ready, user?.id, setAccount]);
   const loadSeq = useRef(0);
   const report = useCallback((s: string) => setToast(s), []);
   const onDirty = useCallback((id: string, value: boolean) => {
@@ -107,6 +132,21 @@ export function App() {
         : rows.find((w) => !w.archived)?.id || null,
     );
   }
+  async function allActivities(id: string) {
+    const data: Activity[] = [];
+    for (let offset = 0; ; offset += 500) {
+      const rows = check(
+        await client()
+          .from("activities")
+          .select("*")
+          .eq("workspace_id", id)
+          .order("id")
+          .range(offset, offset + 499),
+      );
+      data.push(...rows);
+      if (rows.length < 500) return { data, error: null };
+    }
+  }
   async function loadContent() {
     if (!workspaceId) {
       setActivities([]);
@@ -117,12 +157,7 @@ export function App() {
     setLoading(true);
     try {
       const [a, n] = await Promise.all([
-        client()
-          .from("activities")
-          .select("*")
-          .eq("workspace_id", workspaceId)
-          .order("updated_at", { ascending: false })
-          .limit(limit),
+        allActivities(workspaceId),
         client()
           .from("notes")
           .select("*")
@@ -157,7 +192,7 @@ export function App() {
       if (seq === loadSeq.current) {
         setActivities(aa);
         setNotes(nn);
-        setHasMore(aa.length === limit);
+        setHasMore(false);
         setNoteMore(nn.length === limit);
       }
     } finally {
@@ -207,6 +242,7 @@ export function App() {
         if (!dirty.current.size) {
           setView("search");
           setActivityId(null);
+          if (pathname === "/perfil") router.push("/");
         }
       }
     };
@@ -216,12 +252,24 @@ export function App() {
       window.removeEventListener("beforeunload", unload);
       window.removeEventListener("keydown", key);
     };
-  }, []);
+  }, [pathname, router]);
   function navigate(next: View) {
     if (!canLeave()) return;
     setView(next);
     setActivityId(null);
     setMenu(false);
+    if (isProfile) router.push("/");
+  }
+  function navigateHome(event: { preventDefault: () => void }) {
+    if (!canLeave()) {
+      event.preventDefault();
+      return;
+    }
+    setView("dashboard");
+    setActivityId(null);
+    setMenu(false);
+    // The overview is already on this route; only reset the existing view.
+    if (pathname === "/") event.preventDefault();
   }
   function switchWorkspace(id: string) {
     if (!canLeave()) return;
@@ -231,6 +279,11 @@ export function App() {
     setActivityId(null);
     setNoteId(null);
     setLimit(50);
+    setCanvasFilter("");
+    setScheduleFilter("");
+    setDateFrom("");
+    setDateTo("");
+    setSort("updated_at");
     setMenu(false);
   }
   async function save(form: FormData) {
@@ -242,6 +295,7 @@ export function App() {
       if (editor.kind === "workspace") {
         const values = {
           name: title,
+          category: String(form.get("category")) as WorkspaceCategory,
           description,
           icon: String(form.get("icon") || "folder"),
         };
@@ -261,18 +315,28 @@ export function App() {
         await loadWorkspaces();
       } else if (editor.kind === "activity") {
         if (!workspaceId) throw new Error("Selecione um workspace.");
+        const category_attributes = attributesFromForm(
+          workspace!.category,
+          form,
+          editor.item?.category_attributes,
+        );
         if (editor.item)
           check(
             await client()
               .from("activities")
-              .update({ title, description })
+              .update({ title, description, category_attributes })
               .eq("id", editor.item.id),
           );
         else {
           const row = check(
             await client()
               .from("activities")
-              .insert({ title, description, workspace_id: workspaceId })
+              .insert({
+                title,
+                description,
+                workspace_id: workspaceId,
+                category_attributes,
+              })
               .select()
               .single(),
           );
@@ -329,7 +393,10 @@ export function App() {
   async function deleteWorkspace(w: Workspace) {
     if (
       prompt(
-        `Esta ação exclui atividades, notas e arquivos. Digite o nome do workspace para confirmar: ${w.name}`,
+        t(
+          "Esta ação exclui atividades, notas e arquivos. Digite o nome do workspace para confirmar: {{name}}",
+          { name: w.name },
+        ),
       ) !== w.name
     )
       return;
@@ -349,7 +416,9 @@ export function App() {
   async function deleteAccount() {
     if (
       prompt(
-        "Esta ação exclui permanentemente sua conta e registros. Digite seu e-mail para confirmar:",
+        t(
+          "Esta ação exclui permanentemente sua conta e registros. Digite seu e-mail para confirmar:",
+        ),
       ) !== user?.email
     )
       return;
@@ -377,6 +446,7 @@ export function App() {
         "note_entries",
         "attachments",
         "audit_logs",
+        "priority_history",
       ]) {
         let offset = 0;
         output[table] = [];
@@ -446,23 +516,47 @@ export function App() {
       (a) =>
         a.archived === archived &&
         (!filter || a.status === filter) &&
+        (workspace?.category !== "university" ||
+          !canvasFilter ||
+          String(a.category_attributes.university?.openedInCanvas) ===
+            canvasFilter) &&
+        (workspace?.category !== "work" ||
+          ((!scheduleFilter ||
+            (scheduleFilter === "overdue"
+              ? isOverdue(a)
+              : scheduleFilter === "yes"
+                ? !!a.category_attributes.work?.hasScheduledDate
+                : !a.category_attributes.work?.hasScheduledDate)) &&
+            (!dateFrom ||
+              (a.category_attributes.work?.scheduledDate || "") >= dateFrom) &&
+            (!dateTo ||
+              (!!a.category_attributes.work?.scheduledDate &&
+                a.category_attributes.work.scheduledDate <= dateTo)))) &&
         `${a.title} ${a.description}`
           .toLowerCase()
           .includes(query.toLowerCase()),
     )
     .sort((a, b) =>
-      sort === "title"
-        ? a.title.localeCompare(b.title)
-        : b[sort as "created_at" | "updated_at"].localeCompare(
-            a[sort as "created_at" | "updated_at"],
-          ),
+      sort === "scheduled"
+        ? (a.category_attributes.work?.scheduledDate || "9999")
+            .concat(a.category_attributes.work?.scheduledTime || "23:59")
+            .localeCompare(
+              (b.category_attributes.work?.scheduledDate || "9999").concat(
+                b.category_attributes.work?.scheduledTime || "23:59",
+              ),
+            )
+        : sort === "title"
+          ? a.title.localeCompare(b.title, locale)
+          : b[sort as "created_at" | "updated_at"].localeCompare(
+              a[sort as "created_at" | "updated_at"],
+            ),
     );
   if (!db) return <Auth onRecovered={() => setRecovery(false)} />;
   if (!ready)
     return (
       <main className="setup" role="status">
         <BrandLogo layout="vertical" />
-        <p>Abrindo seu espaço…</p>
+        <p>{t("Abrindo seu espaço…")}</p>
       </main>
     );
   if (!user || recovery)
@@ -474,9 +568,9 @@ export function App() {
       />
     );
   const navItems: { id: View; label: string; icon: typeof Folder }[] = [
-    { id: "dashboard", label: "Visão geral", icon: LayoutDashboard },
-    { id: "activities", label: "Atividades", icon: ListTodo },
-    { id: "notes", label: "Bloco de notas", icon: NotebookPen },
+    { id: "dashboard", label: t("Visão geral"), icon: LayoutDashboard },
+    { id: "activities", label: t("Atividades"), icon: ListTodo },
+    { id: "notes", label: t("Bloco de notas"), icon: NotebookPen },
   ];
   const counts = (Object.keys(statuses) as Status[]).map((status) => ({
     status,
@@ -493,22 +587,41 @@ export function App() {
       {menu && (
         <button
           className="sidebar-overlay"
-          aria-label="Fechar menu"
+          aria-label={t("Fechar menu")}
           onClick={() => setMenu(false)}
         />
       )}
       <aside className={"sidebar " + (menu ? "open" : "")}>
-        <BrandLogo size="sm" />
+        <div className="brand brand--sm brand--horizontal">
+          <Link
+            href="/"
+            className="brand-home-link brand-home-symbol"
+            aria-label={t("Tubarão-martelo — Visão geral")}
+            onNavigate={navigateHome}
+          >
+            <BrandSymbol size="sm" decorative />
+          </Link>
+          <Link
+            href="/"
+            className="brand-home-link brand-home-wordmark"
+            aria-label={t("TASKNADO — Visão geral")}
+            onNavigate={navigateHome}
+          >
+            <BrandWordmark size="sm" decorative />
+          </Link>
+        </div>
         <button className="sidebar-search" onClick={() => navigate("search")}>
           <Search size={17} />
-          <span>Buscar em tudo</span>
-          <kbd>Ctrl K</kbd>
+          <span>{t("Buscar em tudo")}</span>
+          <kbd>{t("Ctrl K")}</kbd>
         </button>
-        <div className="sidebar-label">MEU ESPAÇO</div>
+        <div className="sidebar-label">{t("MEU ESPAÇO")}</div>
         <nav>
           {navItems.map(({ id, label, icon: Icon }) => (
             <button
-              className={"nav-item " + (view === id ? "active" : "")}
+              className={
+                "nav-item " + (!isProfile && view === id ? "active" : "")
+              }
               key={id}
               onClick={() => navigate(id)}
             >
@@ -516,7 +629,7 @@ export function App() {
               {label}
               {id === "activities" && (
                 <span className="nav-count">
-                  {activities.filter((a) => !a.archived).length}
+                  {number(activities.filter((a) => !a.archived).length)}
                   {hasMore ? "+" : ""}
                 </span>
               )}
@@ -524,10 +637,10 @@ export function App() {
           ))}
         </nav>
         <div className="sidebar-label row between">
-          <span>WORKSPACES</span>
+          <span>{t("WORKSPACES")}</span>
           <button
             className="icon-button"
-            aria-label="Criar workspace"
+            aria-label={t("Criar workspace")}
             onClick={() => setEditor({ kind: "workspace" })}
           >
             <Plus size={17} />
@@ -560,7 +673,7 @@ export function App() {
               className="nav-item"
               onClick={() => setEditor({ kind: "workspace" })}
             >
-              <Plus size={17} /> Seu primeiro workspace
+              <Plus size={17} /> {t("Seu primeiro workspace")}
             </button>
           )}
         </div>
@@ -568,25 +681,27 @@ export function App() {
           <div className="private-card">
             <LockKeyhole size={17} />
             <div>
-              <strong>Um espaço só seu</strong>
-              <p>Privado. Organizado. No seu ritmo.</p>
+              <strong>{t("Um espaço só seu")}</strong>
+              <p>{t("Privado. Organizado. No seu ritmo.")}</p>
             </div>
           </div>
           <button
-            className={"nav-item " + (view === "settings" ? "active" : "")}
+            className={
+              "nav-item " + (!isProfile && view === "settings" ? "active" : "")
+            }
             onClick={() => navigate("settings")}
           >
-            <Settings size={18} /> Configurações
+            <Settings size={18} /> {t("Configurações")}
           </button>
           <div className="profile">
             <span className="avatar">{user.email?.[0].toUpperCase()}</span>
             <div>
-              <strong>Minha conta</strong>
+              <strong>{t("Minha conta")}</strong>
               <small>{user.email}</small>
             </div>
             <button
               className="icon-button"
-              aria-label="Sair"
+              aria-label={t("Sair")}
               onClick={async () => {
                 if (canLeave())
                   try {
@@ -606,32 +721,39 @@ export function App() {
           <div className="row">
             <button
               className="icon-button mobile-menu"
-              aria-label="Abrir menu"
+              aria-label={t("Abrir menu")}
               onClick={() => setMenu(true)}
             >
               <Menu size={20} />
             </button>
-            <span className="muted">Meu espaço</span>
+            <span className="muted">{t("Meu espaço")}</span>
             <ChevronRight size={14} />
             <button
               className="workspace-crumb"
               onClick={() => navigate("settings")}
             >
-              {workspace?.name || "Bem-vindo"}
+              {workspace?.name || t("Bem-vindo")}
               <ChevronDown size={14} />
             </button>
           </div>
           <div className="row">
             <span className="private-label">
-              <LockKeyhole size={13} /> Pessoal e privado
+              <LockKeyhole size={13} /> {t("Pessoal e privado")}
             </span>
-            <span className="avatar small-avatar">
-              {user.email?.[0].toUpperCase()}
-            </span>
+            <ProfileMenu
+              user={user}
+              canNavigate={() => {
+                if (!canLeave()) return false;
+                setMenu(false);
+                return true;
+              }}
+            />
           </div>
         </header>
         <main className="main-content" id="main">
-          {view === "search" ? (
+          {isProfile ? (
+            <Profile user={user} />
+          ) : view === "search" ? (
             <GlobalSearch
               workspaces={workspaces}
               onOpen={(r) => void openResult(r)}
@@ -641,22 +763,22 @@ export function App() {
             <>
               <div className="page-heading">
                 <div>
-                  <span className="eyebrow">DO SEU JEITO</span>
-                  <h1>Configurações</h1>
-                  <p>Gerencie seus espaços e seus dados pessoais.</p>
+                  <span className="eyebrow">{t("DO SEU JEITO")}</span>
+                  <h1>{t("Configurações")}</h1>
+                  <p>{t("Gerencie seus espaços e seus dados pessoais.")}</p>
                 </div>
                 <Button onClick={() => setEditor({ kind: "workspace" })}>
-                  <Plus size={16} /> Novo workspace
+                  <Plus size={16} /> {t("Novo workspace")}
                 </Button>
               </div>
               <section className="panel settings-panel">
-                <h2>Seus workspaces</h2>
+                <h2>{t("Seus workspaces")}</h2>
                 {workspaces.map((w) => (
                   <div className="settings-row" key={w.id}>
                     <div>
                       <strong>{w.name}</strong>
                       <p>
-                        {w.description || "Sem descrição"}{" "}
+                        {w.description || t("Sem descrição")}{" "}
                         {w.archived ? "· Arquivado" : ""}
                       </p>
                     </div>
@@ -668,7 +790,7 @@ export function App() {
                           navigate("dashboard");
                         }}
                       >
-                        Abrir
+                        {t("Abrir")}
                       </Button>
                       <Button
                         variant="secondary"
@@ -676,7 +798,7 @@ export function App() {
                           setEditor({ kind: "workspace", item: w })
                         }
                       >
-                        Editar
+                        {t("Editar")}
                       </Button>
                       <Button
                         variant="ghost"
@@ -684,12 +806,12 @@ export function App() {
                         onClick={() => void workspaceArchive(w)}
                       >
                         <Archive size={16} />
-                        {w.archived ? "Restaurar" : "Arquivar"}
+                        {w.archived ? t("Restaurar") : t("Arquivar")}
                       </Button>
                       <Button
                         variant="danger"
                         disabled={busy}
-                        aria-label={"Excluir " + w.name}
+                        aria-label={t("Excluir {{name}}", { name: w.name })}
                         onClick={() => void deleteWorkspace(w)}
                       >
                         <Trash2 size={16} />
@@ -698,55 +820,60 @@ export function App() {
                   </div>
                 ))}
               </section>
+              <LanguageSettings />
               <section className="panel settings-panel">
-                <h2>Conta e privacidade</h2>
+                <h2>{t("Conta e privacidade")}</h2>
                 <p>{user.email}</p>
                 <p className="muted">
-                  Exportação de registros em JSON. Arquivos devem ser baixados
-                  individualmente. Para excluir o conteúdo, exclua os workspaces
-                  acima.
+                  {t(
+                    "Exportação de registros em JSON. Arquivos devem ser baixados individualmente. Para excluir o conteúdo, exclua os workspaces acima.",
+                  )}
                 </p>
                 <Button
                   variant="secondary"
                   disabled={busy}
                   onClick={() => void exportData()}
                 >
-                  <Download size={16} /> Exportar meus dados
+                  <Download size={16} /> {t("Exportar meus dados")}
                 </Button>
                 <Button
                   variant="danger"
                   disabled={busy}
                   onClick={() => void deleteAccount()}
                 >
-                  Excluir minha conta
+                  {t("Excluir minha conta")}
                 </Button>
                 <p className="hint">
-                  A exclusão é permanente. Backups seguem a retenção do projeto;
-                  arquivos entram na fila de limpeza.
+                  {t(
+                    "A exclusão é permanente. Backups seguem a retenção do projeto; arquivos entram na fila de limpeza.",
+                  )}
                 </p>
               </section>
             </>
           ) : !workspace ? (
             <div className="welcome panel">
-              <span className="eyebrow">BEM-VINDO AO SEU NOVO ESPAÇO</span>
+              <span className="eyebrow">
+                {t("BEM-VINDO AO SEU NOVO ESPAÇO")}
+              </span>
               <h1>
-                Organização começa
+                {t("Organização começa")}
                 <br />
-                com um lugar para começar.
+                {t("com um lugar para começar.")}
               </h1>
               <p>
-                Crie um workspace para separar seus projetos, estudos ou
-                trabalho.
+                {t(
+                  "Crie um workspace para separar seus projetos, estudos ou trabalho.",
+                )}
                 <br />
-                Suas atividades e notas vão morar aqui.
+                {t("Suas atividades e notas vão morar aqui.")}
               </p>
               <Button onClick={() => setEditor({ kind: "workspace" })}>
-                <Plus size={18} /> Criar meu primeiro workspace
+                <Plus size={18} /> {t("Criar meu primeiro workspace")}
               </Button>
               <div className="welcome-steps">
-                <span>01 · Organize por assunto</span>
-                <span>02 · Registre cada avanço</span>
-                <span>03 · Retome com contexto</span>
+                <span>{t("01 · Organize por assunto")}</span>
+                <span>{t("02 · Registre cada avanço")}</span>
+                <span>{t("03 · Retome com contexto")}</span>
               </div>
             </div>
           ) : view === "notes" ? (
@@ -766,7 +893,7 @@ export function App() {
               />
               {noteMore && (
                 <Button variant="ghost" onClick={() => setLimit((x) => x + 50)}>
-                  Carregar mais notas
+                  {t("Carregar mais notas")}
                 </Button>
               )}
             </>
@@ -774,6 +901,7 @@ export function App() {
             <ActivityDetail
               key={selected.id}
               activity={selected}
+              category={workspace.category}
               onBack={() => setActivityId(null)}
               onChange={loadContent}
               onEdit={() => setEditor({ kind: "activity", item: selected })}
@@ -785,22 +913,24 @@ export function App() {
                 <div>
                   <span className="eyebrow">
                     {view === "dashboard"
-                      ? "CADA AVANÇO CONTA"
+                      ? t("CADA AVANÇO CONTA")
                       : workspace.name.toUpperCase()}
                   </span>
                   <h1>
                     {view === "dashboard"
-                      ? "Seu dia, com mais clareza."
-                      : "Atividades"}
+                      ? t("Seu dia, com mais clareza.")
+                      : t("Atividades")}
                   </h1>
                   <p>
                     {view === "dashboard"
-                      ? "Tudo o que você precisa para continuar de onde parou."
-                      : "Acompanhe cada etapa. Preserve todo o contexto."}
+                      ? t(
+                          "Tudo o que você precisa para continuar de onde parou.",
+                        )
+                      : t("Acompanhe cada etapa. Preserve todo o contexto.")}
                   </p>
                 </div>
                 <Button onClick={() => setEditor({ kind: "activity" })}>
-                  <Plus size={18} /> Nova atividade
+                  <Plus size={18} /> {t("Nova atividade")}
                 </Button>
               </div>
               {view === "dashboard" && (
@@ -819,15 +949,15 @@ export function App() {
                           }}
                         >
                           <div className="row between">
-                            <span>{statuses[status]}</span>
+                            <span>{t(statuses[status])}</span>
                             <Icon size={18} />
                           </div>
                           <strong>
-                            {count}
+                            {number(count)}
                             {hasMore ? "+" : ""}
                           </strong>
                           <small>
-                            Ver atividades <ArrowUpRight size={13} />
+                            {t("Ver atividades")} <ArrowUpRight size={13} />
                           </small>
                         </button>
                       );
@@ -838,11 +968,17 @@ export function App() {
                       <HistoryIcon />
                     </div>
                     <div>
-                      <h3>Seu próximo passo já tem um ponto de partida.</h3>
+                      <h3>
+                        {t("Seu próximo passo já tem um ponto de partida.")}
+                      </h3>
                       <p>
                         {activities.some((a) => a.status === "paused")
-                          ? "Retome uma atividade pausada e encontre o contexto no histórico."
-                          : "Registre o que fez hoje. Amanhã, o contexto estará aqui."}
+                          ? t(
+                              "Retome uma atividade pausada e encontre o contexto no histórico.",
+                            )
+                          : t(
+                              "Registre o que fez hoje. Amanhã, o contexto estará aqui.",
+                            )}
                       </p>
                     </div>
                     <Button
@@ -852,20 +988,31 @@ export function App() {
                         setView("activities");
                       }}
                     >
-                      Ver pausadas <ArrowUpRight size={15} />
+                      {t("Ver pausadas")} <ArrowUpRight size={15} />
                     </Button>
                   </section>
                 </>
+              )}
+              {workspace.category === "work" && (
+                <PriorityMatrix
+                  activities={activities}
+                  onOpen={(id) => {
+                    setActivityId(id);
+                    setView("activities");
+                  }}
+                  onChange={loadContent}
+                  report={report}
+                />
               )}
               <section className="panel activities-panel">
                 <div className="section-heading">
                   <div className="row">
                     <h2>
                       {view === "dashboard"
-                        ? "Atividades recentes"
-                        : "Todas as atividades"}
+                        ? t("Atividades recentes")
+                        : t("Todas as atividades")}
                     </h2>
-                    <span className="count">{shown.length}</span>
+                    <span className="count">{number(shown.length)}</span>
                   </div>
                   <button
                     className="text-button"
@@ -875,7 +1022,7 @@ export function App() {
                     }}
                   >
                     <Archive size={15} />
-                    {archived ? "Ver ativas" : "Arquivadas"}
+                    {archived ? t("Ver ativas") : t("Arquivadas")}
                   </button>
                 </div>
                 <div className="list-toolbar">
@@ -884,7 +1031,7 @@ export function App() {
                       className={!filter ? "active" : ""}
                       onClick={() => setFilter("")}
                     >
-                      Todas
+                      {t("Todas")}
                     </button>
                     {Object.entries(statuses).map(([s, label]) => (
                       <button
@@ -892,7 +1039,7 @@ export function App() {
                         key={s}
                         onClick={() => setFilter(s)}
                       >
-                        {label}
+                        {t(label)}
                       </button>
                     ))}
                   </div>
@@ -900,28 +1047,82 @@ export function App() {
                     <label className="search-input compact">
                       <Search size={15} />
                       <input
-                        aria-label="Filtrar atividades"
-                        placeholder="Filtrar…"
+                        aria-label={t("Filtrar atividades")}
+                        placeholder={t("Filtrar…")}
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                       />
                     </label>
                     <select
-                      aria-label="Ordenar atividades"
+                      aria-label={t("Ordenar atividades")}
                       value={sort}
                       onChange={(e) => setSort(e.target.value)}
                     >
-                      <option value="updated_at">Atualização</option>
-                      <option value="created_at">Criação</option>
-                      <option value="title">Nome</option>
+                      <option value="updated_at">{t("Atualização")}</option>
+                      <option value="created_at">{t("Criação")}</option>
+                      <option value="title">{t("Nome")}</option>
+                      {workspace.category === "work" && (
+                        <option value="scheduled">
+                          {t("Data programada")}
+                        </option>
+                      )}
                     </select>
                   </div>
                 </div>
+                {workspace.category === "university" && (
+                  <div className="list-toolbar">
+                    <label>
+                      {t("Aberta no Canvas?")}
+                      <select
+                        value={canvasFilter}
+                        onChange={(e) => setCanvasFilter(e.target.value)}
+                      >
+                        <option value="">{t("Todas")}</option>
+                        <option value="true">{t("Sim")}</option>
+                        <option value="false">{t("Não")}</option>
+                        <option value="undefined">{t("Não definida")}</option>
+                      </select>
+                    </label>
+                  </div>
+                )}
+                {workspace.category === "work" && (
+                  <div className="list-toolbar category-filters">
+                    <label>
+                      {t("Agendamento")}
+                      <select
+                        value={scheduleFilter}
+                        onChange={(e) => setScheduleFilter(e.target.value)}
+                      >
+                        <option value="">{t("Todas")}</option>
+                        <option value="yes">{t("Com data programada")}</option>
+                        <option value="no">{t("Sem data programada")}</option>
+                        <option value="overdue">{t("Atrasada")}</option>
+                      </select>
+                    </label>
+                    <label>
+                      {t("Data inicial")}
+                      <input
+                        type="date"
+                        value={dateFrom}
+                        onChange={(e) => setDateFrom(e.target.value)}
+                      />
+                    </label>
+                    <label>
+                      {t("Data final")}
+                      <input
+                        type="date"
+                        value={dateTo}
+                        min={dateFrom}
+                        onChange={(e) => setDateTo(e.target.value)}
+                      />
+                    </label>
+                  </div>
+                )}
                 <div className="activity-table">
                   <div className="table-head">
-                    <span>ATIVIDADE</span>
-                    <span>STATUS</span>
-                    <span>ATUALIZADA EM</span>
+                    <span>{t("ATIVIDADE")}</span>
+                    <span>{t("STATUS")}</span>
+                    <span>{t("ATUALIZADA EM")}</span>
                     <span />
                   </div>
                   {shown
@@ -943,15 +1144,23 @@ export function App() {
                             </span>
                             <div>
                               <strong>{a.title}</strong>
+                              {workspace.category === "work" && (
+                                <span
+                                  className={isOverdue(a) ? "overdue" : "hint"}
+                                >
+                                  <Schedule work={a.category_attributes.work} />
+                                  {isOverdue(a) && ` · ${t("Atrasada")}`}
+                                </span>
+                              )}
                               <p>
                                 {a.description ||
-                                  "Seu próximo registro começa aqui."}
+                                  t("Seu próximo registro começa aqui.")}
                               </p>
                             </div>
                           </div>
                           <span className={"badge " + a.status}>
                             <Icon size={12} />
-                            {statuses[a.status]}
+                            {t(statuses[a.status])}
                           </span>
                           <time>{date(a.updated_at)}</time>
                           <ChevronRight size={16} />
@@ -964,20 +1173,22 @@ export function App() {
                     <ListTodo size={32} />
                     <h3>
                       {query || filter
-                        ? "Nenhuma atividade neste filtro"
-                        : "Dê espaço ao seu próximo projeto"}
+                        ? t("Nenhuma atividade neste filtro")
+                        : t("Dê espaço ao seu próximo projeto")}
                     </h3>
                     <p>
                       {query || filter
-                        ? "Ajuste os filtros para encontrar suas atividades."
-                        : "Crie uma atividade e mantenha cada etapa da sua jornada registrada."}
+                        ? t("Ajuste os filtros para encontrar suas atividades.")
+                        : t(
+                            "Crie uma atividade e mantenha cada etapa da sua jornada registrada.",
+                          )}
                     </p>
                     {!query && !filter && (
                       <Button
                         variant="secondary"
                         onClick={() => setEditor({ kind: "activity" })}
                       >
-                        <Plus size={16} /> Criar atividade
+                        <Plus size={16} /> {t("Criar atividade")}
                       </Button>
                     )}
                   </div>
@@ -985,19 +1196,22 @@ export function App() {
                 <div className="table-footer">
                   <span>
                     {loading
-                      ? "Atualizando…"
-                      : `${shown.length} atividade(s) carregada(s) · ${workspace.name}`}
+                      ? t("Atualizando…")
+                      : t("taskCount", {
+                          count: shown.length,
+                          workspace: workspace.name,
+                        })}
                   </span>
                   {hasMore ? (
                     <Button
                       variant="ghost"
                       onClick={() => setLimit((x) => x + 50)}
                     >
-                      Carregar mais
+                      {t("Carregar mais")}
                     </Button>
                   ) : (
                     <span>
-                      <LockKeyhole size={12} /> Visível somente para você
+                      <LockKeyhole size={12} /> {t("Visível somente para você")}
                     </span>
                   )}
                 </div>
@@ -1009,8 +1223,10 @@ export function App() {
                 >
                   <NotebookPen size={23} />
                   <div>
-                    <h3>Uma ideia que vale guardar?</h3>
-                    <p>Abra seu bloco de notas. O salvamento é automático.</p>
+                    <h3>{t("Uma ideia que vale guardar?")}</h3>
+                    <p>
+                      {t("Abra seu bloco de notas. O salvamento é automático.")}
+                    </p>
                   </div>
                   <ArrowUpRight size={20} />
                 </button>
@@ -1020,26 +1236,26 @@ export function App() {
                 >
                   <Search size={23} />
                   <div>
-                    <h3>O contexto está por aqui.</h3>
-                    <p>Encontre notas, acontecimentos e arquivos.</p>
+                    <h3>{t("O contexto está por aqui.")}</h3>
+                    <p>{t("Encontre notas, acontecimentos e arquivos.")}</p>
                   </div>
-                  <kbd>Ctrl K</kbd>
+                  <kbd>{t("Ctrl K")}</kbd>
                 </button>
               </div>
             </>
           )}
         </main>
         <footer className="app-footer">
-          <span>Tasknado · Sua memória operacional</span>
-          <span>Um passo de cada vez.</span>
+          <span>{t("Tasknado · Sua memória operacional")}</span>
+          <span>{t("Um passo de cada vez.")}</span>
         </footer>
       </div>
       {toast && (
         <div className="toast" role="status">
-          <span>{toast}</span>
+          <span>{t(toast)}</span>
           <button
             className="icon-button"
-            aria-label="Dispensar aviso"
+            aria-label={t("Dispensar aviso")}
             onClick={() => setToast("")}
           >
             <X size={17} />
@@ -1048,14 +1264,26 @@ export function App() {
       )}
       {editor && (
         <Modal
-          title={`${editor.item ? "Editar" : "Criar"} ${editor.kind === "workspace" ? "workspace" : editor.kind === "activity" ? "atividade" : "nota"}`}
+          title={t(
+            editor.kind === "workspace"
+              ? editor.item
+                ? "Editar workspace"
+                : "Criar workspace"
+              : editor.kind === "activity"
+                ? editor.item
+                  ? "Editar atividade"
+                  : "Criar atividade"
+                : editor.item
+                  ? "Editar nota"
+                  : "Criar nota",
+          )}
           onClose={() => {
             if (!busy) setEditor(null);
           }}
           description={
             editor.kind === "workspace"
-              ? "Separe seus assuntos em espaços privados."
-              : "Dê um nome claro para encontrar este conteúdo depois."
+              ? t("Separe seus assuntos em espaços privados.")
+              : t("Dê um nome claro para encontrar este conteúdo depois.")
           }
         >
           <form
@@ -1065,7 +1293,7 @@ export function App() {
             }}
           >
             <label>
-              {editor.kind === "workspace" ? "Nome" : "Título"}
+              {editor.kind === "workspace" ? t("Nome") : t("Título")}
               <input
                 name="title"
                 autoFocus
@@ -1082,7 +1310,7 @@ export function App() {
             </label>
             {editor.kind !== "note" && (
               <label>
-                Descrição
+                {t("Descrição")}
                 <textarea
                   name="description"
                   rows={4}
@@ -1095,18 +1323,48 @@ export function App() {
                 />
               </label>
             )}
+            {editor.kind === "activity" && workspace && (
+              <CategoryFields
+                category={workspace.category}
+                attributes={editor.item?.category_attributes}
+              />
+            )}
             {editor.kind === "workspace" && (
               <label>
-                Ícone
+                {t("Categoria do workspace")}
+                <select
+                  name="category"
+                  required
+                  defaultValue={editor.item?.category || ""}
+                >
+                  <option value="" disabled>
+                    {t("Selecione uma opção")}
+                  </option>
+                  {Object.entries(workspaceCategories).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {t(label)}
+                    </option>
+                  ))}
+                </select>
+                <small>
+                  {t(
+                    "Ao trocar a categoria, os atributos anteriores ficam preservados e ocultos até reativá-la.",
+                  )}
+                </small>
+              </label>
+            )}
+            {editor.kind === "workspace" && (
+              <label>
+                {t("Ícone")}
                 <select
                   name="icon"
                   defaultValue={editor.item?.icon || "folder"}
                 >
-                  <option value="folder">Pasta</option>
-                  <option value="briefcase">Trabalho</option>
-                  <option value="book">Estudos</option>
-                  <option value="wallet">Finanças</option>
-                  <option value="code">Projetos</option>
+                  <option value="folder">{t("Pasta")}</option>
+                  <option value="briefcase">{t("Trabalho")}</option>
+                  <option value="book">{t("Estudos")}</option>
+                  <option value="wallet">{t("Finanças")}</option>
+                  <option value="code">{t("Projetos")}</option>
                 </select>
               </label>
             )}
@@ -1117,9 +1375,11 @@ export function App() {
                 disabled={busy}
                 onClick={() => setEditor(null)}
               >
-                Cancelar
+                {t("Cancelar")}
               </Button>
-              <Button disabled={busy}>{busy ? "Salvando…" : "Salvar"}</Button>
+              <Button disabled={busy}>
+                {busy ? t("Salvando…") : t("Salvar")}
+              </Button>
             </div>
           </form>
         </Modal>

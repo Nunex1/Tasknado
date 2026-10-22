@@ -1,4 +1,5 @@
 "use client";
+import { useI18n } from "@/i18n/provider";
 import { useEffect, useRef, useState } from "react";
 import {
   Plus,
@@ -9,7 +10,7 @@ import {
   RefreshCw,
   Pencil,
 } from "lucide-react";
-import { Entry, Note, date } from "@/lib/domain";
+import { Entry, Note } from "@/lib/domain";
 import { client, check, errorMessage } from "@/lib/supabase";
 import { Button } from "./ui/button";
 import { Files } from "./files";
@@ -22,6 +23,7 @@ export function NoteEntry({
   onDirty: (id: string, dirty: boolean) => void;
   report: (s: string) => void;
 }) {
+  const { t, date } = useI18n();
   const [content, setContent] = useState(entry.content),
     [saved, setSaved] = useState(entry.content),
     [revision, setRevision] = useState(entry.revision),
@@ -69,31 +71,35 @@ export function NoteEntry({
           role="status"
         >
           {status === "Salvo" ? <Check size={14} /> : <Cloud size={14} />}{" "}
-          {status}
+          {t(status)}
         </span>
       </div>
       <textarea
-        aria-label={"Entrada de " + date(entry.created_at)}
+        aria-label={t("Entrada de {{date}}", { date: date(entry.created_at) })}
         value={content}
         onChange={(e) => {
           setContent(e.target.value);
           onDirty(entry.id, e.target.value !== saved);
         }}
         maxLength={50000}
-        placeholder="Escreva uma ideia, um aprendizado ou um próximo passo…"
+        placeholder={t(
+          "Escreva uma ideia, um aprendizado ou um próximo passo…",
+        )}
         rows={7}
       />
       {status === "Erro ao salvar" && (
         <div className="row">
           <Button variant="secondary" onClick={() => setRetry((x) => x + 1)}>
-            <RefreshCw size={14} /> Tentar novamente
+            <RefreshCw size={14} /> {t("Tentar novamente")}
           </Button>
           <Button
             variant="ghost"
             onClick={async () => {
               if (
                 !confirm(
-                  "Copie seu texto antes de continuar. Carregar a versão atual substituirá o texto desta entrada.",
+                  t(
+                    "Copie seu texto antes de continuar. Carregar a versão atual substituirá o texto desta entrada.",
+                  ),
                 )
               )
                 return;
@@ -115,10 +121,10 @@ export function NoteEntry({
               }
             }}
           >
-            Carregar versão atual
+            {t("Carregar versão atual")}
           </Button>
           <small>
-            Texto preservado nesta tela. Copie-o antes de recarregar.
+            {t("Texto preservado nesta tela. Copie-o antes de recarregar.")}
           </small>
         </div>
       )}
@@ -154,6 +160,7 @@ export function Notes({
   onDirty: (id: string, dirty: boolean) => void;
   report: (s: string) => void;
 }) {
+  const { t, date, locale } = useI18n();
   const [query, setQuery] = useState(""),
     [order, setOrder] = useState("updated_at"),
     [entries, setEntries] = useState<Entry[]>([]),
@@ -217,7 +224,7 @@ export function Notes({
     .filter((n) => n.title.toLowerCase().includes(query.toLowerCase()))
     .sort((a, b) =>
       order === "title"
-        ? a.title.localeCompare(b.title)
+        ? a.title.localeCompare(b.title, locale)
         : b[order as "created_at" | "updated_at"].localeCompare(
             a[order as "created_at" | "updated_at"],
           ),
@@ -226,12 +233,12 @@ export function Notes({
     <>
       <div className="page-heading">
         <div>
-          <span className="eyebrow">CONHECIMENTO SEM PONTAS SOLTAS</span>
-          <h1>Bloco de notas</h1>
-          <p>Um lugar para suas ideias, referências e descobertas.</p>
+          <span className="eyebrow">{t("CONHECIMENTO SEM PONTAS SOLTAS")}</span>
+          <h1>{t("Bloco de notas")}</h1>
+          <p>{t("Um lugar para suas ideias, referências e descobertas.")}</p>
         </div>
         <Button onClick={onCreate}>
-          <Plus size={17} /> Nova nota
+          <Plus size={17} /> {t("Nova nota")}
         </Button>
       </div>
       <div className="notes-layout">
@@ -239,20 +246,20 @@ export function Notes({
           <label className="search-input">
             <Search size={17} />
             <input
-              aria-label="Pesquisar notas"
-              placeholder="Pesquisar títulos…"
+              aria-label={t("Pesquisar notas")}
+              placeholder={t("Pesquisar títulos…")}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
           </label>
           <select
-            aria-label="Ordenar notas"
+            aria-label={t("Ordenar notas")}
             value={order}
             onChange={(e) => setOrder(e.target.value)}
           >
-            <option value="updated_at">Última atualização</option>
-            <option value="created_at">Criação</option>
-            <option value="title">Nome</option>
+            <option value="updated_at">{t("Última atualização")}</option>
+            <option value="created_at">{t("Criação")}</option>
+            <option value="title">{t("Nome")}</option>
           </select>
           {filtered.map((note) => (
             <button
@@ -270,7 +277,7 @@ export function Notes({
             </button>
           ))}
           {!filtered.length && (
-            <p className="empty-inline">Nenhuma nota encontrada.</p>
+            <p className="empty-inline">{t("Nenhuma nota encontrada.")}</p>
           )}
         </section>
         <section className="panel note-content">
@@ -281,7 +288,7 @@ export function Notes({
                 <Button
                   variant="ghost"
                   onClick={() => onRename(selected)}
-                  aria-label="Renomear nota"
+                  aria-label={t("Renomear nota")}
                 >
                   <Pencil size={17} />
                 </Button>
@@ -298,10 +305,11 @@ export function Notes({
                 {!entries.length && (
                   <div className="empty">
                     <NotebookPen />
-                    <h3>Espaço para uma nova ideia</h3>
+                    <h3>{t("Espaço para uma nova ideia")}</h3>
                     <p>
-                      Adicione uma entrada. Seu texto será salvo
-                      automaticamente.
+                      {t(
+                        "Adicione uma entrada. Seu texto será salvo automaticamente.",
+                      )}
                     </p>
                   </div>
                 )}
@@ -314,7 +322,7 @@ export function Notes({
                       )
                     }
                   >
-                    Carregar próximas entradas
+                    {t("Carregar próximas entradas")}
                   </Button>
                 )}
                 <Button
@@ -322,7 +330,7 @@ export function Notes({
                   onClick={() => void add()}
                   disabled={busy}
                 >
-                  <Plus size={16} /> Adicionar entrada
+                  <Plus size={16} /> {t("Adicionar entrada")}
                 </Button>
               </div>
               <Files
@@ -335,10 +343,10 @@ export function Notes({
           ) : (
             <div className="empty tall">
               <NotebookPen />
-              <h3>Seu conhecimento, bem guardado</h3>
-              <p>Selecione uma nota ou crie um novo tema.</p>
+              <h3>{t("Seu conhecimento, bem guardado")}</h3>
+              <p>{t("Selecione uma nota ou crie um novo tema.")}</p>
               <Button onClick={onCreate}>
-                <Plus size={16} /> Criar nota
+                <Plus size={16} /> {t("Criar nota")}
               </Button>
             </div>
           )}

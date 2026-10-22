@@ -1,4 +1,5 @@
 "use client";
+import { useI18n } from "@/i18n/provider";
 import { useState } from "react";
 import {
   ArrowRight,
@@ -19,6 +20,7 @@ export function Auth({
   recovery?: boolean;
   onRecovered: () => void;
 }) {
+  const { t } = useI18n();
   const [mode, setMode] = useState<"login" | "signup" | "reset" | "password">(
     recovery ? "password" : "login",
   );
@@ -74,37 +76,38 @@ export function Auth({
         <BrandLogo size="lg" />
         <div className="auth-story-content">
           <span className="ocean-kicker">
-            <span /> SEU ESPAÇO. SEU RITMO.
+            <span /> {t("SEU ESPAÇO. SEU RITMO.")}
           </span>
           <h1>
-            Um mar de ideias.
+            {t("Um mar de ideias.")}
             <br />
-            <em>Um rumo claro.</em>
+            <em>{t("Um rumo claro.")}</em>
           </h1>
           <p>
-            Encontre tranquilidade para focar. Organize suas atividades, guarde
-            suas ideias e retome de onde parou — com todo o contexto.
+            {t(
+              "Encontre tranquilidade para focar. Organize suas atividades, guarde suas ideias e retome de onde parou — com todo o contexto.",
+            )}
           </p>
           <div className="story-features">
             <span>
               <Layers />
               <span>
-                <strong>Seu universo</strong>
-                <small>Workspaces pessoais</small>
+                <strong>{t("Seu universo")}</strong>
+                <small>{t("Workspaces pessoais")}</small>
               </span>
             </span>
             <span>
               <History />
               <span>
-                <strong>Cada movimento</strong>
-                <small>Histórico preservado</small>
+                <strong>{t("Cada movimento")}</strong>
+                <small>{t("Histórico preservado")}</small>
               </span>
             </span>
             <span>
               <NotebookPen />
               <span>
-                <strong>Ideias à vista</strong>
-                <small>Notas e referências</small>
+                <strong>{t("Ideias à vista")}</strong>
+                <small>{t("Notas e referências")}</small>
               </span>
             </span>
           </div>
@@ -112,9 +115,9 @@ export function Auth({
         <div className="ocean-signature">
           <Waves size={18} />
           <span>
-            Encontre seu fluxo.
+            {t("Encontre seu fluxo.")}
             <br />
-            <strong>Continue no seu ritmo.</strong>
+            <strong>{t("Continue no seu ritmo.")}</strong>
           </span>
           <div className="ocean-rule" />
           <BrandSymbol decorative className="signature-shark" />
@@ -122,33 +125,35 @@ export function Auth({
       </section>
       <section className="auth-form">
         <div className="auth-form-overline">
-          <LockKeyhole size={13} /> PESSOAL POR NATUREZA. PRIVADO POR PRINCÍPIO.
+          <LockKeyhole size={13} />{" "}
+          {t("PESSOAL POR NATUREZA. PRIVADO POR PRINCÍPIO.")}
         </div>
         <div className="auth-box">
           <div className="auth-card-heading">
             <span className="auth-card-symbol">
               <BrandSymbol decorative size="sm" />
             </span>
-            <span className="eyebrow">SEU ESPAÇO PESSOAL</span>
+            <span className="eyebrow">{t("SEU ESPAÇO PESSOAL")}</span>
           </div>
           <h2>
             {mode === "login"
-              ? "Volte ao seu fluxo."
+              ? t("Volte ao seu fluxo.")
               : mode === "signup"
-                ? "Comece seu novo espaço"
+                ? t("Comece seu novo espaço")
                 : mode === "reset"
-                  ? "Recupere seu acesso"
-                  : "Defina sua nova senha"}
+                  ? t("Recupere seu acesso")
+                  : t("Defina sua nova senha")}
           </h2>
           <p className="muted">
             {mode === "login"
-              ? "Entre na sua conta para acessar seus workspaces."
-              : "Sua organização começa com um espaço só seu."}
+              ? t("Entre na sua conta para acessar seus workspaces.")
+              : t("Sua organização começa com um espaço só seu.")}
           </p>
           {!db && (
             <p className="connection-notice" role="status">
-              Seu espaço está sendo preparado. O acesso será liberado assim que
-              a conexão estiver configurada.
+              {t(
+                "Seu espaço está sendo preparado. O acesso será liberado assim que a conexão estiver configurada.",
+              )}
             </p>
           )}
           <form
@@ -159,12 +164,12 @@ export function Auth({
           >
             {mode !== "password" && (
               <label>
-                E-mail
+                {t("E-mail")}
                 <input
                   name="email"
                   type="email"
                   autoComplete="email"
-                  placeholder="voce@exemplo.com"
+                  placeholder={t("voce@exemplo.com")}
                   required
                   maxLength={254}
                 />
@@ -172,14 +177,14 @@ export function Auth({
             )}
             {mode !== "reset" && (
               <label>
-                Senha
+                {t("Senha")}
                 <input
                   name="password"
                   type="password"
                   autoComplete={
                     mode === "login" ? "current-password" : "new-password"
                   }
-                  placeholder="Pelo menos 8 caracteres"
+                  placeholder={t("Pelo menos 8 caracteres")}
                   required
                   minLength={8}
                   maxLength={128}
@@ -188,25 +193,25 @@ export function Auth({
             )}
             {error && (
               <p role="alert" className="error">
-                {error}
+                {t(error)}
               </p>
             )}
             {message && (
               <p role="status" className="success">
                 <Check size={18} />
-                {message}
+                {t(message)}
               </p>
             )}
             <Button disabled={busy || !db} className="full">
               {busy
-                ? "Aguarde…"
+                ? t("Aguarde…")
                 : mode === "login"
-                  ? "Entrar na minha conta"
+                  ? t("Entrar na minha conta")
                   : mode === "signup"
-                    ? "Criar conta"
+                    ? t("Criar conta")
                     : mode === "reset"
-                      ? "Enviar link de recuperação"
-                      : "Salvar nova senha"}
+                      ? t("Enviar link de recuperação")
+                      : t("Salvar nova senha")}
               <ArrowRight size={17} />
             </Button>
           </form>
@@ -220,12 +225,14 @@ export function Auth({
                 setMessage("");
               }}
             >
-              Esqueci minha senha
+              {t("Esqueci minha senha")}
             </Button>
           )}
           {mode !== "password" && (
             <div className="auth-switch">
-              {mode === "login" ? "Ainda não tem conta?" : "Já tem uma conta?"}{" "}
+              {mode === "login"
+                ? t("Ainda não tem conta?")
+                : t("Já tem uma conta?")}{" "}
               <button
                 onClick={() => {
                   setMode(mode === "login" ? "signup" : "login");
@@ -233,17 +240,17 @@ export function Auth({
                   setMessage("");
                 }}
               >
-                {mode === "login" ? "Criar conta" : "Entrar"}
+                {mode === "login" ? t("Criar conta") : t("Entrar")}
               </button>
             </div>
           )}
           <div className="privacy-note">
-            <LockKeyhole size={15} /> Seus workspaces são privados e
-            individuais.
+            <LockKeyhole size={15} />{" "}
+            {t("Seus workspaces são privados e individuais.")}
           </div>
         </div>
         <span className="auth-form-caption">
-          Menos ruído. Mais espaço para o que importa.
+          {t("Menos ruído. Mais espaço para o que importa.")}
         </span>
       </section>
     </div>

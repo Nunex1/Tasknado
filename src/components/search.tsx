@@ -1,15 +1,11 @@
 "use client";
+import { useI18n } from "@/i18n/provider";
 import { useEffect, useState } from "react";
 import { Search as SearchIcon, ArrowUpRight } from "lucide-react";
-import {
-  SearchResult,
-  Workspace,
-  statuses,
-  date,
-  mimeTypes,
-} from "@/lib/domain";
+import { SearchResult, Workspace, statuses, mimeTypes } from "@/lib/domain";
 import { client, check, errorMessage } from "@/lib/supabase";
 import { Button } from "./ui/button";
+import { DateInput } from "./ui/date-input";
 export function GlobalSearch({
   workspaces,
   onOpen,
@@ -19,6 +15,7 @@ export function GlobalSearch({
   onOpen: (r: SearchResult) => void;
   report: (s: string) => void;
 }) {
+  const { t, date } = useI18n();
   const [query, setQuery] = useState(""),
     [workspace, setWorkspace] = useState(""),
     [kind, setKind] = useState(""),
@@ -70,21 +67,23 @@ export function GlobalSearch({
     };
   }, [query, workspace, kind, status, from, to, mime, offset]);
   const kinds: Record<string, string> = {
-    workspace: "Workspace",
-    activity: "Atividade",
-    event: "Acontecimento",
-    note: "Nota",
-    entry: "Entrada",
-    file: "Arquivo",
+    workspace: t("Workspace"),
+    activity: t("Atividade"),
+    event: t("Acontecimento"),
+    note: t("Nota"),
+    entry: t("Entrada"),
+    file: t("Arquivo"),
   };
   return (
     <>
       <div className="page-heading">
         <div>
-          <span className="eyebrow">ENCONTRE O CONTEXTO</span>
-          <h1>Busca global</h1>
+          <span className="eyebrow">{t("ENCONTRE O CONTEXTO")}</span>
+          <h1>{t("Busca global")}</h1>
           <p>
-            Pesquise em todos os seus workspaces, incluindo itens arquivados.
+            {t(
+              "Pesquise em todos os seus workspaces, incluindo itens arquivados.",
+            )}
           </p>
         </div>
       </div>
@@ -93,8 +92,8 @@ export function GlobalSearch({
           <SearchIcon size={22} />
           <input
             autoFocus
-            placeholder="O que você quer encontrar?"
-            aria-label="Busca global"
+            placeholder={t("O que você quer encontrar?")}
+            aria-label={t("Busca global")}
             value={query}
             maxLength={200}
             onChange={(e) => setQuery(e.target.value)}
@@ -103,12 +102,12 @@ export function GlobalSearch({
         </label>
         <div className="search-filters">
           <label>
-            Workspace
+            {t("Workspace")}
             <select
               value={workspace}
               onChange={(e) => setWorkspace(e.target.value)}
             >
-              <option value="">Todos</option>
+              <option value="">{t("Todos")}</option>
               {workspaces.map((w) => (
                 <option key={w.id} value={w.id}>
                   {w.name}
@@ -117,52 +116,47 @@ export function GlobalSearch({
             </select>
           </label>
           <label>
-            Conteúdo
+            {t("Conteúdo")}
             <select value={kind} onChange={(e) => setKind(e.target.value)}>
-              <option value="">Todos os tipos</option>
+              <option value="">{t("Todos os tipos")}</option>
               {Object.entries(kinds).map(([key, name]) => (
                 <option value={key} key={key}>
-                  {name}
+                  {t(name)}
                 </option>
               ))}
             </select>
           </label>
           <label>
-            Status
+            {t("Status")}
             <select value={status} onChange={(e) => setStatus(e.target.value)}>
-              <option value="">Todos</option>
+              <option value="">{t("Todos")}</option>
               {Object.entries(statuses).map(([key, name]) => (
                 <option value={key} key={key}>
-                  {name}
+                  {t(name)}
                 </option>
               ))}
             </select>
           </label>
+          <DateInput label={t("De")} value={from} onChange={setFrom} />
+          <DateInput label={t("Até")} value={to} onChange={setTo} />
           <label>
-            De
-            <input
-              type="date"
-              value={from}
-              onChange={(e) => setFrom(e.target.value)}
-            />
-          </label>
-          <label>
-            Até
-            <input
-              type="date"
-              value={to}
-              onChange={(e) => setTo(e.target.value)}
-            />
-          </label>
-          <label>
-            Formato
+            {t("Formato")}
             <select value={mime} onChange={(e) => setMime(e.target.value)}>
-              <option value="">Todos</option>
+              <option value="">{t("Todos")}</option>
               {mimeTypes.map((m) => (
                 <option value={m} key={m}>
-                  {m
-                    .split("/")[1]
-                    .replace("vnd.openxmlformats-officedocument.", "")}
+                  {t(
+                    {
+                      "text/plain": "Texto simples",
+                      "text/csv": "Arquivo CSV",
+                      "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+                        "Documento Word",
+                      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+                        "Planilha Excel",
+                      "application/vnd.openxmlformats-officedocument.presentationml.presentation":
+                        "Apresentação PowerPoint",
+                    }[m] || m.split("/")[1].toUpperCase(),
+                  )}
                 </option>
               ))}
             </select>
@@ -171,10 +165,10 @@ export function GlobalSearch({
       </section>
       <p className="muted" role="status">
         {loading
-          ? "Pesquisando…"
+          ? t("Pesquisando…")
           : query
-            ? `${results.length} resultado(s) nesta página`
-            : "Digite uma palavra ou expressão para começar."}
+            ? t("resultCount", { count: results.length })
+            : t("Digite uma palavra ou expressão para começar.")}
       </p>
       <section className="search-results">
         {results.map((r) => (
@@ -189,7 +183,12 @@ export function GlobalSearch({
                 {workspaces.find((w) => w.id === r.workspace_id)?.name}
               </span>
               <h3>{r.title}</h3>
-              <p>{r.excerpt}</p>
+              <p>
+                {r.kind === "file" &&
+                (r.excerpt === "activity" || r.excerpt === "note")
+                  ? kinds[r.excerpt]
+                  : r.excerpt}
+              </p>
               <small>{date(r.created_at)}</small>
             </div>
             <ArrowUpRight size={19} />
@@ -198,8 +197,8 @@ export function GlobalSearch({
         {query && !loading && !results.length && (
           <div className="empty">
             <SearchIcon />
-            <h3>Nenhum resultado encontrado</h3>
-            <p>Tente outra palavra ou ajuste os filtros.</p>
+            <h3>{t("Nenhum resultado encontrado")}</h3>
+            <p>{t("Tente outra palavra ou ajuste os filtros.")}</p>
           </div>
         )}
       </section>
@@ -209,12 +208,12 @@ export function GlobalSearch({
             variant="secondary"
             onClick={() => setOffset((x) => Math.max(0, x - 50))}
           >
-            Anterior
+            {t("Anterior")}
           </Button>
         )}
         {more && (
           <Button variant="secondary" onClick={() => setOffset((x) => x + 50)}>
-            Próxima página
+            {t("Próxima página")}
           </Button>
         )}
       </div>

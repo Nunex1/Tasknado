@@ -1,4 +1,5 @@
 "use client";
+import { useI18n } from "@/i18n/provider";
 import { useEffect, useState } from "react";
 import {
   Paperclip,
@@ -12,8 +13,6 @@ import { client, check, errorMessage } from "@/lib/supabase";
 import {
   Attachment,
   ActivityEvent,
-  bytes,
-  date,
   validateFile,
   mimeTypes,
   eventNames,
@@ -30,6 +29,7 @@ export function Files({
   report: (message: string) => void;
   events?: ActivityEvent[];
 }) {
+  const { t, date, bytes, number } = useI18n();
   const [eventId, setEventId] = useState("");
   const [files, setFiles] = useState<Attachment[]>([]),
     [busy, setBusy] = useState(false),
@@ -120,7 +120,8 @@ export function Files({
     }
   }
   async function remove(file: Attachment) {
-    if (!confirm(`Excluir o arquivo “${file.name}”?`)) return;
+    if (!confirm(t("Excluir o arquivo “{{name}}”?", { name: file.name })))
+      return;
     setBusy(true);
     try {
       check(await client().storage.from("attachments").remove([file.path]));
@@ -137,8 +138,8 @@ export function Files({
     <section className="files">
       <div className="row between">
         <h3>
-          <Paperclip size={16} /> Arquivos{" "}
-          <span className="count">{files.length}</span>
+          <Paperclip size={16} /> {t("Arquivos")}{" "}
+          <span className="count">{number(files.length)}</span>
         </h3>
         <label
           role="button"
@@ -152,9 +153,9 @@ export function Files({
           }}
           className={"button ghost small " + (busy ? "disabled" : "")}
         >
-          {busy ? "Enviando…" : "+ Anexar"}
+          {busy ? t("Enviando…") : t("+ Anexar")}
           <input
-            aria-label="Anexar arquivo"
+            aria-label={t("Anexar arquivo")}
             type="file"
             accept={mimeTypes.join(",")}
             disabled={busy}
@@ -167,15 +168,15 @@ export function Files({
           />
         </label>
       </div>
-      <p className="hint">Privados · até 20 MB por arquivo</p>
+      <p className="hint">{t("Privados · até 20 MB por arquivo")}</p>
       {events.length > 0 && (
         <label className="attachment-event">
-          Vincular próximo arquivo
+          {t("Vincular próximo arquivo")}
           <select value={eventId} onChange={(e) => setEventId(e.target.value)}>
-            <option value="">À atividade</option>
+            <option value="">{t("À atividade")}</option>
             {events.map((event) => (
               <option key={event.id} value={event.id}>
-                {eventNames[event.type]} · {date(event.created_at)}
+                {t(eventNames[event.type])} · {date(event.created_at)}
               </option>
             ))}
           </select>
@@ -183,7 +184,7 @@ export function Files({
       )}
       {files.length === 0 && (
         <p className="empty-inline">
-          Guarde aqui os arquivos que dão contexto.
+          {t("Guarde aqui os arquivos que dão contexto.")}
         </p>
       )}
       {files.map((file) => (
@@ -203,14 +204,14 @@ export function Files({
           </button>
           <button
             className="icon-button"
-            aria-label={"Baixar " + file.name}
+            aria-label={t("Baixar {{name}}", { name: file.name })}
             onClick={() => void open(file, true)}
           >
             <Download size={16} />
           </button>
           <button
             className="icon-button"
-            aria-label={"Excluir " + file.name}
+            aria-label={t("Excluir {{name}}", { name: file.name })}
             disabled={busy}
             onClick={() => void remove(file)}
           >
@@ -224,7 +225,7 @@ export function Files({
             <strong>{preview.file.name}</strong>
             <button
               className="icon-button"
-              aria-label="Fechar visualização"
+              aria-label={t("Fechar visualização")}
               onClick={() => setPreview(null)}
             >
               ×
@@ -235,13 +236,13 @@ export function Files({
           ) : preview.file.mime.startsWith("video/") ? (
             <video src={preview.url} controls />
           ) : (
-            <p>Baixe o arquivo para abrir no seu aplicativo.</p>
+            <p>{t("Baixe o arquivo para abrir no seu aplicativo.")}</p>
           )}
           <Button
             variant="secondary"
             onClick={() => void open(preview.file, true)}
           >
-            Baixar arquivo
+            {t("Baixar arquivo")}
           </Button>
         </div>
       )}
