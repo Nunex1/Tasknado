@@ -1,6 +1,8 @@
 # Tasknado
 
-Plataforma individual de produtividade baseada no PRD 1.1. Next.js, React, TypeScript, Tailwind, Radix, Supabase Auth, PostgreSQL e Storage privado. Interface Deep Sea Blue em português. Não há dados demonstrativos ou backend simulado na aplicação.
+Plataforma individual de produtividade para computadores. Next.js, React, TypeScript, Radix, Supabase Auth, PostgreSQL e Storage privado. Interface clara, marca oceânica e idiomas PT/EN. Não há dados demonstrativos ou backend simulado na aplicação.
+
+A entrega atual está documentada no [relatório Desktop A–J](docs/DESKTOP-DELIVERY.md) e na [rastreabilidade R01–R50](docs/DESKTOP-TRACEABILITY.md), com evidências locais, arquivos, migrações e limites da validação.
 
 ## Executar localmente
 
@@ -37,6 +39,8 @@ pnpm typecheck
 pnpm test
 node scripts/test-database.mjs
 pnpm build
+pnpm test:integration
+pnpm test:desktop
 ```
 
 `test-database.mjs` executa PostgreSQL real embarcado (PGlite), com esquemas mínimos de Auth/Storage somente no teste. Valida SQL, RLS, transições, idempotência, buscas, concorrência otimista e cascatas. Não substitui a integração HTTP do Supabase.
@@ -48,7 +52,7 @@ Para a integração completa, com a instância local em execução, execute `pnp
 1. No painel Supabase da sua conta, crie um projeto e escolha região e plano. Guarde a senha do banco em gerenciador de senhas.
 2. Autentique a CLI: `pnpm exec supabase login`.
 3. Vincule o projeto: `pnpm exec supabase link --project-ref SEU_PROJECT_REF`.
-4. Confira o destino e aplique: `pnpm exec supabase db push`.
+4. Confira o destino e o histórico remoto, inspecione as migrações pendentes e execute `pnpm exec supabase db push --dry-run`. Somente depois de revisar os efeitos, aplique as migrações com `pnpm exec supabase db push`.
 5. Em Authentication, configure Site URL e Redirect URLs com o domínio final. Ative confirmação de e-mail e configure SMTP próprio para entrega real.
 6. Confira políticas e bucket privado `attachments`. As migrações criam as regras e o limite de 20 MB.
 7. Execute os testes de duas contas em um ambiente de homologação antes de uso real. O script local não deve ser apontado para produção.
@@ -61,10 +65,10 @@ Nenhum projeto na nuvem ou publicação é criado por estes arquivos. Há etapas
 
 ## Operação, arquivos e privacidade
 
-- Eventos são permanentes. Corrija informações com novas observações. As transições são validadas e gravadas atomicamente no banco; identificadores de requisição evitam duplicação em tentativas repetidas.
+- Eventos de execução são permanentes. Observações permitem edição e exclusão explícitas; o histórico operacional mantém os snapshots dessas alterações. As transições são validadas e gravadas atomicamente no banco; identificadores de requisição evitam duplicação em tentativas repetidas.
 - Notas usam debounce de 700 ms e revisão otimista. `Salvo` aparece somente após retorno do banco. O aplicativo bloqueia navegação interna enquanto existe texto não salvo e avisa antes de fechar a aba. Em conflito, o texto fica visível para cópia; não há mesclagem automática.
 - Datas são geradas pelo banco e exibidas no fuso do navegador. Todos os registros usam `timestamptz`.
-- Listagens e busca carregam páginas. Indicadores da visão geral refletem os registros carregados e exibem `+` quando há outra página.
+- Atividades e contagens são lidas em páginas de 500 até completar o conjunto autorizado. O dashboard mostra apenas atividades não iniciadas e atividades iniciadas ainda não concluídas. Busca, notas, observações e histórico oferecem paginação própria.
 - Links de download expiram em 60 segundos. Depois de emitidos, podem continuar válidos até expirar mesmo após excluir o vínculo.
 - Exclusão de workspace exige digitar o nome. Remove registros em cascata e revoga imediatamente o acesso por RLS. Os objetos ficam em fila `storage_cleanup` para remoção física.
 - Agende `node scripts/cleanup-storage.mjs` em um backend confiável, com `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` como secrets. O script remove até 100 objetos por execução e pode ser repetido. Não há agendamento de produção configurado neste repositório.
@@ -78,13 +82,13 @@ Nenhum projeto na nuvem ou publicação é criado por estes arquivos. Há etapas
 
 Escolha a retenção e, se necessário, PITR no projeto Supabase. Faça backup separado dos objetos de Storage; backup de banco não inclui seus bytes. Antes de produção, execute uma restauração em projeto isolado e verifique contas, threads, notas e downloads. Não há backup de produção configurado ou teste de restauração concluído.
 
-## Referências e pendências visuais
+## Referências
 
 - [Arquitetura e decisões](docs/ARCHITECTURE.md)
 - [Validação e limites](docs/VALIDATION.md)
 - [Fluxo local oficial do Supabase](https://supabase.com/docs/guides/local-development/cli-workflows)
 - [Autenticação no Next.js](https://nextjs.org/docs/app/guides/authentication)
 
-Nome de trabalho: Tasknado. Por solicitação posterior do usuário, a identidade passou a incluir um símbolo vetorial de tubarão-martelo e um cenário de mar profundo. A nova orientação substitui a pendência de manter apenas o nome em texto. O tema está em `src/app/ocean.css`; a marca reutilizável está em `src/components/brand.tsx`. Veja [os detalhes da identidade oceânica](docs/OCEAN_DESIGN.md).
+O design system atual está em `src/app/desktop.css`, carregado após os estilos anteriores para preservar componentes compartilhados. Branco e neutros predominam; o azul institucional indica identidade, seleção, foco e ações. A marca reutilizável permanece em `src/components/brand.tsx`. Os documentos de identidade oceânica descrevem a origem dos ativos preservados.
 
 Identidade oficial atual: [tubarão e logotipo gráfico TASKNADO](docs/BRAND_IDENTITY.md), com componentes compartilhados e variantes clara e escura.

@@ -1,4 +1,5 @@
 import { App } from "@/components/app";
+import { Suspense } from "react";
 
 export default function WorkspaceLayout({
   children,
@@ -9,7 +10,9 @@ export default function WorkspaceLayout({
   // while Next.js navigates between the overview and the profile.
   return (
     <>
-      <App />
+      <Suspense>
+        <App />
+      </Suspense>
       {children}
     </>
   );

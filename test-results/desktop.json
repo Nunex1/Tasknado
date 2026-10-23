@@ -1,0 +1,257 @@
+{
+  "date": "2026-10-23T03:50:41.747Z",
+  "passed": 18,
+  "checks": [
+    "Real UI authentication, Workspace creation and dedicated route; Work schedule/date/time and Q1 persist",
+    "Activity start and observation creation/editing survive reload with original creation and separate edit timestamp",
+    "Ctrl/Command K, grouped suggestions, term highlighting, arrow/Enter navigation, Escape and exact observation deep link",
+    "Matrix keyboard selector and real mouse drag/drop persist priority, record history and preserve schedule/status",
+    "Workspace observations create/edit/search/order/reload and exact search navigation; operational history contains observations and priority changes",
+    "University requires an explicit Canvas choice; false persists independently of status and Canvas filters work",
+    "Workspace category changes hide specialized fields and restore them without changing any activity attributes",
+    "Profile nickname/letter/custom color preview, cancel, save, global avatar, reload, menu outside click and Escape focus restoration",
+    "Immediate EN translation, reload preference and real profile/language persistence in a fresh independent browser session",
+    "Original notebook creation, autosave and persistent entry routes preserved",
+    "Both brand links return Home across all modules without full reload; browser Back restores routes; Home has exactly two indicators and no mobile navigation",
+    "Work schedule can be removed; local search, overdue/date filters and date ordering operate independently of status",
+    "Search network failure produces a localized error and retry recovers without reloading",
+    "All five required desktop resolutions: activity tables, matrix, expanded/collapsed context and search fit without horizontal overflow or region overlap",
+    "Desktop 200% effective viewport (960 CSS px from Full HD), with context collapsed, retains matrix and keyboard classification",
+    "Reduced motion disables the wave; explicit deletion removes both observation types while operational snapshots remain",
+    "No browser runtime errors throughout the desktop suite",
+    "Automated WCAG A/AA checks on eleven authenticated desktop screens report no violations; manual-review items recorded separately"
+  ],
+  "visuals": [
+    {
+      "width": 1280,
+      "height": 720,
+      "section": "activities",
+      "scroll": 1280,
+      "viewport": 1280,
+      "main": {
+        "x": 312,
+        "width": 968
+      },
+      "header": {
+        "height": 64
+      },
+      "panelRight": 312,
+      "screenshot": "test-results/desktop/1280x720-activities.png"
+    },
+    {
+      "width": 1280,
+      "height": 720,
+      "section": "matrix",
+      "scroll": 1280,
+      "viewport": 1280,
+      "main": {
+        "x": 312,
+        "width": 968
+      },
+      "header": {
+        "height": 64
+      },
+      "panelRight": 312,
+      "screenshot": "test-results/desktop/1280x720-matrix.png"
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "section": "activities",
+      "scroll": 1366,
+      "viewport": 1366,
+      "main": {
+        "x": 312,
+        "width": 1054
+      },
+      "header": {
+        "height": 64
+      },
+      "panelRight": 312,
+      "screenshot": "test-results/desktop/1366x768-activities.png"
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "section": "matrix",
+      "scroll": 1366,
+      "viewport": 1366,
+      "main": {
+        "x": 312,
+        "width": 1054
+      },
+      "header": {
+        "height": 64
+      },
+      "panelRight": 312,
+      "screenshot": "test-results/desktop/1366x768-matrix.png"
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "section": "activities",
+      "scroll": 1440,
+      "viewport": 1440,
+      "main": {
+        "x": 312,
+        "width": 1128
+      },
+      "header": {
+        "height": 64
+      },
+      "panelRight": 312,
+      "screenshot": "test-results/desktop/1440x900-activities.png"
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "section": "matrix",
+      "scroll": 1440,
+      "viewport": 1440,
+      "main": {
+        "x": 312,
+        "width": 1128
+      },
+      "header": {
+        "height": 64
+      },
+      "panelRight": 312,
+      "screenshot": "test-results/desktop/1440x900-matrix.png"
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "section": "activities",
+      "scroll": 1920,
+      "viewport": 1920,
+      "main": {
+        "x": 476,
+        "width": 1280
+      },
+      "header": {
+        "height": 64
+      },
+      "panelRight": 312,
+      "screenshot": "test-results/desktop/1920x1080-activities.png"
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "section": "matrix",
+      "scroll": 1920,
+      "viewport": 1920,
+      "main": {
+        "x": 476,
+        "width": 1280
+      },
+      "header": {
+        "height": 64
+      },
+      "panelRight": 312,
+      "screenshot": "test-results/desktop/1920x1080-matrix.png"
+    },
+    {
+      "width": 2560,
+      "height": 1440,
+      "section": "activities",
+      "scroll": 2560,
+      "viewport": 2560,
+      "main": {
+        "x": 796,
+        "width": 1280
+      },
+      "header": {
+        "height": 64
+      },
+      "panelRight": 312,
+      "screenshot": "test-results/desktop/2560x1440-activities.png"
+    },
+    {
+      "width": 2560,
+      "height": 1440,
+      "section": "matrix",
+      "scroll": 2560,
+      "viewport": 2560,
+      "main": {
+        "x": 796,
+        "width": 1280
+      },
+      "header": {
+        "height": 64
+      },
+      "panelRight": 312,
+      "screenshot": "test-results/desktop/2560x1440-matrix.png"
+    }
+  ],
+  "accessibility": [
+    {
+      "path": "/",
+      "violations": [],
+      "manualReview": [],
+      "passedRules": 24
+    },
+    {
+      "path": "/workspaces",
+      "violations": [],
+      "manualReview": [],
+      "passedRules": 25
+    },
+    {
+      "path": "/workspaces/34325003-3c74-4d2e-8802-b0bfd47be7bc/activities",
+      "violations": [],
+      "manualReview": [],
+      "passedRules": 25
+    },
+    {
+      "path": "/workspaces/34325003-3c74-4d2e-8802-b0bfd47be7bc/activities/b222f801-4ac1-409f-a012-612e743afc72",
+      "violations": [],
+      "manualReview": [],
+      "passedRules": 28
+    },
+    {
+      "path": "/workspaces/34325003-3c74-4d2e-8802-b0bfd47be7bc/observations",
+      "violations": [],
+      "manualReview": [],
+      "passedRules": 25
+    },
+    {
+      "path": "/workspaces/34325003-3c74-4d2e-8802-b0bfd47be7bc/history",
+      "violations": [],
+      "manualReview": [],
+      "passedRules": 25
+    },
+    {
+      "path": "/workspaces/34325003-3c74-4d2e-8802-b0bfd47be7bc/matrix",
+      "violations": [],
+      "manualReview": [],
+      "passedRules": 25
+    },
+    {
+      "path": "/workspaces/34325003-3c74-4d2e-8802-b0bfd47be7bc/notes/edf22764-c6ec-4e07-8610-7027449d0d98",
+      "violations": [],
+      "manualReview": [],
+      "passedRules": 26
+    },
+    {
+      "path": "/perfil",
+      "violations": [],
+      "manualReview": [],
+      "passedRules": 26
+    },
+    {
+      "path": "/settings",
+      "violations": [],
+      "manualReview": [],
+      "passedRules": 26
+    },
+    {
+      "path": "/search",
+      "violations": [],
+      "manualReview": [],
+      "passedRules": 26
+    }
+  ],
+  "errors": [],
+  "failure": null,
+  "scope": "Real local Supabase + Microsoft Edge Chromium, temporary account"
+}

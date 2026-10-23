@@ -1,5 +1,5 @@
 {
-  "date": "2026-10-22T00:27:17.353Z",
+  "date": "2026-10-22T22:55:35.757Z",
   "checks": [
     "All migrations execute in real embedded PostgreSQL (Supabase auth/storage schema harness)",
     "RLS isolates users and composite foreign keys reject cross-account parents",
@@ -7,6 +7,7 @@
     "Explicit boolean Canvas choice, category preservation, schedule validation and independent audited priority",
     "Observation editing preserves creation time, detects conflicts and isolates owners while execution events remain immutable",
     "Optimistic note revision prevents stale overwrite",
+    "Workspace observations preserve timestamps, search updates, history snapshots and ownership; forged history and timestamps rejected",
     "Storage policies, RPCs and search reject another owner",
     "Portuguese full text search, filters and immutable audit logs",
     "Deletion cascades records and immediately revokes file visibility; cleanup queued",

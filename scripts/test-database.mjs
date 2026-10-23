@@ -309,6 +309,61 @@ assert.equal(
   "Armazenagem revisada",
 );
 pass("Optimistic note revision prevents stale overwrite");
+const general = (
+  await pg.query(
+    "insert into workspace_observations(workspace_id,content) values($1,'Observação geral pesquisável') returning *",
+    [w.id],
+  )
+).rows[0];
+assert.deepEqual(general.created_at, general.updated_at);
+await pg.query(
+  "update workspace_observations set content='Observação geral revisada' where id=$1",
+  [general.id],
+);
+assert.deepEqual(
+  (
+    await pg.query(
+      "select created_at from workspace_observations where id=$1",
+      [general.id],
+    )
+  ).rows[0].created_at,
+  general.created_at,
+);
+assert.ok(
+  (await pg.query("select * from search_all('revisada')")).rows.some(
+    (r) => r.kind === "workspace_observation",
+  ),
+);
+await fails("update workspace_observations set created_at=now() where id=$1", [
+  general.id,
+]);
+await fails(
+  "insert into workspace_events(owner_id,workspace_id,source_id,action) values($1,$2,$3,'forged')",
+  [a, w.id, general.id],
+);
+await as(b);
+assert.equal(
+  (await pg.query("select * from workspace_observations")).rows.length,
+  0,
+);
+assert.equal(
+  (await pg.query("select * from workspace_timeline($1)", [w.id])).rows.length,
+  0,
+);
+await fails(
+  "insert into workspace_observations(workspace_id,content) values($1,'intrusion')",
+  [w.id],
+);
+await as(a);
+await pg.query("delete from workspace_observations where id=$1", [general.id]);
+assert.ok(
+  (await pg.query("select * from workspace_timeline($1)", [w.id])).rows.some(
+    (r) => r.action === "observation_deleted",
+  ),
+);
+pass(
+  "Workspace observations preserve timestamps, search updates, history snapshots and ownership; forged history and timestamps rejected",
+);
 const file = crypto.randomUUID(),
   path = a + "/" + file;
 await pg.query(

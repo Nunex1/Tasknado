@@ -11,6 +11,7 @@
     "test:integration": "node scripts/test-live.mjs",
     "local:setup": "node scripts/local-setup.mjs",
     "test:database": "node scripts/test-database.mjs",
+    "test:desktop": "node scripts/test-desktop.mjs",
     "format": "prettier --write src scripts"
   },
   "dependencies": {
@@ -19,7 +20,7 @@
     "clsx": "^2.1.1",
     "i18next": "^26.4.5",
     "lucide-react": "^0.468.0",
-    "next": "^16.0.0",
+    "next": "^16.4.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-i18next": "^17.0.17",
@@ -31,6 +32,7 @@
     "@types/node": "^24.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "axe-core": "^4.14.0",
     "prettier": "^3.9.10",
     "supabase": "^2.50.0",
     "tailwindcss": "^4.1.0",

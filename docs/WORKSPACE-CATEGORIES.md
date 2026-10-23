@@ -1,5 +1,7 @@
 # Categorias, observações e Matriz de Eisenhower
 
+> A edição desktop amplia esta base com rotas próprias, observações gerais, histórico operacional e novo design system. Consulte [a entrega atual](DESKTOP-DELIVERY.md). As contagens de testes abaixo são históricas; `scripts/test-browser.mjs` agora encaminha para a suíte desktop atual.
+
 ## Implementação
 
 - Workspaces: `category` com cinco valores estáveis (`personal_life`, `university`, `work`, `self_study`, `sports`). Criação exige escolha; configurações permitem alteração. Workspaces anteriores recebem Vida Pessoal, sem inferência pelo nome.

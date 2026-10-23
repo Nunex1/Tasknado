@@ -1,5 +1,7 @@
 # Evidências de validação
 
+> Registro histórico do MVP. Para a situação atual, consulte [Desktop: relatório e evidências](DESKTOP-DELIVERY.md) e [R01–R50](DESKTOP-TRACEABILITY.md). Os bloqueios de Docker descritos abaixo foram resolvidos para os testes locais; a edição atual é exclusivamente desktop. As referências a celular são evidências antigas, não requisitos nem testes da entrega atual.
+
 Execução em 14/10/2026 (America/Sao_Paulo).
 
 ## Implementado

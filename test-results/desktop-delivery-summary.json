@@ -1,0 +1,50 @@
+{
+  "recordedAt": "2026-10-23T03:51:59.142Z",
+  "next": "16.4.1",
+  "productionFrontend": "http://127.0.0.1:3001",
+  "supabase": "http://127.0.0.1:55431",
+  "unit": {
+    "passed": 25,
+    "total": 25
+  },
+  "browser": {
+    "passed": 18,
+    "failure": null,
+    "errors": [],
+    "accessibilityScreens": 11
+  },
+  "evidence": [
+    {
+      "file": "test-results/unit-desktop.json",
+      "sha256": "1702727630919118e1ce59564936da450ae4a2a9221a053af3a538ffae897722"
+    },
+    {
+      "file": "test-results/database.json",
+      "sha256": "5b3962366121ed10aebc2b47e1358b801b390eda577d31e897ed936f747ee1eb"
+    },
+    {
+      "file": "test-results/integration.json",
+      "sha256": "3a7780b8fc6597451192c9d6a68e8fdc0eae8e6612d94a779788239c4d05c290"
+    },
+    {
+      "file": "test-results/desktop.json",
+      "sha256": "6115440c6443d53eb395bd3e205db1c6602a5d48f157ee4f47eb6624d50a8cab"
+    },
+    {
+      "file": "test-results/build-desktop.txt",
+      "sha256": "a98190db46c5b81dca267ce0fc3d8cf94c2fff10f26811df4b3a560342bf3b96"
+    },
+    {
+      "file": "test-results/typecheck-desktop.txt",
+      "sha256": "aa663f7946072120c663fb539cd0789041b1af9c9b206a7b789b908bc7e90d8b"
+    },
+    {
+      "file": "test-results/dependencies-before.json",
+      "sha256": "d2011e0ad603de2144666a8e8f2c30a701014598e186d73192d61e9f0a4e91bb"
+    },
+    {
+      "file": "test-results/dependencies-after.json",
+      "sha256": "68a1b1d7fec8bd3d493ef046570bbd770d8589e382726bb568f84f33881d2ce0"
+    }
+  ]
+}

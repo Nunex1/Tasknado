@@ -335,7 +335,7 @@ try {
       ).content,
       "Edited observation",
     );
-    ok(await reopened.auth.signOut());
+    ok(await reopened.auth.signOut({ scope: "local" }));
     ok(
       await a.rpc("delete_observation", {
         p_id: observation.id,
@@ -443,6 +443,162 @@ try {
   );
   pass(
     "Portuguese FTS includes files and activities with private filtered results",
+  );
+  const observation = ok(
+    await a
+      .from("workspace_observations")
+      .insert({
+        workspace_id: workspace.id,
+        content: "Registro geral de oceanografia",
+      })
+      .select()
+      .single(),
+  );
+  assert.equal(observation.created_at, observation.updated_at);
+  const edited = ok(
+    await a
+      .from("workspace_observations")
+      .update({ content: "Registro geral de oceanografia revisado" })
+      .eq("id", observation.id)
+      .eq("updated_at", observation.updated_at)
+      .select()
+      .single(),
+  );
+  assert.equal(edited.created_at, observation.created_at);
+  assert.notEqual(edited.updated_at, edited.created_at);
+  assert.equal(
+    ok(
+      await a
+        .from("workspace_observations")
+        .update({ content: "Sobrescrita antiga" })
+        .eq("id", observation.id)
+        .eq("updated_at", observation.updated_at)
+        .select(),
+    ).length,
+    0,
+  );
+  assert.equal(
+    ok(await b.from("workspace_observations").select("*")).length,
+    0,
+  );
+  assert.ok(
+    (
+      await b
+        .from("workspace_observations")
+        .insert({ workspace_id: workspace.id, content: "Intrusão" })
+    ).error,
+  );
+  assert.equal(
+    ok(
+      await b
+        .from("workspace_observations")
+        .update({ content: "Intrusão" })
+        .eq("id", observation.id)
+        .select(),
+    ).length,
+    0,
+  );
+  assert.equal(
+    ok(
+      await b
+        .from("workspace_observations")
+        .delete()
+        .eq("id", observation.id)
+        .select(),
+    ).length,
+    0,
+  );
+  assert.ok(
+    ok(await a.rpc("search_all", { p_query: "oceanog" })).some(
+      (r) => r.id === observation.id && r.kind === "workspace_observation",
+    ),
+  );
+  assert.equal(ok(await b.rpc("search_all", { p_query: "oceanog" })).length, 0);
+  ok(
+    await a.auth.updateUser({
+      data: {
+        full_name: "Érica Silva",
+        nickname: "Mar",
+        avatar_initial: "Á",
+        avatar_color: "#b8e0ff",
+        preferred_language: "en-US",
+      },
+    }),
+  );
+  ok(await a.auth.signOut());
+  const logged = ok(await a.auth.signInWithPassword({ email, password }));
+  assert.equal(logged.user.user_metadata.nickname, "Mar");
+  assert.equal(logged.user.user_metadata.avatar_initial, "Á");
+  assert.equal(logged.user.user_metadata.avatar_color, "#b8e0ff");
+  assert.equal(logged.user.user_metadata.preferred_language, "en-US");
+  assert.equal(
+    ok(
+      await a
+        .from("workspace_observations")
+        .select("*")
+        .eq("id", observation.id)
+        .single(),
+    ).content,
+    edited.content,
+  );
+  pass(
+    "Workspace observation CRUD timestamps, stale-edit detection, substring search and two-user isolation; profile and preferred language persist through a new auth session",
+  );
+  const history = ok(
+    await a.rpc("workspace_timeline", { p_workspace: workspace.id }),
+  );
+  assert.ok(history.some((r) => r.action === "activity_created"));
+  assert.ok(history.some((r) => r.action === "status_changed"));
+  assert.ok(
+    history.some(
+      (r) =>
+        r.action === "observation_created" &&
+        r.current?.content === observation.content,
+    ),
+  );
+  assert.ok(
+    history.some(
+      (r) =>
+        r.action === "observation_edited" &&
+        r.previous?.content === observation.content &&
+        r.current?.content === edited.content,
+    ),
+  );
+  assert.equal(
+    ok(await b.rpc("workspace_timeline", { p_workspace: workspace.id })).length,
+    0,
+  );
+  assert.ok(
+    (
+      await a
+        .from("workspace_events")
+        .insert({
+          workspace_id: workspace.id,
+          owner_id: ua.id,
+          source_id: observation.id,
+          action: "forged",
+        })
+    ).error,
+  );
+  assert.ok(
+    (
+      await a
+        .from("workspace_events")
+        .update({ action: "forged" })
+        .eq("workspace_id", workspace.id)
+    ).error,
+  );
+  ok(await a.from("workspace_observations").delete().eq("id", observation.id));
+  assert.ok(
+    ok(await a.rpc("workspace_timeline", { p_workspace: workspace.id })).some(
+      (r) =>
+        r.action === "observation_deleted" &&
+        r.previous?.content === edited.content,
+    ),
+  );
+  assert.equal(ok(await a.rpc("search_all", { p_query: "oceanog" })).length, 0);
+  pass(
+    "Operational history contains real creation/status/observation snapshots, survives deletion and rejects direct writes and other owners",
   );
   assert.ok(ok(await a.from("audit_logs").select("*")).length > 0);
   assert.equal(ok(await b.from("audit_logs").select("*")).length, 0);

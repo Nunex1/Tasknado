@@ -1,6 +1,6 @@
 {
-  "date": "2026-10-22T00:45:33.609Z",
-  "passed": 13,
+  "date": "2026-10-22T22:55:14.065Z",
+  "passed": 15,
   "checks": [
     "Two real accounts authenticate",
     "Server enforces initial state",
@@ -11,6 +11,8 @@
     "Autosave persists and rejects stale concurrent writes",
     "Private Storage roundtrip preserves bytes and blocks unauthorized access",
     "Portuguese FTS includes files and activities with private filtered results",
+    "Workspace observation CRUD timestamps, stale-edit detection, substring search and two-user isolation; profile and preferred language persist through a new auth session",
+    "Operational history contains real creation/status/observation snapshots, survives deletion and rejects direct writes and other owners",
     "Audit logs are populated and isolated",
     "Archiving retains history",
     "Workspace deletion cascades only its records",
