@@ -36,7 +36,7 @@ export function LanguageSettings() {
         {t(
           storageError
             ? "Não foi possível salvar a preferência neste navegador. O idioma permanece ativo nesta sessão."
-            : "Preferência salva neste navegador para sua conta.",
+            : "Preferência sincronizada com sua conta.",
         )}
       </p>
     </section>

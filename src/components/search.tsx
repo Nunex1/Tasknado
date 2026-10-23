@@ -6,6 +6,7 @@ import { SearchResult, Workspace, statuses, mimeTypes } from "@/lib/domain";
 import { client, check, errorMessage } from "@/lib/supabase";
 import { Button } from "./ui/button";
 import { DateInput } from "./ui/date-input";
+import { Highlight } from "./header-search";
 export function GlobalSearch({
   workspaces,
   onOpen,
@@ -73,6 +74,7 @@ export function GlobalSearch({
     note: t("Nota"),
     entry: t("Entrada"),
     file: t("Arquivo"),
+    workspace_observation: t("Observações gerais"),
   };
   return (
     <>
@@ -182,12 +184,16 @@ export function GlobalSearch({
                 {kinds[r.kind]} ·{" "}
                 {workspaces.find((w) => w.id === r.workspace_id)?.name}
               </span>
-              <h3>{r.title}</h3>
+              <h3>
+                <Highlight text={r.title} query={query} />
+              </h3>
               <p>
                 {r.kind === "file" &&
-                (r.excerpt === "activity" || r.excerpt === "note")
-                  ? kinds[r.excerpt]
-                  : r.excerpt}
+                (r.excerpt === "activity" || r.excerpt === "note") ? (
+                  kinds[r.excerpt]
+                ) : (
+                  <Highlight text={r.excerpt} query={query} />
+                )}
               </p>
               <small>{date(r.created_at)}</small>
             </div>

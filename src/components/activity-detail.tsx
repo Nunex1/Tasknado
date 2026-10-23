@@ -35,6 +35,7 @@ export function ActivityDetail({
   onChange,
   onEdit,
   report,
+  focusId,
 }: {
   activity: Activity;
   category: WorkspaceCategory;
@@ -42,6 +43,7 @@ export function ActivityDetail({
   onChange: () => Promise<void>;
   onEdit: () => void;
   report: (s: string) => void;
+  focusId?: string | null;
 }) {
   const { t, date } = useI18n();
   const observationTrigger = useRef<HTMLButtonElement | null>(null);
@@ -67,13 +69,31 @@ export function ActivityDetail({
         .order("id", { ascending: !newest })
         .range(offset, offset + 49),
     ) as ActivityEvent[];
+    const full = rows.length === 50;
+    if (focusId && !offset && !rows.some((e) => e.id === focusId)) {
+      const found = check(
+        await client()
+          .from("activity_events")
+          .select("*")
+          .eq("activity_id", activity.id)
+          .eq("id", focusId)
+          .maybeSingle(),
+      );
+      if (found) rows.unshift(found);
+    }
     setEvents((prev) => (offset ? [...prev, ...rows] : rows));
-    setMore(rows.length === 50);
+    setMore(full);
   }
   useEffect(() => {
     void load().catch((e) => report(errorMessage(e)));
     setType(actions(activity.status)[0]);
-  }, [activity.id, onlyObservations, newest]);
+  }, [activity.id, onlyObservations, newest, focusId]);
+  useEffect(() => {
+    if (focusId)
+      document
+        .getElementById(`event-${focusId}`)
+        ?.scrollIntoView({ block: "center" });
+  }, [focusId, events]);
   async function submit() {
     setBusy(true);
     try {
@@ -277,7 +297,11 @@ export function ActivityDetail({
               {events.map((event) => {
                 const Icon = icons[event.type];
                 return (
-                  <article className="timeline-item" key={event.id}>
+                  <article
+                    id={`event-${event.id}`}
+                    className={`timeline-item ${focusId === event.id ? "highlighted" : ""}`}
+                    key={event.id}
+                  >
                     <span className={"timeline-dot " + event.type}>
                       <Icon size={16} />
                     </span>
@@ -343,6 +367,7 @@ export function ActivityDetail({
                 {t("Registrar acontecimento")}
                 <select
                   value={type}
+                  disabled={busy}
                   onChange={(e) => {
                     setType(e.target.value as EventType);
                     setRequest(crypto.randomUUID());
@@ -357,6 +382,7 @@ export function ActivityDetail({
               </label>
               <textarea
                 aria-label={t("Conteúdo do acontecimento")}
+                disabled={busy}
                 placeholder={
                   type === "pause"
                     ? t(

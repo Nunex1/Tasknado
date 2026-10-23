@@ -23,6 +23,7 @@ export function BrandSymbol({
       aria-hidden={decorative || undefined}
       className={`brand-symbol brand-symbol--${size} ${className}`}
       unoptimized
+      loading="eager"
     />
   );
 }

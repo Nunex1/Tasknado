@@ -6,7 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { UserRound } from "lucide-react";
-import { userProfile } from "@/lib/user-profile";
+import { userProfile, avatarForeground } from "@/lib/user-profile";
 
 export function ProfileMenu({
   user,
@@ -23,7 +23,7 @@ export function ProfileMenu({
   const menuId = useId();
   const triggerId = useId();
   const pathname = usePathname();
-  const { initial } = userProfile(user);
+  const { initial, color } = userProfile(user);
 
   useEffect(() => setOpen(false), [pathname]);
 
@@ -66,6 +66,7 @@ export function ProfileMenu({
         id={triggerId}
         type="button"
         className="avatar small-avatar profile-menu-trigger"
+        style={{ background: color, color: avatarForeground(color) }}
         aria-label={t("Menu do usuário")}
         aria-haspopup="menu"
         aria-expanded={open}
@@ -120,7 +121,7 @@ export function ProfileMenu({
             }}
           >
             <UserRound size={17} aria-hidden="true" />
-            {t("Perfil")}
+            {t("Editar perfil")}
           </Link>
         </div>
       )}
