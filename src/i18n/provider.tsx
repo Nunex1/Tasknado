@@ -23,7 +23,7 @@ import {
 
 const Preferences = createContext<{
   setLocale: (locale: Locale) => void;
-  setAccount: (id: string | null) => void;
+  setAccount: (id: string | null, preferred?: unknown) => void;
   storageError: boolean;
 } | null>(null);
 
@@ -35,7 +35,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   const setAccount = useCallback(
-    (id: string | null) => {
+    (id: string | null, preferred?: unknown) => {
       account.current = id;
       setStorageError(false);
       let locale = defaultLocale;
@@ -44,6 +44,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       } catch {
         /* Storage can be disabled. */
       }
+      if (id && isLocale(preferred)) locale = preferred;
       void instance.changeLanguage(locale);
     },
     [instance],

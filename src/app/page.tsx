@@ -1,4 +1,10 @@
 import { App } from "@/components/app";
+import { Suspense } from "react";
+
 export default function Page() {
-  return <App />;
+  return (
+    <Suspense>
+      <App />
+    </Suspense>
+  );
 }
