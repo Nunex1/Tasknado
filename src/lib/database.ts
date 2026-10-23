@@ -11,6 +11,8 @@ import type {
   SearchResult,
   Status,
   EventType,
+  WorkspaceObservation,
+  WorkspaceEvent,
 } from "./domain";
 type Owned<T> = T & { owner_id: string };
 type Table<Row, Insert, Update = Partial<Insert>> = {
@@ -23,6 +25,16 @@ type OptionalOwnership = { id?: string; owner_id?: string };
 export type Database = {
   public: {
     Tables: {
+      workspace_observations: Table<
+        Owned<WorkspaceObservation>,
+        { workspace_id: string; content: string },
+        { content: string }
+      >;
+      workspace_events: Table<
+        Owned<WorkspaceEvent> & { workspace_id: string; source_id: string },
+        never,
+        never
+      >;
       workspaces: Table<
         Owned<Workspace>,
         OptionalOwnership & {
@@ -92,6 +104,14 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      workspace_timeline: {
+        Args: { p_workspace: string; p_offset?: number };
+        Returns: WorkspaceEvent[];
+      };
+      observation_counts: {
+        Args: { p_workspace?: string | null };
+        Returns: { activity_id: string; total: number }[];
+      };
       set_priority: {
         Args: {
           p_activity: string;

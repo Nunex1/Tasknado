@@ -7,6 +7,9 @@ export const statuses: Record<Status, string> = {
   paused: "Pausada",
   completed: "Concluída",
 };
+export function isStarted(status: Status) {
+  return status === "in_progress" || status === "paused";
+}
 export const eventNames: Record<EventType, string> = {
   check_in: "Check In",
   pause: "Pausa",
@@ -167,4 +170,20 @@ export interface PriorityHistory {
   created_at: string;
   previous: { isUrgent: boolean | null; isImportant: boolean | null };
   current: { isUrgent: boolean | null; isImportant: boolean | null };
+}
+export interface WorkspaceObservation {
+  id: string;
+  workspace_id: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+}
+export interface WorkspaceEvent {
+  id: string;
+  activity_id: string | null;
+  action: string;
+  title: string;
+  previous: Record<string, unknown> | string | null;
+  current: Record<string, unknown> | string | null;
+  created_at: string;
 }

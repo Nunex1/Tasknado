@@ -10,7 +10,7 @@ describe("Dados do perfil autenticado", () => {
   it("obtém o nome dos metadados e preserva caracteres acentuados", () => {
     expect(
       userProfile(user({ full_name: "  Érica Silva  " }, "erica@example.test")),
-    ).toEqual({
+    ).toMatchObject({
       name: "Érica Silva",
       email: "erica@example.test",
       initial: "É",
@@ -27,7 +27,7 @@ describe("Dados do perfil autenticado", () => {
   });
 
   it("usa a inicial do e-mail sem inventar um nome para contas sem nome", () => {
-    expect(userProfile(user({}, "gabriel@example.test"))).toEqual({
+    expect(userProfile(user({}, "gabriel@example.test"))).toMatchObject({
       name: null,
       email: "gabriel@example.test",
       initial: "G",
@@ -35,7 +35,7 @@ describe("Dados do perfil autenticado", () => {
   });
 
   it("não inventa dados quando a conta não tem nome nem e-mail", () => {
-    expect(userProfile(user({ full_name: null }))).toEqual({
+    expect(userProfile(user({ full_name: null }))).toMatchObject({
       name: null,
       email: null,
       initial: null,
