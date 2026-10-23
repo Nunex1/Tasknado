@@ -399,116 +399,6 @@ body {
     padding-right: max(6vw, calc((100vw - 1450px) / 2));
   }
 }
-@media (max-width: 1100px) {
-  .auth-layout {
-    grid-template-columns: 1fr 1fr;
-  }
-  .auth-story {
-    padding: 45px 25px 35px 35px;
-    gap: 50px;
-  }
-  .auth-form {
-    padding: 45px 30px 35px 15px;
-  }
-  .auth-box {
-    padding: 28px 26px 24px;
-  }
-  .auth-story h1 {
-    font-size: 46px;
-    letter-spacing: -2px;
-  }
-  .story-features {
-    flex-wrap: wrap;
-    gap: 18px;
-  }
-  .story-features > span {
-    min-width: 120px;
-  }
-}
-@media (max-width: 800px) {
-  .auth-layout {
-    grid-template-columns: 1fr;
-  }
-  .auth-story {
-    padding: 30px 28px 20px;
-    gap: 37px;
-  }
-  .auth-layout .auth-story .auth-story-content {
-    display: block;
-    padding: 0;
-    max-width: 500px;
-  }
-  .auth-story h1 {
-    font-size: 43px;
-    margin: 19px 0 15px;
-  }
-  .auth-story-content > p {
-    font-size: 12px;
-    margin-bottom: 0;
-  }
-  .auth-story .story-features,
-  .auth-story .ocean-signature {
-    display: none;
-  }
-  .auth-form {
-    padding: 15px 22px 30px;
-    gap: 18px;
-  }
-  .auth-form-overline {
-    display: none;
-  }
-  .auth-box {
-    max-width: 500px;
-    width: 100%;
-    padding: 27px 25px 24px;
-    border-radius: 16px;
-  }
-  .auth-card-heading {
-    margin-bottom: 19px;
-  }
-  .auth-box h2 {
-    font-size: 27px;
-  }
-  .auth-box input {
-    font-size: 16px;
-  }
-  .auth-box input::placeholder {
-    font-size: 12px;
-  }
-  .auth-form-caption {
-    font-size: 9px;
-  }
-  .ocean-scenery {
-    background-position: 34% top;
-  }
-  .ocean-scenery::after {
-    background: linear-gradient(180deg, rgb(0 18 51 / 68%), var(--ocean-deep));
-  }
-  .main-shell::before {
-    background-size:
-      auto,
-      auto 550px;
-  }
-  .welcome::after {
-    width: 115px;
-    height: 130px;
-  }
-}
-@media (max-width: 380px) {
-  .auth-story {
-    padding: 25px 22px 18px;
-  }
-  .auth-story h1 {
-    font-size: 38px;
-  }
-  .auth-form {
-    padding-left: 14px;
-    padding-right: 14px;
-  }
-  .auth-box {
-    padding: 24px 20px;
-  }
-}
 
 /* Official Tasknado identity. Artwork never rotates or stretches. */
 .brand {
@@ -588,17 +478,7 @@ body {
   height: auto;
   aspect-ratio: 1;
 }
-@media (max-width: 800px) {
-  .auth-story > .brand {
-    gap: 12px;
-  }
-  .auth-story > .brand .brand-symbol {
-    width: 64px;
-  }
-  .auth-story > .brand .brand-wordmark {
-    width: min(230px, 55vw);
-  }
-}
+
 @media (forced-colors: active) {
   .brand-wordmark {
     background: CanvasText;
@@ -836,9 +716,4 @@ legend {
 }
 .activity-title .hint {
   display: block;
-}
-@media (max-width: 760px) {
-  .matrix-grid {
-    grid-template-columns: 1fr;
-  }
 }

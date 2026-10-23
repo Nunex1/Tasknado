@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./ocean.css";
+import "./desktop.css";
 import { LanguageProvider } from "@/i18n/provider";
 import ptBR from "@/i18n/pt-BR.json";
 export const metadata: Metadata = {
