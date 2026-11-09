@@ -4,7 +4,7 @@ describe("Regras da interface", () => {
   it("oferece apenas transições compatíveis com o estado", () => {
     expect(actions("not_started")).not.toContain("resume");
     expect(actions("paused")).toContain("resume");
-    expect(actions("completed")).toEqual(["observation"]);
+    expect(actions("completed")).toEqual(["resume", "observation"]);
     expect(actions("in_progress")).toContain("pause");
   });
   it("bloqueia arquivos vazios, executáveis e grandes", () => {

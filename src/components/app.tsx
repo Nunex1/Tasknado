@@ -42,6 +42,7 @@ import {
   SearchResult,
   Status,
   statuses,
+  matchesTaskIndicator,
 } from "@/lib/domain";
 import { Auth } from "./auth";
 import { Button } from "./ui/button";
@@ -81,7 +82,23 @@ export function App() {
   const router = useRouter();
   const isProfile = pathname === "/perfil";
   const { workspaceId, view, activityId, noteId } = routeState(pathname);
-  const focusId = useSearchParams().get("focus");
+  const searchParams = useSearchParams();
+  const focusId = searchParams.get("focus");
+  const requestedFilter = searchParams.get("status") || "";
+  const filter =
+    requestedFilter === "started" || Object.hasOwn(statuses, requestedFilter)
+      ? requestedFilter
+      : "";
+  function setFilter(value: string) {
+    if (!canLeave()) return;
+    const params = new URLSearchParams(searchParams.toString());
+    if (value) params.set("status", value);
+    else params.delete("status");
+    const path = workspaceId
+      ? workspacePath(workspaceId, "activities")
+      : "/activities";
+    router.push(path + (params.size ? "?" + params.toString() : ""));
+  }
   const [editorWorkspaceId, setEditorWorkspaceId] = useState("");
   const [observationCounts, setObservationCounts] = useState<
     Record<string, number>
@@ -98,7 +115,6 @@ export function App() {
     [loading, setLoading] = useState(false),
     [toast, setToast] = useState(""),
     [archived, setArchived] = useState(false),
-    [filter, setFilter] = useState(""),
     [query, setQuery] = useState(""),
     [sort, setSort] = useState("updated_at"),
     [limit, setLimit] = useState(50),
@@ -279,14 +295,14 @@ export function App() {
   const setView = navigate;
   function setActivityId(id: string | null) {
     const a = activities.find((a) => a.id === id);
-    go(
-      id
-        ? workspacePath(a?.workspace_id || workspaceId!, "activities", id)
-        : workspaceId
-          ? workspacePath(workspaceId, "activities")
-          : "/activities",
-    );
+    const path = id
+      ? workspacePath(a?.workspace_id || workspaceId!, "activities", id)
+      : workspaceId
+        ? workspacePath(workspaceId, "activities")
+        : "/activities";
+    go(path + (filter ? "?status=" + filter : ""));
   }
+
   function setNoteId(id: string | null) {
     const n = notes.find((n) => n.id === id);
     go(
@@ -302,7 +318,6 @@ export function App() {
   }
   useEffect(() => {
     setLimit(50);
-    setFilter("");
     setQuery("");
     setArchived(false);
     setCanvasFilter("");
@@ -532,7 +547,9 @@ export function App() {
   const shown = activities
     .filter(
       (a) =>
-        a.archived === archived &&
+        (filter === "completed" && !archived
+          ? matchesTaskIndicator(a, filter)
+          : a.archived === archived) &&
         (!filter ||
           (filter === "started" ? isStarted(a.status) : a.status === filter)) &&
         (workspace?.category !== "university" ||
@@ -591,15 +608,14 @@ export function App() {
     { id: "activities", label: t("Atividades"), icon: ListTodo },
     { id: "notes", label: t("Bloco de notas"), icon: NotebookPen },
   ];
-  const counts = (["not_started", "in_progress"] as Status[]).map((status) => ({
-    status,
-    count: activities.filter(
-      (a) =>
-        (status === "in_progress"
-          ? isStarted(a.status)
-          : a.status === status) && !a.archived,
-    ).length,
-  }));
+  const counts = (["not_started", "in_progress", "completed"] as const).map(
+    (status) => ({
+      status,
+      count: activities.filter((a) =>
+        matchesTaskIndicator(a, status === "in_progress" ? "started" : status),
+      ).length,
+    }),
+  );
   const statusIcons = {
     not_started: Circle,
     in_progress: Play,
@@ -924,7 +940,6 @@ export function App() {
                           setFilter(
                             status === "in_progress" ? "started" : status,
                           );
-                          setView("activities");
                           setArchived(false);
                         }}
                       >
@@ -933,7 +948,9 @@ export function App() {
                             {t(
                               status === "not_started"
                                 ? "Atividades em aberto"
-                                : "Em andamento",
+                                : status === "completed"
+                                  ? "Tarefas finalizadas"
+                                  : "Em andamento",
                             )}
                           </span>
                         </div>
@@ -975,6 +992,11 @@ export function App() {
               </div>
               {view !== "dashboard" && (
                 <>
+                  {filter === "completed" && !archived && (
+                    <p className="hint">
+                      {t("Inclui tarefas finalizadas arquivadas.")}
+                    </p>
+                  )}
                   <div className="list-toolbar">
                     <div className="filter-tabs">
                       {filter === "started" && (

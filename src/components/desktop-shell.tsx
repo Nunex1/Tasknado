@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
@@ -8,7 +8,6 @@ import {
   Folder,
   ListTodo,
   Search,
-  MoreHorizontal,
   UserRound,
   Plus,
   PanelLeftClose,
@@ -30,13 +29,13 @@ import { workspacePath, View } from "@/lib/navigation";
 import { BrandSymbol, BrandWordmark } from "./brand";
 import { ProfileMenu } from "./profile-menu";
 import { HeaderSearch } from "./header-search";
-
 export const workspaceTabs: { view: View; label: string }[] = [
   { view: "dashboard", label: "Visão geral" },
-  { view: "activities", label: "Atividades" },
+  { view: "activities", label: "Tarefas" },
   { view: "observations", label: "Observações" },
   { view: "history", label: "Histórico" },
   { view: "matrix", label: "Matriz de Eisenhower" },
+  { view: "notes", label: "Notas" },
 ];
 export function DesktopShell({
   user,
@@ -65,10 +64,7 @@ export function DesktopShell({
 }) {
   const { t, locale, setLocale, storageError } = useI18n();
   const path = usePathname();
-  const [collapsed, setCollapsed] = useState(false),
-    [more, setMore] = useState(false);
-  const moreRoot = useRef<HTMLDivElement>(null),
-    moreTrigger = useRef<HTMLButtonElement>(null);
+  const [collapsed, setCollapsed] = useState(false);
   useEffect(() => {
     try {
       setCollapsed(
@@ -76,23 +72,6 @@ export function DesktopShell({
       );
     } catch {}
   }, [user.id]);
-  useEffect(() => {
-    const close = (e: PointerEvent) => {
-      if (!moreRoot.current?.contains(e.target as Node)) setMore(false);
-    };
-    const key = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && more) {
-        setMore(false);
-        moreTrigger.current?.focus();
-      }
-    };
-    document.addEventListener("pointerdown", close);
-    window.addEventListener("keydown", key);
-    return () => {
-      document.removeEventListener("pointerdown", close);
-      window.removeEventListener("keydown", key);
-    };
-  }, [more]);
   function collapse() {
     setCollapsed((v) => {
       try {
@@ -167,8 +146,10 @@ export function DesktopShell({
         {[
           { href: "/", label: "Início", icon: Home },
           { href: "/workspaces", label: "Workspaces", icon: Folder },
-          { href: "/activities", label: "Atividades", icon: ListTodo },
+          { href: "/activities", label: "Tarefas", icon: ListTodo },
           { href: "/search", label: "Pesquisar", icon: Search },
+          { href: "/notes", label: "Notas", icon: NotebookPen },
+          { href: "/settings", label: "Configurações", icon: Settings },
         ].map(({ href, label, icon: Icon }) => (
           <Link
             key={href}
@@ -185,59 +166,6 @@ export function DesktopShell({
             <span>{t(label)}</span>
           </Link>
         ))}
-        <div
-          className="more-root"
-          ref={moreRoot}
-          onBlur={(e) => {
-            if (!e.currentTarget.contains(e.relatedTarget)) setMore(false);
-          }}
-        >
-          <button
-            ref={moreTrigger}
-            className="rail-item"
-            aria-expanded={more}
-            aria-controls="more-navigation"
-            onClick={() => setMore((v) => !v)}
-          >
-            <MoreHorizontal size={20} />
-            <span>{t("Mais")}</span>
-          </button>
-          {more && (
-            <div className="more-popover" id="more-navigation">
-              <Link
-                href={
-                  workspace ? workspacePath(workspace.id, "notes") : "/notes"
-                }
-                onNavigate={(e) => {
-                  guard(e);
-                  setMore(false);
-                }}
-              >
-                <NotebookPen size={17} />
-                {t("Bloco de notas")}
-              </Link>
-              <Link
-                href="/settings"
-                onNavigate={(e) => {
-                  guard(e);
-                  setMore(false);
-                }}
-              >
-                <Settings size={17} />
-                {t("Configurações")}
-              </Link>
-              <button
-                onClick={() => {
-                  setMore(false);
-                  onSignOut();
-                }}
-              >
-                <LogOut size={17} />
-                {t("Sair")}
-              </button>
-            </div>
-          )}
-        </div>
         <Link
           href="/perfil"
           onNavigate={guard}
@@ -247,6 +175,10 @@ export function DesktopShell({
           <UserRound size={20} />
           <span>{t("Perfil")}</span>
         </Link>
+        <button className="rail-item rail-signout" onClick={onSignOut}>
+          <LogOut size={20} />
+          <span>{t("Sair")}</span>
+        </button>
       </nav>
       {contextual && (
         <button
@@ -316,17 +248,11 @@ export function DesktopShell({
                       href={workspacePath(workspace.id, tab.view)}
                       onNavigate={guard}
                       className={`context-link ${view === tab.view ? "active" : ""}`}
+                      aria-current={view === tab.view ? "page" : undefined}
                     >
                       {t(tab.label)}
                     </Link>
                   ))}
-                <Link
-                  className={`context-link ${view === "notes" ? "active" : ""}`}
-                  href={workspacePath(workspace.id, "notes")}
-                  onNavigate={guard}
-                >
-                  {t("Bloco de notas")}
-                </Link>
               </nav>
               <div className="context-category">{t("Conteúdos recentes")}</div>
               {activities

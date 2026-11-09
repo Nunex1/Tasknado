@@ -84,6 +84,8 @@ describe("Translation completeness", () => {
       "Tasknado",
       "×",
       "⌘ K",
+      "PT",
+      "EN",
     ]);
     const paths = ["src/components", "src/app"];
     const untranslated: string[] = [];

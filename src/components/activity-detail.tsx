@@ -375,7 +375,12 @@ export function ActivityDetail({
                 >
                   {actions(activity.status).map((eventType) => (
                     <option key={eventType} value={eventType}>
-                      {t(eventNames[eventType])}
+                      {t(
+                        eventType === "resume" &&
+                          activity.status === "completed"
+                          ? "Reabrir tarefa"
+                          : eventNames[eventType],
+                      )}
                     </option>
                   ))}
                 </select>

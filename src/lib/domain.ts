@@ -23,7 +23,7 @@ export function actions(status: Status): EventType[] {
       not_started: ["check_in", "observation"],
       in_progress: ["pause", "observation", "check_out"],
       paused: ["resume", "observation", "check_out"],
-      completed: ["observation"],
+      completed: ["resume", "observation"],
     } as Record<Status, EventType[]>
   )[status];
 }
@@ -186,4 +186,17 @@ export interface WorkspaceEvent {
   previous: Record<string, unknown> | string | null;
   current: Record<string, unknown> | string | null;
   created_at: string;
+}
+// Completed tasks include archives; the other indicators retain their original semantics.
+export function matchesTaskIndicator(
+  activity: Pick<Activity, "status" | "archived">,
+  filter: string,
+) {
+  if (filter === "completed") return activity.status === "completed";
+  return (
+    !activity.archived &&
+    (filter === "started"
+      ? isStarted(activity.status)
+      : activity.status === filter)
+  );
 }
