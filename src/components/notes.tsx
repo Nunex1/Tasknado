@@ -283,8 +283,10 @@ export function Notes({
         <section className="panel note-content">
           {selected ? (
             <>
-              <div className="section-heading">
-                <h2>{selected.title}</h2>
+              <div className="section-heading note-heading">
+                <h2 tabIndex={0} title={selected.title}>
+                  {selected.title}
+                </h2>
                 <Button
                   variant="ghost"
                   onClick={() => onRename(selected)}

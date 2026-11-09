@@ -115,6 +115,59 @@ pass(
   "State machine, idempotency, chronology, archive and immutable history enforced",
 );
 
+// Reopening uses the existing transactional, owner-scoped event RPC.
+await fails("select add_event($1,'resume','Archived reopen',$2)", [
+  activity.id,
+  crypto.randomUUID(),
+]);
+await pg.query("update activities set archived=false where id=$1", [
+  activity.id,
+]);
+await as(b);
+await fails("select add_event($1,'resume','Foreign reopen',$2)", [
+  activity.id,
+  crypto.randomUUID(),
+]);
+await as(a);
+const reopenRequest = crypto.randomUUID();
+for (let i = 0; i < 2; i++)
+  await pg.query("select add_event($1,'resume','Reopened',$2)", [
+    activity.id,
+    reopenRequest,
+  ]);
+assert.equal(
+  (await pg.query("select status from activities where id=$1", [activity.id]))
+    .rows[0].status,
+  "in_progress",
+);
+assert.equal(
+  (
+    await pg.query("select * from activity_events where request_id=$1", [
+      reopenRequest,
+    ])
+  ).rows.length,
+  1,
+);
+await pg.query("select add_event($1,'check_out','Completed again',$2)", [
+  activity.id,
+  crypto.randomUUID(),
+]);
+await pg.query("update activities set archived=true where id=$1", [
+  activity.id,
+]);
+assert.equal(
+  (
+    await pg.query(
+      "select count(*)::int n from activities where status='completed' and workspace_id=$1",
+      [w.id],
+    )
+  ).rows[0].n,
+  1,
+);
+pass(
+  "Reopening preserves authorization, idempotency and history; completion includes archives",
+);
+
 const university = (
   await pg.query(
     "insert into workspaces(name,category) values('Campus','university') returning *",

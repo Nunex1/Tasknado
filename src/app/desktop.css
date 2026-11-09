@@ -23,7 +23,7 @@
   --space-3: 24px;
   --space-4: 32px;
   --header-height: 64px;
-  --rail-width: 80px;
+  --rail-width: 88px;
   --context-width: 232px;
   --content-width: 1280px;
 }
@@ -329,6 +329,7 @@ mark {
   border-radius: 2px;
 }
 .primary-rail {
+  overflow-y: auto;
   position: fixed;
   left: 0;
   top: var(--header-height);
@@ -343,6 +344,8 @@ mark {
   background: #fafbfc;
 }
 .rail-item {
+  flex-shrink: 0;
+  text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -374,36 +377,6 @@ mark {
 }
 .rail-profile {
   margin-top: auto;
-}
-.more-root {
-  position: relative;
-}
-.more-popover {
-  position: absolute;
-  left: calc(100% + 16px);
-  top: 0;
-  width: 220px;
-  border: 1px solid var(--border);
-  padding: 6px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 8px 24px #00123312;
-}
-.more-popover a,
-.more-popover button {
-  padding: 10px 12px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  color: var(--text);
-  text-decoration: none;
-  text-align: left;
-  border-radius: 5px;
-}
-.more-popover a:hover,
-.more-popover button:hover {
-  background: var(--hover);
 }
 .context-panel {
   position: fixed;
@@ -1264,5 +1237,52 @@ legend {
   }
   .color-swatch {
     forced-color-adjust: none;
+  }
+}
+.rail-signout {
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+}
+.note-content .note-heading {
+  padding-block: 16px;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  align-items: center;
+  gap: 8px;
+}
+.note-heading h2 {
+  display: block;
+  grid-column: 2;
+  min-width: 0;
+  margin: 0;
+  text-align: center;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.note-heading .button {
+  grid-column: 3;
+  padding-inline: 8px;
+}
+.note-heading h2:focus {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+@media (max-height: 760px) {
+  .primary-rail {
+    gap: 4px;
+    padding-block: 8px;
+  }
+  .rail-item {
+    min-height: 54px;
+  }
+}
+@media (max-width: 700px) {
+  .stats-grid {
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .stat {
+    min-width: 130px;
   }
 }

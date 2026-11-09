@@ -10,6 +10,7 @@ import {
 } from "react";
 import { I18nextProvider, useTranslation } from "react-i18next";
 import { usePathname } from "next/navigation";
+import { db } from "@/lib/supabase";
 import {
   createI18n,
   defaultLocale,
@@ -31,11 +32,15 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   // A separate instance per provider also keeps server renders isolated.
   const [instance] = useState(() => createI18n());
   const [storageError, setStorageError] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const account = useRef<string | null>(null);
   const pathname = usePathname();
+  const saving = useRef(0);
+  const queue = useRef(Promise.resolve());
 
   const setAccount = useCallback(
     (id: string | null, preferred?: unknown) => {
+      if (account.current === id && saving.current) return;
       account.current = id;
       setStorageError(false);
       let locale = defaultLocale;
@@ -64,12 +69,29 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       } catch {
         setStorageError(true);
       }
+      const id = account.current;
+      if (id && db) {
+        saving.current++;
+        queue.current = queue.current
+          .then(async () => {
+            if (account.current !== id) return;
+            const { error } = await db!.auth.updateUser({
+              data: { preferred_language: locale },
+            });
+            if (account.current === id) setStorageError(!!error);
+          })
+          .catch(() => setStorageError(true))
+          .finally(() => {
+            saving.current--;
+          });
+      }
     },
     [instance],
   );
 
   useEffect(() => {
     setAccount(account.current);
+    setMounted(true);
     const sync = (event: StorageEvent) => {
       if (event.key === preferenceKey(account.current) || event.key === null) {
         void instance.changeLanguage(
@@ -168,7 +190,13 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   return (
     <I18nextProvider i18n={instance}>
       <Preferences.Provider value={{ setLocale, setAccount, storageError }}>
-        {children}
+        {mounted ? (
+          children
+        ) : (
+          <div className="setup" role="status">
+            {instance.t("Abrindo seu espaço…")}
+          </div>
+        )}
       </Preferences.Provider>
     </I18nextProvider>
   );

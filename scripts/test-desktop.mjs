@@ -166,6 +166,111 @@ try {
           .single(),
       ).status === "in_progress",
   );
+  await page.getByLabel("Registrar acontecimento").selectOption("check_out");
+  await page
+    .getByRole("textbox", { name: "Conteúdo do acontecimento" })
+    .fill("Conclusão validada");
+  await page
+    .getByRole("button", { name: "Registrar Check Out", exact: true })
+    .click();
+  await eventually(
+    async () =>
+      ok(
+        await api
+          .from("activities")
+          .select("status")
+          .eq("id", activity.id)
+          .single(),
+      ).status === "completed",
+  );
+  await tab("Visão geral");
+  await eventually(
+    async () =>
+      (await page.locator(".stat.completed strong").textContent()).trim() ===
+      "1",
+  );
+  await page
+    .locator(".primary-rail")
+    .getByRole("link", { name: "Início", exact: true })
+    .click();
+  await page.waitForURL(root + "/");
+  await eventually(
+    async () =>
+      (await page.locator(".stat.completed strong").textContent()).trim() ===
+      "1",
+  );
+  const isolatedWorkspace = ok(
+    await api
+      .from("workspaces")
+      .insert({ name: "Isolamento de finalizadas" })
+      .select()
+      .single(),
+  );
+  await page.goto(`${root}/workspaces/${isolatedWorkspace.id}`);
+  await eventually(
+    async () =>
+      (await page.locator(".stat.completed strong").textContent()).trim() ===
+      "0",
+  );
+  await page.goto(`${root}/workspaces/${work.id}`);
+  await eventually(
+    async () =>
+      (await page.locator(".stat.completed strong").textContent()).trim() ===
+      "1",
+  );
+  pass(
+    "Home counts across workspaces and another workspace excludes completed tasks outside its scope",
+  );
+  await page.locator(".stat.completed").click();
+  await page.waitForURL(/status=completed/);
+  await page.reload();
+  await page
+    .locator(".activity-row")
+    .filter({ hasText: activity.title })
+    .click();
+  await page
+    .getByRole("button", { name: "Arquivar atividade", exact: true })
+    .click();
+  await tab("Visão geral");
+  await eventually(
+    async () =>
+      (await page.locator(".stat.completed strong").textContent()).trim() ===
+      "1",
+  );
+  await page.locator(".stat.completed").click();
+  await page
+    .locator(".activity-row")
+    .filter({ hasText: activity.title })
+    .click();
+  await page.getByRole("button", { name: "Desarquivar", exact: true }).click();
+  await page.getByLabel("Registrar acontecimento").selectOption("resume");
+  await page
+    .getByRole("textbox", { name: "Conteúdo do acontecimento" })
+    .fill("Reabertura validada");
+  await page
+    .getByRole("button", { name: "Registrar Retomada", exact: true })
+    .click();
+  await eventually(
+    async () =>
+      ok(
+        await api
+          .from("activities")
+          .select("status")
+          .eq("id", activity.id)
+          .single(),
+      ).status === "in_progress",
+  );
+  await tab("Visão geral");
+  await eventually(
+    async () =>
+      (await page.locator(".stat.completed strong").textContent()).trim() ===
+      "0",
+  );
+  await page.goto(`${root}/workspaces/${work.id}/activities/${activity.id}`);
+  pass(
+    "Completed indicator, archive inclusion, URL filter reload and recorded reopening",
+  );
+
   await page.getByLabel("Registrar acontecimento").selectOption("observation");
   await page
     .getByRole("textbox", { name: "Conteúdo do acontecimento" })
@@ -388,7 +493,7 @@ try {
     universityActivity.category_attributes.university.openedInCanvas,
     false,
   );
-  await tab("Atividades");
+  await tab("Tarefas");
   await page
     .getByRole("combobox", { name: "Aberta no Canvas?", exact: true })
     .selectOption("true");
@@ -580,6 +685,95 @@ try {
     "Original notebook creation, autosave and persistent entry routes preserved",
   );
 
+  const noteUrl = page.url();
+  for (const width of [1280, 1440, 1920]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const title of [
+      "Nota",
+      "Anthropic | Vagas",
+      "Título extenso ".repeat(12).trim(),
+    ]) {
+      await page
+        .getByRole("button", { name: "Renomear nota", exact: true })
+        .click();
+      await page
+        .getByRole("dialog")
+        .getByLabel("Título", { exact: true })
+        .fill(title);
+      await page
+        .getByRole("dialog")
+        .getByRole("button", { name: "Salvar", exact: true })
+        .click();
+      await eventually(
+        async () =>
+          (await page.locator(".note-heading h2").textContent()) === title,
+      );
+      const geometry = await page.locator(".note-heading").evaluate((el) => {
+        const h = el.getBoundingClientRect(),
+          t = el.querySelector("h2").getBoundingClientRect(),
+          b = el.querySelector("button").getBoundingClientRect();
+        return {
+          centerError: Math.abs((h.left + h.right - t.left - t.right) / 2),
+          verticalError: Math.abs((h.top + h.bottom - t.top - t.bottom) / 2),
+          display: getComputedStyle(el.querySelector("h2")).display,
+          overlap: t.right > b.left,
+          overflow: document.documentElement.scrollWidth > innerWidth,
+        };
+      });
+      assert.ok(geometry.centerError < 1);
+      assert.ok(geometry.verticalError < 1);
+      assert.equal(geometry.display, "block");
+      assert.equal(geometry.overlap, false);
+      assert.equal(geometry.overflow, false);
+    }
+    await page.screenshot({
+      path: `test-results/desktop/refinement-notes-${width}.png`,
+      fullPage: true,
+    });
+  }
+  assert.equal(
+    await page.locator('.workspace-tabs a[aria-current="page"]').textContent(),
+    "Notas",
+  );
+  assert.equal(
+    await page.locator('.context-link[aria-current="page"]').textContent(),
+    "Notas",
+  );
+  await tab("Visão geral");
+  await page.waitForURL(`${root}/workspaces/${work.id}`);
+  await page.goBack();
+  await page.waitForURL(noteUrl);
+  for (const [label, path] of [
+    ["Início", "/"],
+    ["Workspaces", "/workspaces"],
+    ["Tarefas", "/activities"],
+    ["Pesquisar", "/search"],
+    ["Notas", "/notes"],
+    ["Configurações", "/settings"],
+    ["Perfil", "/perfil"],
+  ]) {
+    await page
+      .locator(".primary-rail")
+      .getByRole("link", { name: label, exact: true })
+      .click();
+    await page.waitForURL(root + path);
+    assert.equal(
+      await page.locator('.primary-rail a[aria-current="page"]').textContent(),
+      label,
+    );
+  }
+  assert.equal(
+    await page
+      .locator(".primary-rail")
+      .getByRole("button", { name: "Sair", exact: true })
+      .count(),
+    1,
+  );
+  assert.equal(await page.locator(".more-root").count(), 0);
+  pass(
+    "Direct global navigation, synchronized Notes tabs, history and centered short/long titles at all desktop widths",
+  );
+
   for (const target of [
     `/workspaces/${work.id}/activities`,
     `/workspaces/${work.id}/observations`,
@@ -605,11 +799,11 @@ try {
       .click();
     await page.waitForURL(root + "/");
   }
-  assert.equal(await page.locator(".stats-grid .stat").count(), 2);
+  assert.equal(await page.locator(".stats-grid .stat").count(), 3);
   assert.equal(await page.locator(".primary-rail").count(), 1);
   assert.equal(await page.locator(".mobile-menu,.sidebar-overlay").count(), 0);
   pass(
-    "Both brand links return Home across all modules without full reload; browser Back restores routes; Home has exactly two indicators and no mobile navigation",
+    "Both brand links return Home across all modules without full reload; browser Back restores routes; Home has exactly three indicators and no mobile navigation",
   );
 
   await page.screenshot({
@@ -895,6 +1089,15 @@ try {
   pass(
     "Automated WCAG A/AA checks on eleven authenticated desktop screens report no violations; manual-review items recorded separately",
   );
+  await page
+    .locator(".primary-rail")
+    .getByRole("button", { name: "Sair", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Entrar na minha conta", exact: true })
+    .waitFor();
+  assert.equal(await page.locator(".primary-rail").count(), 0);
+  pass("Direct Sign Out ends the authenticated UI session");
 } catch (e) {
   failure = e.stack || String(e);
   console.error(failure);

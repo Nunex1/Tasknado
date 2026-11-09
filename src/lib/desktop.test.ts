@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import type { User } from "@supabase/supabase-js";
 import { routeState, workspacePath } from "./navigation";
 import { avatarForeground, userProfile } from "./user-profile";
-import { isStarted, Status } from "./domain";
+import { isStarted, Status, matchesTaskIndicator } from "./domain";
 describe("Desktop contracts", () => {
   it("keeps open and started/unfinished counts exclusive, including paused execution", () => {
     const states: Status[] = [
@@ -92,5 +92,37 @@ describe("Desktop contracts", () => {
               : 1.05 / (lum + 0.05);
           expect(ratio).toBeGreaterThanOrEqual(4.5);
         }
+  });
+});
+
+describe("Task indicators", () => {
+  it("counts completed archives without treating archive alone as completion", () => {
+    expect(
+      matchesTaskIndicator(
+        { status: "completed", archived: true },
+        "completed",
+      ),
+    ).toBe(true);
+    expect(
+      matchesTaskIndicator({ status: "paused", archived: true }, "completed"),
+    ).toBe(false);
+    expect(
+      matchesTaskIndicator({ status: "paused", archived: false }, "started"),
+    ).toBe(true);
+    expect(
+      matchesTaskIndicator(
+        { status: "in_progress", archived: false },
+        "not_started",
+      ),
+    ).toBe(false);
+  });
+  it("reflects completion and reopening in the same list predicate", () => {
+    const task = { status: "in_progress" as Status, archived: false };
+    expect(matchesTaskIndicator(task, "completed")).toBe(false);
+    task.status = "completed";
+    expect(matchesTaskIndicator(task, "completed")).toBe(true);
+    task.status = "in_progress";
+    expect(matchesTaskIndicator(task, "completed")).toBe(false);
+    expect(matchesTaskIndicator(task, "started")).toBe(true);
   });
 });
