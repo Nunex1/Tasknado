@@ -424,5 +424,17 @@
   "Notas": "Notes",
   "Tarefas finalizadas": "Completed Tasks",
   "Inclui tarefas finalizadas arquivadas.": "Includes archived completed tasks.",
-  "Reabrir tarefa": "Reopen task"
+  "Reabrir tarefa": "Reopen task",
+  "Excluir bloco": "Delete Block",
+  "Excluir este bloco?": "Delete this block?",
+  "Esta ação removerá permanentemente o bloco selecionado. O restante da nota permanecerá inalterado.": "This action will permanently remove the selected block. The rest of the note will remain unchanged.",
+  "Bloco excluído.": "Block deleted.",
+  "Este bloco não está mais disponível.": "This block is no longer available.",
+  "Ações da nota": "Note actions",
+  "Excluir nota": "Delete Note",
+  "Excluir “{{title}}”?": "Delete “{{title}}”?",
+  "Esta ação excluirá permanentemente esta nota, todos os seus blocos e arquivos anexados.": "This action will permanently delete this note, all its blocks and attached files.",
+  "Nota excluída.": "Note deleted.",
+  "Esta nota não está mais disponível.": "This note is no longer available.",
+  "Excluindo…": "Deleting…"
 }

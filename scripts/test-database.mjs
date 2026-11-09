@@ -362,6 +362,160 @@ assert.equal(
   "Armazenagem revisada",
 );
 pass("Optimistic note revision prevents stale overwrite");
+
+// Granular notebook deletion: owner-scoped functions only, direct DELETE stays closed.
+const rows = async (sql, args = []) => (await pg.query(sql, args)).rows;
+const draft = (
+  await rows(
+    "insert into notes(workspace_id,title) values($1,'Nota descartável') returning *,updated_at::text stamp",
+    [w.id],
+  )
+)[0];
+const keptNote = (
+  await rows(
+    "insert into notes(workspace_id,title) values($1,'Nota preservada') returning *",
+    [w.id],
+  )
+)[0];
+const blocks = [];
+for (const content of ["Bloco um", "Bloco dois", "Bloco três"])
+  blocks.push(
+    (
+      await rows(
+        "insert into note_entries(note_id,content) values($1,$2) returning *",
+        [draft.id, content],
+      )
+    )[0],
+  );
+const keptBlock = (
+  await rows(
+    "insert into note_entries(note_id,content) values($1,'Bloco preservado') returning *",
+    [keptNote.id],
+  )
+)[0];
+const noteFile = crypto.randomUUID();
+await pg.query(
+  "insert into attachments(id,note_id,name,path,mime,size) values($1,$2,'anexo.txt',$3,'text/plain',12)",
+  [noteFile, draft.id, a + "/" + noteFile],
+);
+const draftBlocks = () =>
+  rows("select id from note_entries where note_id=$1 order by created_at,id", [
+    draft.id,
+  ]).then((list) => list.map((row) => row.id));
+await fails("delete from note_entries where id=$1", [blocks[0].id]);
+await pg.query("delete from notes where id=$1", [draft.id]).catch(() => {});
+assert.equal(
+  (await rows("select 1 from notes where id=$1", [draft.id])).length,
+  1,
+);
+// A block is only deleted through the note it belongs to.
+await fails("select delete_entry($1,$2)", [blocks[0].id, keptNote.id]);
+await as(b);
+await fails("select delete_entry($1,$2)", [blocks[0].id, draft.id]);
+await fails("select delete_note($1)", [draft.id]);
+await pg.exec("reset role");
+await pg.query("select set_config('request.jwt.claim.sub','',false)");
+await pg.exec("set role anon");
+await fails("select delete_entry($1,$2)", [blocks[0].id, draft.id]);
+await fails("select delete_note($1)", [draft.id]);
+await pg.exec("reset role");
+await pg.exec("set role authenticated");
+await fails("select delete_entry($1,$2)", [blocks[0].id, draft.id]);
+await fails("select delete_note($1)", [draft.id]);
+await as(a);
+assert.deepEqual(
+  await draftBlocks(),
+  blocks.map((block) => block.id),
+);
+pass(
+  "Direct deletes, wrong-note, other-owner, anonymous and session-less deletions leave notes and blocks untouched",
+);
+await pg.query("select delete_entry($1,$2)", [blocks[1].id, draft.id]);
+assert.deepEqual(await draftBlocks(), [blocks[0].id, blocks[2].id]);
+assert.equal(
+  (
+    await rows(
+      "select updated_at>$2::timestamptz touched from notes where id=$1",
+      [draft.id, draft.stamp],
+    )
+  )[0].touched,
+  true,
+);
+await fails("select delete_entry($1,$2)", [blocks[1].id, draft.id]);
+// A save that arrives after the deletion fails and cannot recreate the block.
+await fails("select save_entry($1,'Gravação atrasada',1)", [blocks[1].id]);
+assert.equal(
+  (await rows("select 1 from note_entries where id=$1", [blocks[1].id])).length,
+  0,
+);
+await pg.query("select save_entry($1,'Bloco um revisado',1)", [blocks[0].id]);
+await pg.query("select delete_entry($1,$2)", [blocks[0].id, draft.id]);
+await pg.query("select delete_entry($1,$2)", [blocks[2].id, draft.id]);
+assert.deepEqual(await draftBlocks(), []);
+assert.equal(
+  (await rows("select 1 from notes where id=$1", [draft.id])).length,
+  1,
+);
+const refill = (
+  await rows(
+    "insert into note_entries(note_id,content) values($1,'Conteúdo novo') returning *",
+    [draft.id],
+  )
+)[0];
+assert.equal(
+  (await rows("select 1 from note_entries where id=$1", [keptBlock.id])).length,
+  1,
+);
+pass(
+  "Block deletion removes one block, keeps order, the note and its other blocks, touches the note, rejects repeats and late saves; an emptied note accepts new blocks",
+);
+await pg.query("select delete_note($1)", [draft.id]);
+for (const [sql, id] of [
+  ["select 1 from notes where id=$1", draft.id],
+  ["select 1 from note_entries where note_id=$1", draft.id],
+  ["select 1 from attachments where id=$1", noteFile],
+])
+  assert.equal((await rows(sql, [id])).length, 0);
+await fails("select delete_note($1)", [draft.id]);
+await fails("select save_entry($1,'Gravação atrasada',1)", [refill.id]);
+await fails("insert into note_entries(note_id,content) values($1,'Órfão')", [
+  draft.id,
+]);
+for (const [sql, id] of [
+  ["select 1 from notes where id=$1", keptNote.id],
+  ["select 1 from note_entries where id=$1", keptBlock.id],
+  ["select 1 from notes where id=$1", n.id],
+  ["select 1 from note_entries where id=$1", e.id],
+  ["select 1 from workspaces where id=$1", w.id],
+  ["select 1 from activities where id=$1", activity.id],
+])
+  assert.equal((await rows(sql, [id])).length, 1);
+assert.deepEqual(
+  (
+    await rows(
+      "select entity,count(*)::int n from audit_logs where action='DELETE' and entity_id=any($1::uuid[]) group by entity order by entity",
+      [[draft.id, refill.id, noteFile, ...blocks.map((block) => block.id)]],
+    )
+  ).map((row) => [row.entity, row.n]),
+  [
+    ["attachments", 1],
+    ["note_entries", 4],
+    ["notes", 1],
+  ],
+);
+await pg.exec("reset role");
+assert.equal(
+  (
+    await rows("select 1 from storage_cleanup where path=$1", [
+      a + "/" + noteFile,
+    ])
+  ).length,
+  1,
+);
+await as(a);
+pass(
+  "Note deletion removes the note with its blocks and file records in one step, queues storage cleanup, audits it, blocks late writes and preserves every other record",
+);
 const general = (
   await pg.query(
     "insert into workspace_observations(workspace_id,content) values($1,'Observação geral pesquisável') returning *",
@@ -479,7 +633,7 @@ assert.deepEqual(
   (await pg.query("select path from storage_cleanup order by path")).rows.map(
     (row) => row.path,
   ),
-  [path, a + "/" + observationFile].sort(),
+  [path, a + "/" + observationFile, a + "/" + noteFile].sort(),
 );
 pass(
   "Deletion cascades records and immediately revokes file visibility; cleanup queued",

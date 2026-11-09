@@ -41,7 +41,10 @@ node scripts/test-database.mjs
 pnpm build
 pnpm test:integration
 pnpm test:desktop
+pnpm test:notes
 ```
+
+`test:notes` percorre no navegador a exclusão de blocos e notas (confirmação, autosave pendente, falha de rede, rotas e estados vazios), com conta temporária na instância local e a aplicação em execução.
 
 `test-database.mjs` executa PostgreSQL real embarcado (PGlite), com esquemas mínimos de Auth/Storage somente no teste. Valida SQL, RLS, transições, idempotência, buscas, concorrência otimista e cascatas. Não substitui a integração HTTP do Supabase.
 

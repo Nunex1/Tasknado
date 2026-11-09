@@ -393,6 +393,176 @@ try {
     ).error,
   );
   pass("Autosave persists and rejects stale concurrent writes");
+
+  // Granular deletion through the real API: authorization, races, cascade and storage.
+  const draft = ok(
+    await a
+      .from("notes")
+      .insert({ workspace_id: workspace.id, title: "Rascunho descartável" })
+      .select()
+      .single(),
+  );
+  const blocks = [];
+  for (const content of ["Bloco A", "Bloco B", "Bloco C"])
+    blocks.push(
+      ok(
+        await a
+          .from("note_entries")
+          .insert({ note_id: draft.id, content })
+          .select()
+          .single(),
+      ),
+    );
+  const draftBlocks = async () =>
+    ok(
+      await a
+        .from("note_entries")
+        .select("id")
+        .eq("note_id", draft.id)
+        .order("created_at")
+        .order("id"),
+    ).map((row) => row.id);
+  const removeBlock = (client, block, noteId = draft.id) =>
+    client.rpc("delete_entry", { p_id: block.id, p_note: noteId });
+  for (const table of ["note_entries", "notes"]) {
+    const direct = await a
+      .from(table)
+      .delete()
+      .eq("id", table === "notes" ? draft.id : blocks[0].id)
+      .select();
+    assert.ok(direct.error || direct.data.length === 0);
+  }
+  for (const intruder of [b, makeClient()]) {
+    assert.ok((await removeBlock(intruder, blocks[0])).error);
+    assert.ok((await intruder.rpc("delete_note", { p_note: draft.id })).error);
+  }
+  // Another owner's block and a block that never existed are indistinguishable.
+  assert.equal(
+    (await removeBlock(b, blocks[0])).error.message,
+    (await removeBlock(a, { id: crypto.randomUUID() })).error.message,
+  );
+  assert.ok((await removeBlock(a, blocks[0], note.id)).error);
+  assert.deepEqual(
+    await draftBlocks(),
+    blocks.map((block) => block.id),
+  );
+  pass(
+    "Direct deletes, other accounts, anonymous clients and wrong-note requests cannot delete blocks or notes, and reveal nothing",
+  );
+  const [raceDelete, raceSave] = await Promise.all([
+    removeBlock(a, blocks[1]),
+    a.rpc("save_entry", {
+      p_id: blocks[1].id,
+      p_content: "Gravação concorrente",
+      p_revision: 1,
+    }),
+  ]);
+  assert.ifError(raceDelete.error);
+  assert.ok(
+    (
+      await a.rpc("save_entry", {
+        p_id: blocks[1].id,
+        p_content: "Gravação atrasada",
+        p_revision: raceSave.error ? 1 : 2,
+      })
+    ).error,
+  );
+  assert.deepEqual(await draftBlocks(), [blocks[0].id, blocks[2].id]);
+  const twice = await Promise.all([
+    removeBlock(a, blocks[0]),
+    removeBlock(a, blocks[0]),
+  ]);
+  assert.equal(twice.filter((result) => !result.error).length, 1);
+  ok(await removeBlock(a, blocks[2]));
+  assert.deepEqual(await draftBlocks(), []);
+  assert.equal(
+    ok(await a.from("notes").select("id").eq("id", draft.id)).length,
+    1,
+  );
+  const refill = ok(
+    await a
+      .from("note_entries")
+      .insert({ note_id: draft.id, content: "Conteúdo novo" })
+      .select()
+      .single(),
+  );
+  pass(
+    "Block deletion wins a concurrent autosave, cannot be undone by a late save, runs once under duplicate requests and leaves an emptied note usable",
+  );
+  const noteFileId = crypto.randomUUID(),
+    notePath = `${ua.id}/${noteFileId}`,
+    noteFile = new Blob(["Anexo da nota"], { type: "text/plain" });
+  ok(
+    await a.from("attachments").insert({
+      id: noteFileId,
+      note_id: draft.id,
+      path: notePath,
+      name: "anexo-da-nota.txt",
+      mime: "text/plain",
+      size: noteFile.size,
+    }),
+  );
+  ok(
+    await a.storage
+      .from("attachments")
+      .upload(notePath, noteFile, { contentType: "text/plain" }),
+  );
+  const [noteDelete, lateSave] = await Promise.all([
+    a.rpc("delete_note", { p_note: draft.id }),
+    a.rpc("save_entry", {
+      p_id: refill.id,
+      p_content: "Gravação durante a exclusão",
+      p_revision: 1,
+    }),
+  ]);
+  assert.ifError(noteDelete.error);
+  for (const [table, column, id] of [
+    ["notes", "id", draft.id],
+    ["note_entries", "note_id", draft.id],
+    ["attachments", "id", noteFileId],
+  ])
+    assert.equal(ok(await a.from(table).select("id").eq(column, id)).length, 0);
+  assert.ok((await a.storage.from("attachments").download(notePath)).error);
+  assert.equal(
+    ok(await admin.from("storage_cleanup").select("path").eq("path", notePath))
+      .length,
+    1,
+  );
+  assert.ok(
+    (
+      await a.rpc("save_entry", {
+        p_id: refill.id,
+        p_content: "Gravação atrasada",
+        p_revision: lateSave.error ? 1 : 2,
+      })
+    ).error,
+  );
+  assert.ok(
+    (
+      await a
+        .from("note_entries")
+        .insert({ note_id: draft.id, content: "Órfão" })
+    ).error,
+  );
+  assert.ok((await a.rpc("delete_note", { p_note: draft.id })).error);
+  assert.equal(
+    ok(await a.from("notes").select("id").eq("id", note.id)).length,
+    1,
+  );
+  assert.equal(
+    ok(await a.from("note_entries").select("id").eq("id", entry.id)).length,
+    1,
+  );
+  assert.equal(
+    ok(await a.from("activities").select("id").eq("id", activity.id)).length,
+    1,
+  );
+  // The owner can still remove the stored object, as the app does after deleting.
+  ok(await a.storage.from("attachments").remove([notePath]));
+  ok(await admin.from("storage_cleanup").delete().eq("path", notePath));
+  pass(
+    "Note deletion wins a concurrent autosave, removes its blocks and file record, revokes file access at once, queues cleanup, blocks late writes and preserves other notes and activities",
+  );
   const fid = crypto.randomUUID(),
     path = `${ua.id}/${fid}`,
     file = new Blob(["Evidência do rateio"], { type: "text/plain" });

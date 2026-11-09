@@ -14,6 +14,7 @@ Aplicação individual Next.js/React/TypeScript, tokens Tailwind e componentes a
 ## Decisões iniciais revisáveis
 - Nome de trabalho: Tasknado (nome da pasta). Nova orientação do usuário: identidade oceânica com símbolo vetorial de tubarão-martelo, implementada sobre a base Deep Sea Blue.
 - Eventos são imutáveis; correções devem ser novas observações. Exclusão de workspace exige confirmação e remove seus dados.
+- Notas e entradas (blocos) só são excluídas pelas funções `delete_note` e `delete_entry`, restritas ao proprietário; `DELETE` direto continua indisponível. Excluir a nota remove suas entradas e os registros de arquivos pela chave composta `(note_id, owner_id)` e enfileira a limpeza do Storage. `save_entry` apenas atualiza: uma gravação atrasada não recria o que foi excluído.
 - Até 20 MB por arquivo. PDF, imagens PNG/JPEG/WebP, vídeos MP4/WebM, TXT/CSV e documentos Office Open XML. SVG/HTML/executáveis não são aceitos.
 - Upload sem scanner antivírus externo: formatos restritos, download isolado e bucket privado reduzem superfície; inspeção antimalware de produção permanece pendente.
 - Timestamps timestamptz do servidor; apresentação no fuso do navegador.

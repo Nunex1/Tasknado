@@ -65,6 +65,8 @@ import { WorkspaceObservations, WorkspaceHistory } from "./workspace-records";
 import { WorkspaceDirectory, RecentObservations } from "./workspace-overview";
 import { quadrant, quadrants, isStarted } from "@/lib/domain";
 import { fetchPages } from "@/lib/pagination";
+import { isGone, removeNote } from "@/lib/notes";
+const uuid = /^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
 type Editor =
   | { kind: "workspace"; item?: Workspace }
   | { kind: "activity"; item?: Activity }
@@ -211,7 +213,11 @@ export function App() {
         );
         if (row) aa.push(row as Activity);
       }
-      if (noteId && !nn.some((item) => item.id === noteId)) {
+      if (
+        noteId &&
+        uuid.test(noteId) &&
+        !nn.some((item) => item.id === noteId)
+      ) {
         const row = check(
           await client()
             .from("notes")
@@ -231,6 +237,12 @@ export function App() {
         setNotes(nn);
         setHasMore(false);
         setNoteMore(nn.length === limit);
+        // The address must not keep pointing to a note that was deleted or
+        // never belonged to this account.
+        if (noteId && !nn.some((item) => item.id === noteId)) {
+          report("Esta nota não está mais disponível.");
+          router.replace(workspacePath(workspaceId!, "notes"));
+        }
       }
     } catch (e) {
       if (seq === loadSeq.current) setLoadError(errorMessage(e));
@@ -457,6 +469,32 @@ export function App() {
     } finally {
       setBusy(false);
     }
+  }
+  async function deleteNote(note: Note, nextId: string | null) {
+    let gone = false;
+    try {
+      await removeNote(client(), note.id);
+    } catch (e) {
+      // Already deleted elsewhere: the screen still has to let go of it.
+      if (!isGone(e)) throw e;
+      gone = true;
+    }
+    // A list response still in flight predates the deletion and must not
+    // bring the note back.
+    loadSeq.current++;
+    setLoading(false);
+    setNotes((prev) => prev.filter((item) => item.id !== note.id));
+    if (noteId === note.id) {
+      const next = notes.find((item) => item.id === nextId);
+      router.replace(
+        next
+          ? workspacePath(next.workspace_id, "notes", next.id)
+          : workspaceId
+            ? workspacePath(workspaceId, "notes")
+            : "/notes",
+      );
+    }
+    report(gone ? "Esta nota não está mais disponível." : "Nota excluída.");
   }
   async function deleteAccount() {
     if (
@@ -873,7 +911,7 @@ export function App() {
           <>
             <Notes
               notes={notes}
-              selectedId={noteId}
+              selectedId={noteId && uuid.test(noteId) ? noteId : null}
               onSelect={(id) => {
                 if (canLeave()) setNoteId(id);
               }}
@@ -881,6 +919,7 @@ export function App() {
                 if (canLeave()) setEditor({ kind: "note" });
               }}
               onRename={(item) => setEditor({ kind: "note", item })}
+              onDelete={deleteNote}
               onDirty={onDirty}
               report={report}
             />

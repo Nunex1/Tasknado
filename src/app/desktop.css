@@ -1246,9 +1246,67 @@ legend {
 .note-content .note-heading {
   padding-block: 16px;
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  grid-template-columns: 76px minmax(0, 1fr) 76px;
   align-items: center;
   gap: 8px;
+}
+.note-actions {
+  grid-column: 3;
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+}
+.note-menu {
+  position: relative;
+  display: flex;
+}
+.note-menu .profile-menu-item {
+  width: 100%;
+  text-align: left;
+}
+.profile-menu-item.danger,
+.profile-menu-item.danger svg {
+  color: var(--error);
+}
+.profile-menu-item.danger:hover,
+.profile-menu-item.danger:focus-visible {
+  background: #fff5f5;
+}
+.note-entry {
+  transition: opacity 0.18s;
+}
+.note-entry.deleting {
+  opacity: 0.55;
+}
+.note-entry-meta {
+  gap: 6px;
+}
+/* Compact so the date and status row keeps its height. */
+.note-entry-delete {
+  width: 24px;
+  height: 24px;
+  margin-block: -6px;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.note-entry-delete:hover:not(:disabled),
+.note-entry-delete:focus-visible {
+  background: #fff5f5;
+  color: var(--error);
+}
+.confirm-modal {
+  width: min(440px, calc(100vw - 32px));
+  animation: confirm-open 0.16s ease-out;
+}
+.confirm-modal h2 {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+@keyframes confirm-open {
+  from {
+    opacity: 0;
+  }
 }
 .note-heading h2 {
   display: block;
@@ -1261,7 +1319,6 @@ legend {
   text-overflow: ellipsis;
 }
 .note-heading .button {
-  grid-column: 3;
   padding-inline: 8px;
 }
 .note-heading h2:focus {

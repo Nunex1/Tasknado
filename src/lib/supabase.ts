@@ -41,6 +41,8 @@ export function errorMessage(e: unknown): string {
     ],
     [/activity unavailable/i, "Atividade indisponível."],
     [/workspace unavailable/i, "Workspace indisponível."],
+    [/entry unavailable/i, "Este bloco não está mais disponível."],
+    [/note unavailable/i, "Esta nota não está mais disponível."],
     [/archived activity/i, "Esta atividade está arquivada."],
     [
       /invalid transition/i,
