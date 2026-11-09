@@ -424,5 +424,17 @@
   "Notas": "Notas",
   "Tarefas finalizadas": "Tarefas finalizadas",
   "Inclui tarefas finalizadas arquivadas.": "Inclui tarefas finalizadas arquivadas.",
-  "Reabrir tarefa": "Reabrir tarefa"
+  "Reabrir tarefa": "Reabrir tarefa",
+  "Excluir bloco": "Excluir bloco",
+  "Excluir este bloco?": "Excluir este bloco?",
+  "Esta ação removerá permanentemente o bloco selecionado. O restante da nota permanecerá inalterado.": "Esta ação removerá permanentemente o bloco selecionado. O restante da nota permanecerá inalterado.",
+  "Bloco excluído.": "Bloco excluído.",
+  "Este bloco não está mais disponível.": "Este bloco não está mais disponível.",
+  "Ações da nota": "Ações da nota",
+  "Excluir nota": "Excluir nota",
+  "Excluir “{{title}}”?": "Excluir “{{title}}”?",
+  "Esta ação excluirá permanentemente esta nota, todos os seus blocos e arquivos anexados.": "Esta ação excluirá permanentemente esta nota, todos os seus blocos e arquivos anexados.",
+  "Nota excluída.": "Nota excluída.",
+  "Esta nota não está mais disponível.": "Esta nota não está mais disponível.",
+  "Excluindo…": "Excluindo…"
 }

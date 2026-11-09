@@ -141,6 +141,11 @@ export type Database = {
         Args: { p_id: string; p_content: string; p_revision: number };
         Returns: Owned<Entry>;
       };
+      delete_entry: {
+        Args: { p_id: string; p_note: string };
+        Returns: undefined;
+      };
+      delete_note: { Args: { p_note: string }; Returns: undefined };
       delete_workspace: { Args: { p_workspace: string }; Returns: undefined };
       delete_my_account: { Args: Record<string, never>; Returns: undefined };
       search_all: {

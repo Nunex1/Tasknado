@@ -1,6 +1,6 @@
 "use client";
 import { useI18n } from "@/i18n/provider";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import {
   Plus,
   Search,
@@ -9,17 +9,25 @@ import {
   Cloud,
   RefreshCw,
   Pencil,
+  Trash2,
+  MoreHorizontal,
 } from "lucide-react";
 import { Entry, Note } from "@/lib/domain";
 import { client, check, errorMessage } from "@/lib/supabase";
+import { isGone, mergeEntries, nextNoteId, removeEntry } from "@/lib/notes";
 import { Button } from "./ui/button";
+import { ConfirmDialog } from "./ui/dialog";
 import { Files } from "./files";
 export function NoteEntry({
   entry,
+  deleting,
+  onDelete,
   onDirty,
   report,
 }: {
   entry: Entry;
+  deleting: boolean;
+  onDelete: (entry: Entry, opener: HTMLElement) => void;
   onDirty: (id: string, dirty: boolean) => void;
   report: (s: string) => void;
 }) {
@@ -30,9 +38,14 @@ export function NoteEntry({
     [status, setStatus] = useState("Salvo"),
     [retry, setRetry] = useState(0);
   const saving = useRef(false),
-    latest = useRef(content);
+    latest = useRef(content),
+    removing = useRef(deleting);
   latest.current = content;
+  removing.current = deleting;
   useEffect(() => {
+    // While a deletion runs nothing is scheduled; the previous cleanup already
+    // cancelled the pending save. If the deletion fails, this runs again.
+    if (deleting) return;
     onDirty(entry.id, content !== saved);
     if (content === saved) return;
     setStatus("Aguardando…");
@@ -52,6 +65,8 @@ export function NoteEntry({
         setSaved(content);
         setStatus(latest.current === content ? "Salvo" : "Aguardando…");
       } catch (e) {
+        // A save that loses the race against a deletion is expected.
+        if (removing.current) return;
         setStatus("Erro ao salvar");
         report(errorMessage(e));
       } finally {
@@ -59,24 +74,40 @@ export function NoteEntry({
       }
     }, 700);
     return () => clearTimeout(timer);
-  }, [content, saved, revision, retry]);
+  }, [content, saved, revision, retry, deleting]);
   return (
-    <article className="note-entry">
+    <article
+      className={"note-entry" + (deleting ? " deleting" : "")}
+      aria-busy={deleting}
+    >
       <div className="row between">
         <time>{date(entry.created_at)}</time>
-        <span
-          className={
-            "save-status " + (status === "Erro ao salvar" ? "error" : "")
-          }
-          role="status"
-        >
-          {status === "Salvo" ? <Check size={14} /> : <Cloud size={14} />}{" "}
-          {t(status)}
-        </span>
+        <div className="row note-entry-meta">
+          <span
+            className={
+              "save-status " + (status === "Erro ao salvar" ? "error" : "")
+            }
+            role="status"
+          >
+            {status === "Salvo" ? <Check size={14} /> : <Cloud size={14} />}{" "}
+            {t(status)}
+          </span>
+          <button
+            type="button"
+            className="icon-button note-entry-delete"
+            aria-label={t("Excluir bloco")}
+            title={t("Excluir bloco")}
+            disabled={deleting}
+            onClick={(e) => onDelete(entry, e.currentTarget)}
+          >
+            <Trash2 size={14} />
+          </button>
+        </div>
       </div>
       <textarea
         aria-label={t("Entrada de {{date}}", { date: date(entry.created_at) })}
         value={content}
+        readOnly={deleting}
         onChange={(e) => {
           setContent(e.target.value);
           onDirty(entry.id, e.target.value !== saved);
@@ -143,12 +174,117 @@ export function NoteEntry({
     </article>
   );
 }
+function NoteMenu({
+  triggerRef,
+  onEdit,
+  onDelete,
+}: {
+  triggerRef: React.RefObject<HTMLButtonElement | null>;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  const { t } = useI18n();
+  const [open, setOpen] = useState(false);
+  const container = useRef<HTMLDivElement>(null);
+  const items = useRef<(HTMLButtonElement | null)[]>([]);
+  const menuId = useId();
+  const actions = [
+    { label: t("Editar nota"), icon: Pencil, run: onEdit, danger: false },
+    { label: t("Excluir nota"), icon: Trash2, run: onDelete, danger: true },
+  ];
+  useEffect(() => {
+    if (!open) return;
+    items.current[0]?.focus();
+    const outside = (event: PointerEvent) => {
+      if (
+        event.target instanceof Node &&
+        !container.current?.contains(event.target)
+      )
+        setOpen(false);
+    };
+    document.addEventListener("pointerdown", outside);
+    return () => document.removeEventListener("pointerdown", outside);
+  }, [open]);
+  function focusItem(index: number) {
+    items.current[(index + actions.length) % actions.length]?.focus();
+  }
+  return (
+    <div className="note-menu" ref={container}>
+      <button
+        ref={triggerRef}
+        type="button"
+        className="button ghost"
+        aria-label={t("Ações da nota")}
+        title={t("Ações da nota")}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls={open ? menuId : undefined}
+        onClick={() => setOpen((value) => !value)}
+        onKeyDown={(event) => {
+          if (event.key === "ArrowDown") {
+            event.preventDefault();
+            setOpen(true);
+          }
+        }}
+      >
+        <MoreHorizontal size={17} />
+      </button>
+      {open && (
+        <div
+          id={menuId}
+          role="menu"
+          aria-label={t("Ações da nota")}
+          className="profile-dropdown"
+          onKeyDown={(event) => {
+            const current = items.current.findIndex(
+              (item) => item === document.activeElement,
+            );
+            if (event.key === "ArrowDown") focusItem(current + 1);
+            else if (event.key === "ArrowUp") focusItem(current - 1);
+            else if (event.key === "Home") focusItem(0);
+            else if (event.key === "End") focusItem(actions.length - 1);
+            else if (event.key === "Escape" || event.key === "Tab") {
+              // Tab resumes the normal order from the menu button.
+              setOpen(false);
+              triggerRef.current?.focus();
+              if (event.key === "Tab") return;
+            } else return;
+            event.preventDefault();
+          }}
+        >
+          {actions.map((action, index) => (
+            <button
+              key={index}
+              ref={(element) => {
+                items.current[index] = element;
+              }}
+              type="button"
+              role="menuitem"
+              tabIndex={-1}
+              className={"profile-menu-item" + (action.danger ? " danger" : "")}
+              onClick={() => {
+                setOpen(false);
+                action.run();
+              }}
+            >
+              <action.icon size={16} aria-hidden="true" />
+              {action.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+type DeleteTarget =
+  { kind: "entry"; entry: Entry } | { kind: "note"; note: Note };
 export function Notes({
   notes,
   selectedId,
   onSelect,
   onCreate,
   onRename,
+  onDelete,
   onDirty,
   report,
 }: {
@@ -157,6 +293,7 @@ export function Notes({
   onSelect: (id: string) => void;
   onCreate: () => void;
   onRename: (note: Note) => void;
+  onDelete: (note: Note, nextId: string | null) => Promise<void>;
   onDirty: (id: string, dirty: boolean) => void;
   report: (s: string) => void;
 }) {
@@ -166,10 +303,20 @@ export function Notes({
     [entries, setEntries] = useState<Entry[]>([]),
     [busy, setBusy] = useState(false),
     [more, setMore] = useState(false),
-    [loadedCount, setLoadedCount] = useState(0);
+    [loadedCount, setLoadedCount] = useState(0),
+    [target, setTarget] = useState<DeleteTarget | null>(null),
+    [deleting, setDeleting] = useState(false);
   const selected = notes.find((n) => n.id === selectedId);
   const activeId = useRef(selectedId);
   activeId.current = selectedId;
+  const shown = useRef(entries);
+  shown.current = entries;
+  const deleteLock = useRef(false),
+    removed = useRef(new Set<string>()),
+    pending = useRef<Promise<void> | null>(null),
+    opener = useRef<HTMLElement | null>(null),
+    heading = useRef<HTMLHeadingElement>(null),
+    menuTrigger = useRef<HTMLButtonElement>(null);
   async function load(offset = 0) {
     if (!selectedId) {
       setEntries([]);
@@ -185,21 +332,20 @@ export function Notes({
         .range(offset, offset + 49),
     ) as Entry[];
     if (activeId.current !== selectedId) return;
-    setEntries((prev) => {
-      const merged = offset ? [...prev, ...result] : result;
-      return [
-        ...new Map(merged.map((entry) => [entry.id, entry])).values(),
-      ].sort(
-        (a, b) =>
-          a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id),
-      );
-    });
+    setEntries((prev) =>
+      mergeEntries(prev, result, offset > 0, removed.current),
+    );
     setLoadedCount(offset + result.length);
     setMore(result.length === 50);
   }
+  function startLoad(offset = 0) {
+    pending.current = load(offset).catch((e) => report(errorMessage(e)));
+  }
   useEffect(() => {
     setEntries([]);
-    void load().catch((e) => report(errorMessage(e)));
+    // A confirmation left open belongs to the note that was on screen.
+    if (!deleteLock.current) setTarget(null);
+    startLoad();
   }, [selectedId]);
   async function add() {
     if (!selectedId) return;
@@ -218,6 +364,52 @@ export function Notes({
       report(errorMessage(e));
     } finally {
       setBusy(false);
+    }
+  }
+  async function confirmDelete() {
+    // The ref closes the gap between two clicks and the next render.
+    if (!target || deleteLock.current) return;
+    deleteLock.current = true;
+    setDeleting(true);
+    try {
+      // Let a page that is still loading settle, so offsets and content
+      // describe a single state.
+      await pending.current;
+      if (target.kind === "entry") {
+        const { entry } = target;
+        let gone = false;
+        try {
+          await removeEntry(client(), entry);
+        } catch (e) {
+          if (!isGone(e)) throw e;
+          gone = true;
+        }
+        removed.current.add(entry.id);
+        onDirty(entry.id, false);
+        if (activeId.current === entry.note_id) {
+          setEntries((prev) => prev.filter((item) => item.id !== entry.id));
+          setLoadedCount((count) => Math.max(0, count - 1));
+        }
+        opener.current = heading.current;
+        report(
+          gone ? "Este bloco não está mais disponível." : "Bloco excluído.",
+        );
+      } else {
+        const { note } = target;
+        await onDelete(note, nextNoteId(filtered, note.id));
+        for (const entry of shown.current) {
+          removed.current.add(entry.id);
+          onDirty(entry.id, false);
+        }
+        setEntries([]);
+        opener.current = document.getElementById("main");
+      }
+    } catch (e) {
+      report(errorMessage(e));
+    } finally {
+      deleteLock.current = false;
+      setDeleting(false);
+      setTarget(null);
     }
   }
   const filtered = notes
@@ -284,22 +476,41 @@ export function Notes({
           {selected ? (
             <>
               <div className="section-heading note-heading">
-                <h2 tabIndex={0} title={selected.title}>
+                <h2 ref={heading} tabIndex={0} title={selected.title}>
                   {selected.title}
                 </h2>
-                <Button
-                  variant="ghost"
-                  onClick={() => onRename(selected)}
-                  aria-label={t("Renomear nota")}
-                >
-                  <Pencil size={17} />
-                </Button>
+                <div className="note-actions">
+                  <Button
+                    variant="ghost"
+                    onClick={() => onRename(selected)}
+                    aria-label={t("Renomear nota")}
+                  >
+                    <Pencil size={17} />
+                  </Button>
+                  <NoteMenu
+                    triggerRef={menuTrigger}
+                    onEdit={() => onRename(selected)}
+                    onDelete={() => {
+                      opener.current = menuTrigger.current;
+                      setTarget({ kind: "note", note: selected });
+                    }}
+                  />
+                </div>
               </div>
               <div className="note-entries">
                 {entries.map((entry) => (
                   <NoteEntry
                     key={entry.id}
                     entry={entry}
+                    deleting={
+                      deleting &&
+                      !!target &&
+                      (target.kind === "note" || target.entry.id === entry.id)
+                    }
+                    onDelete={(item, element) => {
+                      opener.current = element;
+                      setTarget({ kind: "entry", entry: item });
+                    }}
                     onDirty={onDirty}
                     report={report}
                   />
@@ -318,11 +529,7 @@ export function Notes({
                 {more && (
                   <Button
                     variant="ghost"
-                    onClick={() =>
-                      void load(loadedCount).catch((e) =>
-                        report(errorMessage(e)),
-                      )
-                    }
+                    onClick={() => startLoad(loadedCount)}
                   >
                     {t("Carregar próximas entradas")}
                   </Button>
@@ -354,6 +561,31 @@ export function Notes({
           )}
         </section>
       </div>
+      {target && (
+        <ConfirmDialog
+          title={
+            target.kind === "entry"
+              ? t("Excluir este bloco?")
+              : t("Excluir “{{title}}”?", { title: target.note.title })
+          }
+          description={
+            target.kind === "entry"
+              ? t(
+                  "Esta ação removerá permanentemente o bloco selecionado. O restante da nota permanecerá inalterado.",
+                )
+              : t(
+                  "Esta ação excluirá permanentemente esta nota, todos os seus blocos e arquivos anexados.",
+                )
+          }
+          confirmLabel={
+            target.kind === "entry" ? t("Excluir") : t("Excluir nota")
+          }
+          busy={deleting}
+          onConfirm={() => void confirmDelete()}
+          onCancel={() => setTarget(null)}
+          returnFocusRef={opener}
+        />
+      )}
     </>
   );
 }
