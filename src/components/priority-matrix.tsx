@@ -25,6 +25,8 @@ export function PriorityMatrix({
 }) {
   const { t, number } = useI18n();
   const [busy, setBusy] = useState(false);
+  // Quadrant under the pointer while a card is being dragged.
+  const [over, setOver] = useState<Quadrant | null>(null);
   async function move(id: string, q: Quadrant) {
     if (busy || !activities.some((a) => a.id === id && !a.archived)) return;
     setBusy(true);
@@ -56,20 +58,35 @@ export function PriorityMatrix({
           const rows = activities.filter(
             (a) => !a.archived && quadrant(a.category_attributes.work) === q,
           );
+          // "Q1 · Importante e urgente · Fazer agora" → code, name and action.
+          const [code, name, action] =
+            q === "unclassified"
+              ? ["", t(quadrants[q]), ""]
+              : t(quadrants[q]).split(" · ");
           return (
             <section
-              className={`panel matrix-quadrant ${q}`}
+              className={`panel matrix-quadrant ${q}${over === q ? " drag-over" : ""}`}
               key={q}
-              onDragOver={(e) => e.preventDefault()}
+              onDragOver={(e) => {
+                e.preventDefault();
+                if (over !== q) setOver(q);
+              }}
+              onDragLeave={(e) => {
+                if (!e.currentTarget.contains(e.relatedTarget as Node | null))
+                  setOver(null);
+              }}
               onDrop={(e) => {
                 e.preventDefault();
+                setOver(null);
                 void move(e.dataTransfer.getData("text/plain"), q);
               }}
             >
               <h3>
-                {t(quadrants[q])}{" "}
+                {code && <span className="matrix-code">{code}</span>}
+                <span>{name}</span>
                 <span className="count">{number(rows.length)}</span>
               </h3>
+              {action && <p className="matrix-action">{action}</p>}
               {rows.map((a) => (
                 <article
                   className="matrix-card"
@@ -78,6 +95,7 @@ export function PriorityMatrix({
                   onDragStart={(e) =>
                     e.dataTransfer.setData("text/plain", a.id)
                   }
+                  onDragEnd={() => setOver(null)}
                 >
                   <button className="text-button" onClick={() => onOpen(a.id)}>
                     {a.title}

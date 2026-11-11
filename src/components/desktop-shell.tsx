@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
@@ -17,6 +17,10 @@ import {
   NotebookPen,
   Settings,
   LogOut,
+  LayoutDashboard,
+  MessageSquareText,
+  History,
+  Grid2x2,
 } from "lucide-react";
 import { useI18n } from "@/i18n/provider";
 import {
@@ -29,6 +33,7 @@ import { workspacePath, View } from "@/lib/navigation";
 import { BrandSymbol, BrandWordmark } from "./brand";
 import { ProfileMenu } from "./profile-menu";
 import { HeaderSearch } from "./header-search";
+import { WorkspaceIcon } from "./workspace-icon";
 export const workspaceTabs: { view: View; label: string }[] = [
   { view: "dashboard", label: "Visão geral" },
   { view: "activities", label: "Tarefas" },
@@ -37,6 +42,29 @@ export const workspaceTabs: { view: View; label: string }[] = [
   { view: "matrix", label: "Matriz de Eisenhower" },
   { view: "notes", label: "Notas" },
 ];
+const tabIcons: Partial<Record<View, typeof Folder>> = {
+  dashboard: LayoutDashboard,
+  activities: ListTodo,
+  observations: MessageSquareText,
+  history: History,
+  matrix: Grid2x2,
+  notes: NotebookPen,
+};
+// Below this width the workspace panel opens over the content instead of
+// beside it. Keep in sync with the 899px breakpoint in shell.css.
+const compactQuery = "(max-width: 899px)";
+function subscribeCompact(onChange: () => void) {
+  const media = window.matchMedia(compactQuery);
+  media.addEventListener("change", onChange);
+  return () => media.removeEventListener("change", onChange);
+}
+function useCompact() {
+  return useSyncExternalStore(
+    subscribeCompact,
+    () => window.matchMedia(compactQuery).matches,
+    () => false,
+  );
+}
 export function DesktopShell({
   user,
   workspaces,
@@ -64,7 +92,10 @@ export function DesktopShell({
 }) {
   const { t, locale, setLocale, storageError } = useI18n();
   const path = usePathname();
+  const compact = useCompact();
+  const toggle = useRef<HTMLButtonElement>(null);
   const [collapsed, setCollapsed] = useState(false);
+  const [drawer, setDrawer] = useState(false);
   useEffect(() => {
     try {
       setCollapsed(
@@ -84,12 +115,32 @@ export function DesktopShell({
     });
   }
   const contextual = path.startsWith("/workspaces");
+  // The drawer never outlives the page it was opened on.
+  useEffect(() => setDrawer(false), [path, compact]);
+  const panelOpen = contextual && (compact ? drawer : !collapsed);
+  useEffect(() => {
+    if (!compact || !drawer) return;
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setDrawer(false);
+        toggle.current?.focus();
+      }
+    };
+    document.addEventListener("keydown", escape);
+    return () => document.removeEventListener("keydown", escape);
+  }, [compact, drawer]);
   const guard = (event: { preventDefault: () => void }) => {
     if (!canLeave()) event.preventDefault();
   };
   return (
     <div
-      className={`desktop-app ${contextual && !collapsed ? "with-context" : ""}`}
+      className={[
+        "desktop-app",
+        contextual ? "contextual" : "",
+        panelOpen ? (compact ? "drawer-open" : "with-context") : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
     >
       <a href="#main" className="skip-link">
         {t("Ir para o conteúdo")}
@@ -129,10 +180,14 @@ export function DesktopShell({
         </div>
         <div className="header-account">
           <span className="private-label">
-            <LockKeyhole size={13} />
+            <LockKeyhole size={13} aria-hidden="true" />
             {t("Pessoal e privado")}
           </span>
-          <ProfileMenu user={user} canNavigate={canLeave} />
+          <ProfileMenu
+            user={user}
+            canNavigate={canLeave}
+            onSignOut={onSignOut}
+          />
         </div>
       </header>
       {storageError && (
@@ -149,53 +204,70 @@ export function DesktopShell({
           { href: "/activities", label: "Tarefas", icon: ListTodo },
           { href: "/search", label: "Pesquisar", icon: Search },
           { href: "/notes", label: "Notas", icon: NotebookPen },
-          { href: "/settings", label: "Configurações", icon: Settings },
-        ].map(({ href, label, icon: Icon }) => (
-          <Link
-            key={href}
-            href={href}
-            onNavigate={guard}
-            className={`rail-item ${path === href || (href === "/workspaces" && contextual) ? "active" : ""}`}
-            aria-current={
-              path === href || (href === "/workspaces" && contextual)
-                ? "page"
-                : undefined
-            }
-          >
-            <Icon size={20} />
-            <span>{t(label)}</span>
-          </Link>
-        ))}
+          {
+            href: "/settings",
+            label: "Configurações",
+            icon: Settings,
+            secondary: true,
+          },
+        ].map(({ href, label, icon: Icon, secondary }) => {
+          const active =
+            path === href || (href === "/workspaces" && contextual);
+          return (
+            <Link
+              key={href}
+              href={href}
+              onNavigate={guard}
+              className={`rail-item ${secondary ? "rail-secondary" : ""} ${active ? "active" : ""}`}
+              aria-current={active ? "page" : undefined}
+            >
+              <Icon size={20} aria-hidden="true" />
+              <span>{t(label)}</span>
+            </Link>
+          );
+        })}
+        {/* On phones these three live in the account menu of the header. */}
         <Link
           href="/perfil"
           onNavigate={guard}
-          className={`rail-item rail-profile ${path === "/perfil" ? "active" : ""}`}
+          className={`rail-item rail-secondary rail-profile ${path === "/perfil" ? "active" : ""}`}
           aria-current={path === "/perfil" ? "page" : undefined}
         >
-          <UserRound size={20} />
+          <UserRound size={20} aria-hidden="true" />
           <span>{t("Perfil")}</span>
         </Link>
-        <button className="rail-item rail-signout" onClick={onSignOut}>
-          <LogOut size={20} />
+        <button
+          className="rail-item rail-secondary rail-signout"
+          onClick={onSignOut}
+        >
+          <LogOut size={20} aria-hidden="true" />
           <span>{t("Sair")}</span>
         </button>
       </nav>
       {contextual && (
         <button
+          ref={toggle}
           className="context-toggle icon-button"
-          aria-label={t(collapsed ? "Expandir painel" : "Recolher painel")}
-          aria-expanded={!collapsed}
+          aria-label={t(panelOpen ? "Recolher painel" : "Expandir painel")}
+          aria-expanded={panelOpen}
           aria-controls="workspace-context"
-          onClick={collapse}
+          onClick={() => (compact ? setDrawer((v) => !v) : collapse())}
         >
-          {collapsed ? (
-            <PanelLeftOpen size={18} />
+          {panelOpen ? (
+            <PanelLeftClose size={18} aria-hidden="true" />
           ) : (
-            <PanelLeftClose size={18} />
+            <PanelLeftOpen size={18} aria-hidden="true" />
           )}
         </button>
       )}
-      {contextual && !collapsed && (
+      {panelOpen && compact && (
+        <div
+          className="context-scrim"
+          aria-hidden="true"
+          onClick={() => setDrawer(false)}
+        />
+      )}
+      {panelOpen && (
         <aside
           className="context-panel"
           id="workspace-context"
@@ -208,7 +280,7 @@ export function DesktopShell({
               aria-label={t("Criar workspace")}
               onClick={onCreate}
             >
-              <Plus size={17} />
+              <Plus size={17} aria-hidden="true" />
             </button>
           </div>
           <div className="context-workspaces">
@@ -222,13 +294,13 @@ export function DesktopShell({
                   aria-current={w.id === workspace?.id ? "page" : undefined}
                   className={`context-workspace ${w.id === workspace?.id ? "selected" : ""}`}
                 >
-                  <Folder size={16} />
+                  <WorkspaceIcon icon={w.icon} />
                   <span>{w.name}</span>
                 </Link>
               ))}
           </div>
           <button className="text-button context-create" onClick={onCreate}>
-            <Plus size={14} />
+            <Plus size={14} aria-hidden="true" />
             {t("Criar workspace")}
           </button>
           {workspace && (
@@ -242,17 +314,21 @@ export function DesktopShell({
                     (tab) =>
                       tab.view !== "matrix" || workspace.category === "work",
                   )
-                  .map((tab) => (
-                    <Link
-                      key={tab.view}
-                      href={workspacePath(workspace.id, tab.view)}
-                      onNavigate={guard}
-                      className={`context-link ${view === tab.view ? "active" : ""}`}
-                      aria-current={view === tab.view ? "page" : undefined}
-                    >
-                      {t(tab.label)}
-                    </Link>
-                  ))}
+                  .map((tab) => {
+                    const Icon = tabIcons[tab.view] ?? Folder;
+                    return (
+                      <Link
+                        key={tab.view}
+                        href={workspacePath(workspace.id, tab.view)}
+                        onNavigate={guard}
+                        className={`context-link ${view === tab.view ? "active" : ""}`}
+                        aria-current={view === tab.view ? "page" : undefined}
+                      >
+                        <Icon size={16} aria-hidden="true" />
+                        {t(tab.label)}
+                      </Link>
+                    );
+                  })}
               </nav>
               <div className="context-category">{t("Conteúdos recentes")}</div>
               {activities
@@ -275,7 +351,7 @@ export function DesktopShell({
                 className="context-link context-settings"
                 onNavigate={guard}
               >
-                <Settings size={15} />
+                <Settings size={16} aria-hidden="true" />
                 {t("Configurações")}
               </Link>
             </>

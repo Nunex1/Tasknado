@@ -1,12 +1,16 @@
 {
-  "date": "2026-10-22T22:55:35.757Z",
+  "date": "2026-11-11T01:52:05.149Z",
   "checks": [
     "All migrations execute in real embedded PostgreSQL (Supabase auth/storage schema harness)",
     "RLS isolates users and composite foreign keys reject cross-account parents",
     "State machine, idempotency, chronology, archive and immutable history enforced",
+    "Reopening preserves authorization, idempotency and history; completion includes archives",
     "Explicit boolean Canvas choice, category preservation, schedule validation and independent audited priority",
     "Observation editing preserves creation time, detects conflicts and isolates owners while execution events remain immutable",
     "Optimistic note revision prevents stale overwrite",
+    "Direct deletes, wrong-note, other-owner, anonymous and session-less deletions leave notes and blocks untouched",
+    "Block deletion removes one block, keeps order, the note and its other blocks, touches the note, rejects repeats and late saves; an emptied note accepts new blocks",
+    "Note deletion removes the note with its blocks and file records in one step, queues storage cleanup, audits it, blocks late writes and preserves every other record",
     "Workspace observations preserve timestamps, search updates, history snapshots and ownership; forged history and timestamps rejected",
     "Storage policies, RPCs and search reject another owner",
     "Portuguese full text search, filters and immutable audit logs",

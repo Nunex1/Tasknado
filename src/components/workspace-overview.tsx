@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Folder, Plus, ArrowUpRight } from "lucide-react";
+import { Plus, ArrowUpRight } from "lucide-react";
 import {
   Workspace,
   workspaceCategories,
@@ -10,6 +10,7 @@ import {
 import { client, check, errorMessage } from "@/lib/supabase";
 import { useI18n } from "@/i18n/provider";
 import { Button } from "./ui/button";
+import { WorkspaceIcon } from "./workspace-icon";
 export function WorkspaceDirectory({
   workspaces,
   onOpen,
@@ -53,14 +54,14 @@ export function WorkspaceDirectory({
             key={w.id}
             onClick={() => onOpen(w.id)}
           >
-            <Folder size={22} />
+            <WorkspaceIcon icon={w.icon} size={22} />
             <div>
               <strong>{w.name}</strong>
               <p>{w.description || t(workspaceCategories[w.category])}</p>
             </div>
             <span className="badge">{t(workspaceCategories[w.category])}</span>
             <time>{date(w.updated_at)}</time>
-            <ArrowUpRight size={17} />
+            <ArrowUpRight size={17} aria-hidden="true" />
           </button>
         ))}
       </div>

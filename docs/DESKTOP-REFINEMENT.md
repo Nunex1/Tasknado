@@ -26,7 +26,6 @@ Versões instaladas verificadas: Next.js 16.4.1, React 19.3.0, TypeScript 5.9.3,
 | src/app/desktop.css | Barra compacta com rolagem em alturas reduzidas; grid de título com laterais simétricas; truncamento e revelação por foco |
 | src/lib/domain.ts | Predicado compartilhado de indicadores; ação de retomada após conclusão |
 | src/components/activity-detail.tsx | Rótulo Reabrir tarefa no seletor de eventos de tarefas concluídas |
-| src/i18n/provider.tsx e i18n.test.ts | Inclui as correções locais de persistência remota do idioma, hidratação e reconhecimento dos rótulos PT/EN, ainda ausentes da main |
 | src/i18n/pt-BR.json e en-US.json | Novos rótulos e mensagens, incluindo Completed Tasks e Sign Out |
 | supabase/migrations/202611090001_reopen_completed.sql | Amplia a transição resume na função add_event para completed |
 | src/lib/domain.test.ts e desktop.test.ts | Contratos de transição e classificação de indicadores |
@@ -61,7 +60,7 @@ Comandos do projeto executados com o launcher pnpm via Node, pois o alias pnpm d
 | Prettier --check dos arquivos alterados | Aprovado |
 | Lint | Não executável: não há script lint nem configuração de ESLint no projeto; Prettier não substitui lint |
 
-Evidências completas: `docs/validation/desktop-refinement/database.json`, `docs/validation/desktop-refinement/integration.json`, `docs/validation/desktop-refinement/desktop.json`. As contas de teste foram criadas no ambiente local e removidas pelos testes; nenhum dado de produção foi usado ou substituído por mocks.
+Evidências completas: `test-results/database.json`, `test-results/integration.json`, `test-results/desktop.json`. As contas de teste foram criadas no ambiente local e removidas pelos testes; nenhum dado de produção foi usado ou substituído por mocks.
 
 Os 15 cenários pedidos têm cobertura local: conclusão; reabertura; escopo de Workspace; navegação global; ausência de Mais; aba Notas; sincronização; alinhamento; persistência; PT/EN; URLs diretas; resoluções Desktop; segurança; autosave/edição; regressão de busca, histórico, matriz e perfil. A revisão de código confirmou reaproveitamento de rotas, estado, consultas e RLS. As falhas intermediárias de teste por espera de navegação foram corrigidas antes da execução final, que terminou sem falhas.
 

@@ -261,7 +261,7 @@ export function WorkspaceObservations({
                     {t("Editar")}
                   </button>
                   <button
-                    className="text-button"
+                    className="text-button danger"
                     disabled={busy}
                     onClick={() => void remove(row)}
                   >

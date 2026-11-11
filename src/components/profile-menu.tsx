@@ -5,31 +5,42 @@ import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
-import { UserRound } from "lucide-react";
+import { LogOut, Settings, UserRound } from "lucide-react";
 import { userProfile, avatarForeground } from "@/lib/user-profile";
+
+const links = [
+  { href: "/perfil", label: "Editar perfil", icon: UserRound },
+  { href: "/settings", label: "Configurações", icon: Settings },
+];
 
 export function ProfileMenu({
   user,
   canNavigate,
+  onSignOut,
 }: {
   user: User;
   canNavigate: () => boolean;
+  onSignOut: () => void;
 }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const container = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
-  const item = useRef<HTMLAnchorElement>(null);
+  const items = useRef<(HTMLElement | null)[]>([]);
   const menuId = useId();
   const triggerId = useId();
   const pathname = usePathname();
-  const { initial, color } = userProfile(user);
+  const { initial, color, displayName, email } = userProfile(user);
+  const count = links.length + 1;
+  function focusItem(index: number) {
+    items.current[(index + count) % count]?.focus();
+  }
 
   useEffect(() => setOpen(false), [pathname]);
 
   useEffect(() => {
     if (!open) return;
-    item.current?.focus();
+    items.current[0]?.focus();
     const outside = (event: PointerEvent) => {
       if (
         event.target instanceof Node &&
@@ -76,53 +87,87 @@ export function ProfileMenu({
           if (event.key === "ArrowDown" || event.key === "ArrowUp") {
             event.preventDefault();
             setOpen(true);
-            item.current?.focus();
+            items.current[0]?.focus();
           }
         }}
       >
         <span aria-hidden="true">{initial || <UserRound size={15} />}</span>
       </button>
       {open && (
-        <div
-          id={menuId}
-          role="menu"
-          aria-labelledby={triggerId}
-          className="profile-dropdown"
-          onKeyDown={(event) => {
-            if (["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) {
-              event.preventDefault();
-              item.current?.focus();
-            }
-            if (event.key === "Tab") {
-              // Resume the normal tab order from the menu button.
-              trigger.current?.focus();
-              setOpen(false);
-            }
-          }}
-        >
-          <Link
-            ref={item}
-            href="/perfil"
-            role="menuitem"
-            tabIndex={-1}
-            className="profile-menu-item"
+        <div className="profile-dropdown">
+          {(displayName || email) && (
+            <div className="profile-dropdown-header">
+              <strong>{displayName}</strong>
+              {email && email !== displayName && <small>{email}</small>}
+            </div>
+          )}
+          <div
+            id={menuId}
+            role="menu"
+            aria-labelledby={triggerId}
             onKeyDown={(event) => {
-              if (event.key === " ") {
-                event.preventDefault();
-                event.currentTarget.click();
-              }
-            }}
-            onNavigate={(event) => {
-              if (!canNavigate() || pathname === "/perfil") {
-                event.preventDefault();
+              const current = items.current.findIndex(
+                (item) => item === document.activeElement,
+              );
+              if (event.key === "ArrowDown") focusItem(current + 1);
+              else if (event.key === "ArrowUp") focusItem(current - 1);
+              else if (event.key === "Home") focusItem(0);
+              else if (event.key === "End") focusItem(count - 1);
+              else if (event.key === "Tab") {
+                // Resume the normal tab order from the menu button.
                 trigger.current?.focus();
-              }
-              setOpen(false);
+                setOpen(false);
+                return;
+              } else return;
+              event.preventDefault();
             }}
           >
-            <UserRound size={17} aria-hidden="true" />
-            {t("Editar perfil")}
-          </Link>
+            {links.map(({ href, label, icon: Icon }, index) => (
+              <Link
+                key={href}
+                ref={(element) => {
+                  items.current[index] = element;
+                }}
+                href={href}
+                role="menuitem"
+                tabIndex={-1}
+                className="profile-menu-item"
+                onKeyDown={(event) => {
+                  if (event.key === " ") {
+                    event.preventDefault();
+                    event.currentTarget.click();
+                  }
+                }}
+                onNavigate={(event) => {
+                  if (!canNavigate() || pathname === href) {
+                    event.preventDefault();
+                    trigger.current?.focus();
+                  }
+                  setOpen(false);
+                }}
+              >
+                <Icon size={16} aria-hidden="true" />
+                {t(label)}
+              </Link>
+            ))}
+            <div className="profile-menu-separator" role="separator" />
+            <button
+              ref={(element) => {
+                items.current[links.length] = element;
+              }}
+              type="button"
+              role="menuitem"
+              tabIndex={-1}
+              className="profile-menu-item"
+              onClick={() => {
+                setOpen(false);
+                onSignOut();
+              }}
+            >
+              <LogOut size={16} aria-hidden="true" />
+              {t("Sair")}
+            </button>
+          </div>
         </div>
       )}
     </div>
