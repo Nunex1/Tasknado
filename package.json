@@ -13,7 +13,9 @@
     "test:database": "node scripts/test-database.mjs",
     "test:desktop": "node scripts/test-desktop.mjs",
     "test:notes": "node scripts/test-notes-deletion.mjs",
-    "format": "prettier --write src scripts"
+    "format": "prettier --write src scripts",
+    "test:responsive": "node scripts/test-responsive.mjs",
+    "capture:landing": "node scripts/capture-landing.mjs"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.0",

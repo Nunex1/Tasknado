@@ -1,8 +1,10 @@
 {
-  "date": "2026-10-23T03:50:41.747Z",
-  "passed": 18,
+  "date": "2026-11-11T01:56:12.635Z",
+  "passed": 22,
   "checks": [
     "Real UI authentication, Workspace creation and dedicated route; Work schedule/date/time and Q1 persist",
+    "Home counts across workspaces and another workspace excludes completed tasks outside its scope",
+    "Completed indicator, archive inclusion, URL filter reload and recorded reopening",
     "Activity start and observation creation/editing survive reload with original creation and separate edit timestamp",
     "Ctrl/Command K, grouped suggestions, term highlighting, arrow/Enter navigation, Escape and exact observation deep link",
     "Matrix keyboard selector and real mouse drag/drop persist priority, record history and preserve schedule/status",
@@ -12,14 +14,16 @@
     "Profile nickname/letter/custom color preview, cancel, save, global avatar, reload, menu outside click and Escape focus restoration",
     "Immediate EN translation, reload preference and real profile/language persistence in a fresh independent browser session",
     "Original notebook creation, autosave and persistent entry routes preserved",
-    "Both brand links return Home across all modules without full reload; browser Back restores routes; Home has exactly two indicators and no mobile navigation",
+    "Direct global navigation, synchronized Notes tabs, history and centered short/long titles at all desktop widths",
+    "Both brand links return Home across all modules without full reload; browser Back restores routes; Home has exactly three indicators and no mobile navigation",
     "Work schedule can be removed; local search, overdue/date filters and date ordering operate independently of status",
     "Search network failure produces a localized error and retry recovers without reloading",
     "All five required desktop resolutions: activity tables, matrix, expanded/collapsed context and search fit without horizontal overflow or region overlap",
     "Desktop 200% effective viewport (960 CSS px from Full HD), with context collapsed, retains matrix and keyboard classification",
     "Reduced motion disables the wave; explicit deletion removes both observation types while operational snapshots remain",
     "No browser runtime errors throughout the desktop suite",
-    "Automated WCAG A/AA checks on eleven authenticated desktop screens report no violations; manual-review items recorded separately"
+    "Automated WCAG A/AA checks on eleven authenticated desktop screens report no violations; manual-review items recorded separately",
+    "Direct Sign Out ends the authenticated UI session"
   ],
   "visuals": [
     {
@@ -29,13 +33,13 @@
       "scroll": 1280,
       "viewport": 1280,
       "main": {
-        "x": 312,
-        "width": 968
+        "x": 332,
+        "width": 948
       },
       "header": {
         "height": 64
       },
-      "panelRight": 312,
+      "panelRight": 332,
       "screenshot": "test-results/desktop/1280x720-activities.png"
     },
     {
@@ -45,13 +49,13 @@
       "scroll": 1280,
       "viewport": 1280,
       "main": {
-        "x": 312,
-        "width": 968
+        "x": 332,
+        "width": 948
       },
       "header": {
         "height": 64
       },
-      "panelRight": 312,
+      "panelRight": 332,
       "screenshot": "test-results/desktop/1280x720-matrix.png"
     },
     {
@@ -61,13 +65,13 @@
       "scroll": 1366,
       "viewport": 1366,
       "main": {
-        "x": 312,
-        "width": 1054
+        "x": 332,
+        "width": 1034
       },
       "header": {
         "height": 64
       },
-      "panelRight": 312,
+      "panelRight": 332,
       "screenshot": "test-results/desktop/1366x768-activities.png"
     },
     {
@@ -77,13 +81,13 @@
       "scroll": 1366,
       "viewport": 1366,
       "main": {
-        "x": 312,
-        "width": 1054
+        "x": 332,
+        "width": 1034
       },
       "header": {
         "height": 64
       },
-      "panelRight": 312,
+      "panelRight": 332,
       "screenshot": "test-results/desktop/1366x768-matrix.png"
     },
     {
@@ -93,13 +97,13 @@
       "scroll": 1440,
       "viewport": 1440,
       "main": {
-        "x": 312,
-        "width": 1128
+        "x": 332,
+        "width": 1108
       },
       "header": {
         "height": 64
       },
-      "panelRight": 312,
+      "panelRight": 332,
       "screenshot": "test-results/desktop/1440x900-activities.png"
     },
     {
@@ -109,13 +113,13 @@
       "scroll": 1440,
       "viewport": 1440,
       "main": {
-        "x": 312,
-        "width": 1128
+        "x": 332,
+        "width": 1108
       },
       "header": {
         "height": 64
       },
-      "panelRight": 312,
+      "panelRight": 332,
       "screenshot": "test-results/desktop/1440x900-matrix.png"
     },
     {
@@ -125,13 +129,13 @@
       "scroll": 1920,
       "viewport": 1920,
       "main": {
-        "x": 476,
-        "width": 1280
+        "x": 526,
+        "width": 1200
       },
       "header": {
         "height": 64
       },
-      "panelRight": 312,
+      "panelRight": 332,
       "screenshot": "test-results/desktop/1920x1080-activities.png"
     },
     {
@@ -141,13 +145,13 @@
       "scroll": 1920,
       "viewport": 1920,
       "main": {
-        "x": 476,
-        "width": 1280
+        "x": 526,
+        "width": 1200
       },
       "header": {
         "height": 64
       },
-      "panelRight": 312,
+      "panelRight": 332,
       "screenshot": "test-results/desktop/1920x1080-matrix.png"
     },
     {
@@ -157,13 +161,13 @@
       "scroll": 2560,
       "viewport": 2560,
       "main": {
-        "x": 796,
-        "width": 1280
+        "x": 846,
+        "width": 1200
       },
       "header": {
         "height": 64
       },
-      "panelRight": 312,
+      "panelRight": 332,
       "screenshot": "test-results/desktop/2560x1440-activities.png"
     },
     {
@@ -173,13 +177,13 @@
       "scroll": 2560,
       "viewport": 2560,
       "main": {
-        "x": 796,
-        "width": 1280
+        "x": 846,
+        "width": 1200
       },
       "header": {
         "height": 64
       },
-      "panelRight": 312,
+      "panelRight": 332,
       "screenshot": "test-results/desktop/2560x1440-matrix.png"
     }
   ],
@@ -187,67 +191,307 @@
     {
       "path": "/",
       "violations": [],
-      "manualReview": [],
-      "passedRules": 24
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": [
+            {
+              "target": [
+                "select"
+              ],
+              "reason": "Fix any of the following:\n  Element's background color could not be determined due to a background image"
+            }
+          ]
+        }
+      ],
+      "passedRules": 25
     },
     {
       "path": "/workspaces",
       "violations": [],
-      "manualReview": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": [
+            {
+              "target": [
+                "select"
+              ],
+              "reason": "Fix any of the following:\n  Element's background color could not be determined due to a background image"
+            }
+          ]
+        }
+      ],
       "passedRules": 25
     },
     {
-      "path": "/workspaces/34325003-3c74-4d2e-8802-b0bfd47be7bc/activities",
+      "path": "/workspaces/3b8a9b71-a251-4be2-bbac-6de435ebd0f3/activities",
       "violations": [],
-      "manualReview": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": [
+            {
+              "target": [
+                "select[aria-label=\"Idioma da interface\"]"
+              ],
+              "reason": "Fix any of the following:\n  Element's background color could not be determined due to a background image"
+            },
+            {
+              "target": [
+                "select[aria-label=\"Ordenar atividades\"]"
+              ],
+              "reason": "Fix any of the following:\n  Element's background color could not be determined due to a background image"
+            },
+            {
+              "target": [
+                "label:nth-child(1) > select"
+              ],
+              "reason": "Fix any of the following:\n  Element's background color could not be determined due to a background image"
+            }
+          ]
+        }
+      ],
       "passedRules": 25
     },
     {
-      "path": "/workspaces/34325003-3c74-4d2e-8802-b0bfd47be7bc/activities/b222f801-4ac1-409f-a012-612e743afc72",
+      "path": "/workspaces/3b8a9b71-a251-4be2-bbac-6de435ebd0f3/activities/f4effb24-1f63-4f2d-93a2-acf9b064019d",
       "violations": [],
-      "manualReview": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": [
+            {
+              "target": [
+                "select[aria-label=\"Idioma da interface\"]"
+              ],
+              "reason": "Fix any of the following:\n  Element's background color could not be determined due to a background image"
+            },
+            {
+              "target": [
+                ".list-toolbar > label:nth-child(1) > select"
+              ],
+              "reason": "Fix any of the following:\n  Element's background color could not be determined due to a background image"
+            },
+            {
+              "target": [
+                ".list-toolbar > label:nth-child(2) > select"
+              ],
+              "reason": "Fix any of the following:\n  Element's background color could not be determined due to a background image"
+            },
+            {
+              "target": [
+                "form > label > select"
+              ],
+              "reason": "Fix any of the following:\n  Element's background color could not be determined due to a background image"
+            },
+            {
+              "target": [
+                ".attachment-event > select"
+              ],
+              "reason": "Fix any of the following:\n  Element's background color could not be determined due to a background image"
+            }
+          ]
+        }
+      ],
       "passedRules": 28
     },
     {
-      "path": "/workspaces/34325003-3c74-4d2e-8802-b0bfd47be7bc/observations",
+      "path": "/workspaces/3b8a9b71-a251-4be2-bbac-6de435ebd0f3/observations",
       "violations": [],
-      "manualReview": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": [
+            {
+              "target": [
+                "select[aria-label=\"Idioma da interface\"]"
+              ],
+              "reason": "Fix any of the following:\n  Element's background color could not be determined due to a background image"
+            },
+            {
+              "target": [
+                ".list-toolbar > label:nth-child(2) > select"
+              ],
+              "reason": "Fix any of the following:\n  Element's background color could not be determined due to a background image"
+            }
+          ]
+        }
+      ],
       "passedRules": 25
     },
     {
-      "path": "/workspaces/34325003-3c74-4d2e-8802-b0bfd47be7bc/history",
+      "path": "/workspaces/3b8a9b71-a251-4be2-bbac-6de435ebd0f3/history",
       "violations": [],
-      "manualReview": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": [
+            {
+              "target": [
+                "select"
+              ],
+              "reason": "Fix any of the following:\n  Element's background color could not be determined due to a background image"
+            }
+          ]
+        }
+      ],
       "passedRules": 25
     },
     {
-      "path": "/workspaces/34325003-3c74-4d2e-8802-b0bfd47be7bc/matrix",
+      "path": "/workspaces/3b8a9b71-a251-4be2-bbac-6de435ebd0f3/matrix",
       "violations": [],
-      "manualReview": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": [
+            {
+              "target": [
+                "select[aria-label=\"Idioma da interface\"]"
+              ],
+              "reason": "Fix any of the following:\n  Element's background color could not be determined due to a background image"
+            },
+            {
+              "target": [
+                ".q1 > article > select"
+              ],
+              "reason": "Fix any of the following:\n  Element's background color could not be determined due to a background image"
+            },
+            {
+              "target": [
+                ".q2 > article:nth-child(3) > select"
+              ],
+              "reason": "Fix any of the following:\n  Element's background color could not be determined due to a background image"
+            },
+            {
+              "target": [
+                "article:nth-child(4) > select"
+              ],
+              "reason": "Fix any of the following:\n  Element's background color could not be determined due to a background image"
+            },
+            {
+              "target": [
+                ".q3 > article > select"
+              ],
+              "reason": "Fix any of the following:\n  Element's background color could not be determined due to a background image"
+            },
+            {
+              "target": [
+                "select[aria-label=\"Quadrante de Reavaliar rotinas\"]"
+              ],
+              "reason": "Fix any of the following:\n  Element's background color could not be determined due to a background image"
+            }
+          ]
+        }
+      ],
       "passedRules": 25
     },
     {
-      "path": "/workspaces/34325003-3c74-4d2e-8802-b0bfd47be7bc/notes/edf22764-c6ec-4e07-8610-7027449d0d98",
+      "path": "/workspaces/3b8a9b71-a251-4be2-bbac-6de435ebd0f3/notes/ce7ade7d-f76a-472c-8e10-67ee8a0bc373",
       "violations": [],
-      "manualReview": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": [
+            {
+              "target": [
+                "select[aria-label=\"Idioma da interface\"]"
+              ],
+              "reason": "Fix any of the following:\n  Element's background color could not be determined due to a background image"
+            },
+            {
+              "target": [
+                "select[aria-label=\"Ordenar notas\"]"
+              ],
+              "reason": "Fix any of the following:\n  Element's background color could not be determined due to a background image"
+            }
+          ]
+        }
+      ],
       "passedRules": 26
     },
     {
       "path": "/perfil",
       "violations": [],
-      "manualReview": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": [
+            {
+              "target": [
+                "select"
+              ],
+              "reason": "Fix any of the following:\n  Element's background color could not be determined due to a background image"
+            }
+          ]
+        }
+      ],
       "passedRules": 26
     },
     {
       "path": "/settings",
       "violations": [],
-      "manualReview": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": [
+            {
+              "target": [
+                "select[aria-label=\"Idioma da interface\"]"
+              ],
+              "reason": "Fix any of the following:\n  Element's background color could not be determined due to a background image"
+            },
+            {
+              "target": [
+                ".language-select > select"
+              ],
+              "reason": "Fix any of the following:\n  Element's background color could not be determined due to a background image"
+            }
+          ]
+        }
+      ],
       "passedRules": 26
     },
     {
       "path": "/search",
       "violations": [],
-      "manualReview": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": [
+            {
+              "target": [
+                "select[aria-label=\"Idioma da interface\"]"
+              ],
+              "reason": "Fix any of the following:\n  Element's background color could not be determined due to a background image"
+            },
+            {
+              "target": [
+                "label:nth-child(1) > select"
+              ],
+              "reason": "Fix any of the following:\n  Element's background color could not be determined due to a background image"
+            },
+            {
+              "target": [
+                ".search-filters > label:nth-child(2) > select"
+              ],
+              "reason": "Fix any of the following:\n  Element's background color could not be determined due to a background image"
+            },
+            {
+              "target": [
+                "label:nth-child(3) > select"
+              ],
+              "reason": "Fix any of the following:\n  Element's background color could not be determined due to a background image"
+            },
+            {
+              "target": [
+                "label:nth-child(6) > select"
+              ],
+              "reason": "Fix any of the following:\n  Element's background color could not be determined due to a background image"
+            }
+          ]
+        }
+      ],
       "passedRules": 26
     }
   ],

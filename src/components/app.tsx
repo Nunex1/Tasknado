@@ -14,11 +14,8 @@ import {
   ChevronRight,
   ChevronDown,
   Folder,
-  Briefcase,
-  BookOpen,
-  Wallet,
-  Code2,
   ArrowUpRight,
+  MessageSquare,
   Play,
   Pause,
   CheckCircle2,
@@ -63,6 +60,7 @@ import { routeState, workspacePath, View } from "@/lib/navigation";
 import { DesktopShell, workspaceTabs } from "./desktop-shell";
 import { WorkspaceObservations, WorkspaceHistory } from "./workspace-records";
 import { WorkspaceDirectory, RecentObservations } from "./workspace-overview";
+import { DashboardFocus } from "./dashboard-focus";
 import { quadrant, quadrants, isStarted } from "@/lib/domain";
 import { fetchPages } from "@/lib/pagination";
 import { isGone, removeNote } from "@/lib/notes";
@@ -71,13 +69,6 @@ type Editor =
   | { kind: "workspace"; item?: Workspace }
   | { kind: "activity"; item?: Activity }
   | { kind: "note"; item?: Note };
-const icons: Record<string, typeof Folder> = {
-  folder: Folder,
-  briefcase: Briefcase,
-  book: BookOpen,
-  wallet: Wallet,
-  code: Code2,
-};
 export function App() {
   const { t, date, number, locale, setAccount } = useI18n();
   const pathname = usePathname();
@@ -629,7 +620,8 @@ export function App() {
   if (!ready)
     return (
       <main className="setup" role="status">
-        <BrandLogo layout="vertical" />
+        <BrandLogo tone="blue" />
+        <div className="spinner" aria-hidden="true" />
         <p>{t("Abrindo seu espaço…")}</p>
       </main>
     );
@@ -992,6 +984,9 @@ export function App() {
                                   : "Em andamento",
                             )}
                           </span>
+                          <span className="stat-icon" aria-hidden="true">
+                            <Icon size={15} />
+                          </span>
                         </div>
                         <strong>
                           {number(count)}
@@ -1004,6 +999,16 @@ export function App() {
                     );
                   })}
                 </div>
+                <DashboardFocus
+                  activities={activities}
+                  workspaces={workspaces}
+                  workspace={workspace}
+                  onOpen={setActivityId}
+                  onSeeStarted={() => {
+                    setFilter("started");
+                    setArchived(false);
+                  }}
+                />
               </>
             )}
             <section className="panel activities-panel">
@@ -1041,6 +1046,7 @@ export function App() {
                       {filter === "started" && (
                         <button
                           className="active"
+                          aria-pressed="true"
                           onClick={() => setFilter("")}
                         >
                           {t("Iniciadas e não concluídas")} ×
@@ -1048,6 +1054,7 @@ export function App() {
                       )}
                       <button
                         className={!filter ? "active" : ""}
+                        aria-pressed={!filter}
                         onClick={() => setFilter("")}
                       >
                         {t("Todas")}
@@ -1055,6 +1062,7 @@ export function App() {
                       {Object.entries(statuses).map(([s, label]) => (
                         <button
                           className={filter === s ? "active" : ""}
+                          aria-pressed={filter === s}
                           key={s}
                           onClick={() => setFilter(s)}
                         >
@@ -1148,7 +1156,10 @@ export function App() {
                   <span>{t("Classificação")}</span>
                   <span>{t("Criação")}</span>
                   <span>{t("ATUALIZADA EM")}</span>
-                  <span>{t("Observações")}</span>
+                  <span title={t("Observações")}>
+                    <MessageSquare size={14} aria-hidden="true" />
+                    <span className="visually-hidden">{t("Observações")}</span>
+                  </span>
                 </div>
                 {shown
                   .slice(0, view === "dashboard" ? 6 : undefined)
@@ -1214,16 +1225,22 @@ export function App() {
                               : "—"}
                         </span>
                         <time title={date(a.created_at)}>
+                          <span className="cell-label">{t("Criação")}</span>{" "}
                           {new Intl.DateTimeFormat(locale).format(
                             new Date(a.created_at),
                           )}
                         </time>
                         <time title={date(a.updated_at)}>
+                          <span className="cell-label">{t("Atualização")}</span>{" "}
                           {new Intl.DateTimeFormat(locale).format(
                             new Date(a.updated_at),
                           )}
                         </time>
                         <span className="observation-count">
+                          <MessageSquare size={13} aria-hidden="true" />
+                          <span className="visually-hidden">
+                            {t("Observações")}
+                          </span>{" "}
                           {number(observationCounts[a.id] || 0)}
                         </span>
                       </button>

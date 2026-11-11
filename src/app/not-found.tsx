@@ -8,7 +8,7 @@ export default function NotFound() {
   const { t } = useI18n();
   return (
     <main className="setup">
-      <BrandLogo layout="vertical" />
+      <BrandLogo tone="blue" />
       <h1>{t("Página não encontrada")}</h1>
       <p>{t("Esta página não existe ou foi movida.")}</p>
       <Link href="/" className="button primary">

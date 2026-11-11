@@ -1,0 +1,123 @@
+/*
+ * Tasknado Design System — tokens.
+ * Every colour, size, radius, shadow and duration used by the interface is
+ * declared here. Component styles reference these names only.
+ */
+:root {
+  color-scheme: light;
+
+  /* Brand and surfaces */
+  --background: #ffffff;
+  --surface: #f8fafc;
+  --surface-hover: #f1f5f9;
+  --blue-surface: #eff6ff;
+  --primary: #2563eb;
+  --primary-strong: #1d4ed8;
+  --royal: #4169e1;
+  --on-primary: #ffffff;
+
+  /* Text. --text-subtle replaces --text-secondary over tinted surfaces,
+     where the lighter grey would fall below 4.5:1. */
+  --text: #0f172a;
+  --text-secondary: #64748b;
+  --text-subtle: #475569;
+
+  /* Lines. Dividers use --border; form controls need 3:1 against white. */
+  --border: #e2e8f0;
+  --border-hover: #cbd5e1;
+  --border-control: #8793a6;
+  --focus: #1d4ed8;
+  --focus-ring: rgb(37 99 235 / 22%);
+  --overlay: rgb(15 23 42 / 40%);
+
+  /* Semantic states: text colour, surface and border for each meaning. */
+  --info: #1d4ed8;
+  --info-surface: #eff6ff;
+  --info-border: #bfdbfe;
+  --success: #15803d;
+  --success-surface: #f0fdf4;
+  --success-border: #bbf7d0;
+  --warning: #b45309;
+  --warning-surface: #fffbeb;
+  --warning-border: #fde68a;
+  --danger: #b91c1c;
+  --danger-surface: #fef2f2;
+  --danger-border: #fecaca;
+  --neutral: #475569;
+  --neutral-surface: #f1f5f9;
+  --neutral-border: #e2e8f0;
+
+  /* Typography */
+  --font-sans:
+    var(--font-inter), "Inter", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono:
+    ui-monospace, "SF Mono", "Cascadia Mono", "Segoe UI Mono", Consolas,
+    monospace;
+  --text-2xs: 0.6875rem; /* 11px — compact navigation labels only */
+  --text-xs: 0.75rem; /* 12px — metadata */
+  --text-sm: 0.8125rem; /* 13px — secondary text, controls */
+  --text-base: 0.875rem; /* 14px — application body */
+  --text-md: 1rem; /* 16px — landing body */
+  --text-lg: 1.25rem; /* 20px — section title */
+  --text-xl: 1.5rem; /* 24px — landing section lead */
+  --text-2xl: 1.75rem; /* 28px — page title */
+  --text-3xl: clamp(1.75rem, 1.2rem + 2.2vw, 2.5rem); /* landing section */
+  --text-hero: clamp(2.5rem, 1.5rem + 4.6vw, 4rem); /* 40–64px */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --leading-tight: 1.15;
+  --leading-snug: 1.35;
+  --leading-normal: 1.55;
+
+  /* Spacing — multiples of 4px */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+
+  /* Geometry */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-full: 999px;
+  --control-height: 36px;
+  --control-height-lg: 44px;
+
+  /* Elevation — only for surfaces that float above the page */
+  --shadow-sm: 0 1px 2px rgb(15 23 42 / 6%);
+  --shadow-md: 0 8px 24px rgb(15 23 42 / 8%), 0 1px 2px rgb(15 23 42 / 4%);
+  --shadow-lg: 0 24px 64px rgb(15 23 42 / 14%), 0 2px 6px rgb(15 23 42 / 5%);
+
+  /* Motion */
+  --duration-fast: 150ms;
+  --duration: 200ms;
+  --duration-slow: 250ms;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Layout */
+  --header-height: 64px;
+  --rail-width: 92px;
+  --context-width: 240px;
+  --content-width: 1200px;
+  --public-width: 1160px;
+  --bottom-nav-height: 60px;
+  --layer-content: 1;
+  --layer-panel: 20;
+  --layer-rail: 30;
+  --layer-header: 40;
+  --layer-menu: 45;
+  --layer-drawer: 50;
+  --layer-modal: 60;
+  --layer-toast: 80;
+  --layer-skip: 100;
+}

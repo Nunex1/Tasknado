@@ -5,7 +5,7 @@ export default function ErrorPage({ reset }: { reset: () => void }) {
   const { t } = useI18n();
   return (
     <main className="setup">
-      <BrandLogo layout="vertical" />
+      <BrandLogo tone="blue" />
       <h1>{t("Não foi possível abrir esta página")}</h1>
       <p>{t("Seus registros continuam no servidor.")}</p>
       <button className="button primary" onClick={reset}>
