@@ -1,5 +1,5 @@
 {
-  "date": "2026-11-11T01:52:05.149Z",
+  "date": "2026-11-12T02:55:21.996Z",
   "checks": [
     "All migrations execute in real embedded PostgreSQL (Supabase auth/storage schema harness)",
     "RLS isolates users and composite foreign keys reject cross-account parents",

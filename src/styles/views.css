@@ -255,7 +255,7 @@
   box-shadow: 0 -1px 0 var(--border);
 }
 .focus-row:hover {
-  background: var(--surface);
+  background: var(--row-hover);
 }
 .focus-row > svg {
   color: var(--text-secondary);
@@ -299,6 +299,7 @@
 .activities-panel {
   border: 0;
   border-radius: 0;
+  background: transparent;
 }
 .activities-panel > .hint {
   margin-bottom: var(--space-2);
@@ -318,6 +319,10 @@
 .list-toolbar label:not(.search-input) {
   font-size: var(--text-xs);
   color: var(--text-subtle);
+}
+/* Shown on phones only, where it folds the category filters away. */
+.filter-toggle {
+  display: none;
 }
 .filter-tabs {
   display: flex;
@@ -380,7 +385,7 @@
   transition: background-color var(--duration-fast) var(--ease);
 }
 .activity-row:hover {
-  background: var(--surface);
+  background: var(--row-hover);
 }
 .activity-row:focus-visible {
   outline-offset: -2px;
@@ -488,7 +493,7 @@
   transition: background-color var(--duration-fast) var(--ease);
 }
 .recent-observations > button:hover {
-  background: var(--surface);
+  background: var(--row-hover);
 }
 .recent-observations > button > svg {
   color: var(--text-secondary);
@@ -524,7 +529,7 @@
   border-bottom: 1px solid var(--border);
 }
 .workspace-directory-row:hover {
-  background: var(--surface);
+  background: var(--row-hover);
 }
 .workspace-directory-row > svg:first-child {
   width: 40px;
@@ -919,7 +924,7 @@
   padding: var(--space-3);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  background: var(--background);
+  background: var(--surface-elevated);
   cursor: grab;
   transition:
     border-color var(--duration-fast) var(--ease),
@@ -1154,7 +1159,7 @@
   transition: background-color var(--duration-fast) var(--ease);
 }
 .search-result:hover {
-  background: var(--surface);
+  background: var(--row-hover);
 }
 .search-result > svg {
   color: var(--text-secondary);
@@ -1260,7 +1265,7 @@
   justify-content: center;
   width: 32px;
   height: 32px;
-  border: 1px solid rgb(15 23 42 / 16%);
+  border: 1px solid var(--swatch-border);
   border-radius: 50%;
   transition: transform var(--duration-fast) var(--ease);
 }
@@ -1336,6 +1341,19 @@
   .workspace-heading > .button {
     align-self: flex-start;
   }
+  /* The header already names the workspace; past the overview the screen
+     belongs to the content. */
+  .workspace-heading.secondary {
+    display: none;
+  }
+  .filter-toggle {
+    display: inline-flex;
+    min-height: var(--control-height-lg);
+    padding-inline: var(--space-2);
+  }
+  .advanced-filters:not(.open) {
+    display: none;
+  }
   .workspace-tabs {
     gap: var(--space-5);
     margin-inline: calc(var(--space-4) * -1);
@@ -1374,12 +1392,14 @@
     max-width: none;
     padding-left: 28px;
   }
-  .list-toolbar > .row,
-  .list-toolbar .search-input.compact {
+  .list-toolbar > .row {
     width: 100%;
   }
   .list-toolbar .search-input.compact {
-    flex: 1;
+    flex: 1 1 100%;
+  }
+  .list-toolbar > .row > select {
+    flex: 1 1 0;
   }
   .filter-tabs {
     flex-wrap: nowrap;
@@ -1411,21 +1431,18 @@
   .activity-row .activity-title {
     flex: 1 1 100%;
   }
-  .activity-row .classification {
-    order: 1;
-    flex: 1 1 100%;
-  }
-  .activity-row > time:first-of-type {
+  /* A card answers three questions — what, in which state, how urgent.
+     Dates and the empty-description prompt wait in the task itself. */
+  .activity-row .activity-title p.placeholder,
+  .activity-row > time {
     display: none;
   }
-  .activity-row .cell-label {
-    position: static;
-    width: auto;
-    height: auto;
-    clip-path: none;
+  .activity-row .badge {
+    margin-left: 36px;
   }
-  .activity-row .cell-label::after {
-    content: ": ";
+  .activity-row .classification {
+    flex: 1 1 0;
+    min-width: 0;
   }
   .activity-row .observation-count {
     margin-left: auto;

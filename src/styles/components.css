@@ -45,7 +45,7 @@
   z-index: var(--layer-skip);
   padding: var(--space-2) var(--space-4);
   border-radius: var(--radius-sm);
-  background: var(--primary);
+  background: var(--primary-fill);
   color: var(--on-primary);
   font-weight: var(--weight-medium);
   text-decoration: none;
@@ -81,22 +81,22 @@
   transform: scale(0.98);
 }
 .button.primary {
-  background: var(--primary);
-  border-color: var(--primary);
+  background: var(--primary-fill);
+  border-color: var(--primary-fill);
   color: var(--on-primary);
   box-shadow: var(--shadow-sm);
 }
 .button.primary:hover:not(:disabled) {
-  background: var(--primary-strong);
-  border-color: var(--primary-strong);
+  background: var(--primary-fill-hover);
+  border-color: var(--primary-fill-hover);
 }
 .button.secondary {
-  background: var(--background);
+  background: var(--surface-elevated);
   border-color: var(--border-hover);
   color: var(--text);
 }
 .button.secondary:hover:not(:disabled) {
-  background: var(--surface);
+  background: var(--surface-elevated-hover);
   border-color: var(--border-control);
 }
 .button.ghost {
@@ -108,7 +108,7 @@
   color: var(--text);
 }
 .button.danger {
-  background: var(--background);
+  background: transparent;
   border-color: var(--danger-border);
   color: var(--danger);
 }
@@ -171,11 +171,78 @@
   }
 }
 
+/* Segmented control: one choice out of a few, as radio buttons. */
+.segmented {
+  display: inline-grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.segmented-option {
+  position: relative;
+  display: block;
+  cursor: pointer;
+}
+.segmented-option input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.segmented-option span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 4px 12px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--text-subtle);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  transition:
+    background-color var(--duration-fast) var(--ease),
+    border-color var(--duration-fast) var(--ease),
+    color var(--duration-fast) var(--ease);
+}
+.segmented-option:hover span {
+  color: var(--text);
+}
+.segmented-option input:checked + span {
+  border-color: var(--border-hover);
+  background: var(--surface-elevated);
+  color: var(--primary-strong);
+  font-weight: var(--weight-semibold);
+  box-shadow: var(--shadow-sm);
+}
+.segmented-option input:checked + span svg {
+  color: var(--primary);
+}
+.segmented-option input:focus-visible + span {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+@media (pointer: coarse) {
+  .segmented-option span {
+    min-height: 40px;
+  }
+}
+
 /* Surfaces */
 .panel {
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  background: var(--background);
+  background: var(--panel);
 }
 
 /* Status and metadata */
@@ -382,7 +449,7 @@ p[role="status"] {
   overflow: auto;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  background: var(--background);
+  background: var(--surface-elevated);
   box-shadow: var(--shadow-lg);
   transform: translate(-50%, -50%);
   animation: modal-in var(--duration) var(--ease);
@@ -435,7 +502,7 @@ p[role="status"] {
   border: 1px solid var(--border);
   border-left: 3px solid var(--royal);
   border-radius: var(--radius-sm);
-  background: var(--background);
+  background: var(--surface-elevated);
   box-shadow: var(--shadow-md);
   font-size: var(--text-sm);
   animation: toast-in var(--duration) var(--ease);
@@ -486,12 +553,12 @@ p[role="status"] {
   top: calc(100% + var(--space-2));
   right: 0;
   z-index: var(--layer-menu);
-  min-width: 208px;
+  min-width: 256px;
   max-width: calc(100vw - var(--space-8));
   padding: var(--space-1);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  background: var(--background);
+  background: var(--surface-elevated);
   box-shadow: var(--shadow-md);
   animation: menu-in var(--duration-fast) var(--ease);
 }
@@ -540,6 +607,53 @@ p[role="status"] {
 .profile-menu-item.danger:focus-visible {
   background: var(--danger-surface);
 }
+.profile-menu-label {
+  padding: var(--space-2) var(--space-3) var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+}
+.profile-menu-theme {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2px;
+  margin: 0 var(--space-2) var(--space-1);
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.profile-theme-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 4px 6px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--text-subtle);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  transition:
+    background-color var(--duration-fast) var(--ease),
+    color var(--duration-fast) var(--ease);
+}
+.profile-theme-option:hover {
+  color: var(--text);
+}
+.profile-theme-option[aria-checked="true"] {
+  border-color: var(--border-hover);
+  background: var(--surface-elevated);
+  color: var(--primary-strong);
+  font-weight: var(--weight-semibold);
+}
+.profile-theme-option[aria-checked="true"] svg {
+  color: var(--primary);
+}
+.profile-theme-option:focus-visible {
+  outline-offset: 1px;
+}
 .profile-menu-separator {
   height: 1px;
   margin: var(--space-1) 0;
@@ -561,7 +675,7 @@ p[role="status"] {
   height: 36px;
   flex-shrink: 0;
   border-radius: 50%;
-  background: var(--primary);
+  background: var(--primary-fill);
   color: var(--on-primary);
   font-size: var(--text-sm);
   font-weight: var(--weight-semibold);
@@ -658,7 +772,7 @@ p[role="status"] {
   background: var(--surface-hover);
 }
 .calendar-day.selected {
-  background: var(--primary);
+  background: var(--primary-fill);
   color: var(--on-primary);
   font-weight: var(--weight-semibold);
 }
@@ -681,7 +795,62 @@ p[role="status"] {
   .toast {
     right: var(--space-4);
     left: var(--space-4);
-    bottom: calc(var(--bottom-nav-height) + var(--space-4));
+    bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
+  }
+}
+
+/*
+ * Phones. Forms and pickers rise from the bottom edge as sheets, within reach
+ * of the thumb; their actions stay pinned while the fields scroll.
+ * Confirmations stay centred: they are a question, not a task.
+ */
+@media (max-width: 767px) {
+  .heading-action {
+    display: none;
+  }
+  .modal:not(.confirm-modal) {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    max-height: min(92vh, 92dvh);
+    padding: var(--space-3) var(--space-4) 0;
+    border-width: 1px 0 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    transform: none;
+    overscroll-behavior: contain;
+    animation: sheet-in 240ms var(--ease);
+  }
+  .modal:not(.confirm-modal)::before {
+    content: "";
+    display: block;
+    width: 36px;
+    height: 4px;
+    margin: 0 auto var(--space-3);
+    border-radius: var(--radius-full);
+    background: var(--border-hover);
+  }
+  .modal:not(.confirm-modal) > :last-child:not(form) {
+    padding-bottom: calc(var(--space-5) + env(safe-area-inset-bottom));
+  }
+  .modal:not(.confirm-modal) .modal-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+    margin: 0 calc(var(--space-4) * -1);
+    padding: var(--space-3) var(--space-4)
+      calc(var(--space-3) + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--border);
+    background: var(--surface-elevated);
+  }
+  .modal:not(.confirm-modal) .modal-actions > .button {
+    flex: 1 1 0;
+    min-height: var(--control-height-lg);
+  }
+}
+@keyframes sheet-in {
+  from {
+    transform: translateY(100%);
   }
 }
 @media (forced-colors: active) {

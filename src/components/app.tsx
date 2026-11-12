@@ -27,6 +27,7 @@ import {
   Archive,
   Download,
   Trash2,
+  SlidersHorizontal,
 } from "lucide-react";
 import { db, client, check, errorMessage } from "@/lib/supabase";
 import {
@@ -50,6 +51,7 @@ import { GlobalSearch } from "./search";
 import { BrandLogo } from "./brand";
 import { Profile } from "./profile";
 import { LanguageSettings } from "./language-settings";
+import { ThemeSettings } from "./theme";
 import {
   CategoryFields,
   attributesFromForm,
@@ -117,6 +119,8 @@ export function App() {
   const [scheduleFilter, setScheduleFilter] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  // Phones keep the category filters folded away until asked for.
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const dirty = useRef(new Set<string>());
   useEffect(() => {
     if (ready)
@@ -328,6 +332,7 @@ export function App() {
     setDateFrom("");
     setDateTo("");
     setSort("updated_at");
+    setFiltersOpen(false);
   }, [workspaceId]);
   const editorWorkspace =
     workspace ||
@@ -646,12 +651,51 @@ export function App() {
       ).length,
     }),
   );
+  const advancedFilters = [
+    canvasFilter,
+    scheduleFilter,
+    dateFrom,
+    dateTo,
+  ].filter(Boolean).length;
   const statusIcons = {
     not_started: Circle,
     in_progress: Play,
     paused: Pause,
     completed: CheckCircle2,
   };
+  // The one creation that makes sense on the current screen. Phones show it in
+  // the header, where it stays reachable while the page scrolls.
+  const createWorkspace = {
+    label: "Criar workspace",
+    run: () => setEditor({ kind: "workspace" }),
+  };
+  const createActivity = {
+    label: "Nova atividade",
+    run: () => setEditor({ kind: "activity" }),
+  };
+  const action =
+    isProfile || ["search", "observations", "history"].includes(view)
+      ? undefined
+      : view === "settings" || view === "workspaces"
+        ? createWorkspace
+        : workspaceId && !workspace
+          ? undefined
+          : !workspaces.length
+            ? createWorkspace
+            : view === "notes"
+              ? {
+                  label: "Nova nota",
+                  run: () => {
+                    if (canLeave()) setEditor({ kind: "note" });
+                  },
+                }
+              : view === "matrix"
+                ? workspace?.category === "work"
+                  ? createActivity
+                  : undefined
+                : selected && view === "activities"
+                  ? undefined
+                  : createActivity;
   return (
     <DesktopShell
       user={user}
@@ -659,6 +703,7 @@ export function App() {
       workspace={workspace}
       activities={activities}
       view={view}
+      action={action}
       canLeave={canLeave}
       go={go}
       onCreate={() => setEditor({ kind: "workspace" })}
@@ -684,7 +729,13 @@ export function App() {
                 <path d="M0 40 Q150 0 300 40 T600 40 T900 40 T1200 40 V80 H0Z" />
               </svg>
             </div>
-            <div className="workspace-heading">
+            <div
+              className={
+                view === "dashboard"
+                  ? "workspace-heading"
+                  : "workspace-heading secondary"
+              }
+            >
               <div>
                 <span className="eyebrow">
                   {t(workspaceCategories[workspace.category])}
@@ -761,7 +812,10 @@ export function App() {
                 <h1>{t("Configurações")}</h1>
                 <p>{t("Gerencie seus espaços e seus dados pessoais.")}</p>
               </div>
-              <Button onClick={() => setEditor({ kind: "workspace" })}>
+              <Button
+                className="heading-action"
+                onClick={() => setEditor({ kind: "workspace" })}
+              >
                 <Plus size={16} /> {t("Novo workspace")}
               </Button>
             </div>
@@ -811,6 +865,7 @@ export function App() {
                 </div>
               ))}
             </section>
+            <ThemeSettings />
             <LanguageSettings />
             <section className="panel settings-panel">
               <h2>{t("Conta e privacidade")}</h2>
@@ -954,7 +1009,10 @@ export function App() {
                     : t("Acompanhe cada etapa. Preserve todo o contexto.")}
                 </p>
               </div>
-              <Button onClick={() => setEditor({ kind: "activity" })}>
+              <Button
+                className="heading-action"
+                onClick={() => setEditor({ kind: "activity" })}
+              >
                 <Plus size={18} /> {t("Nova atividade")}
               </Button>
             </div>
@@ -1094,10 +1152,34 @@ export function App() {
                           </option>
                         )}
                       </select>
+                      {(workspace?.category === "university" ||
+                        workspace?.category === "work") && (
+                        <button
+                          type="button"
+                          className="text-button filter-toggle"
+                          aria-expanded={filtersOpen}
+                          aria-controls="advanced-filters"
+                          onClick={() => setFiltersOpen((open) => !open)}
+                        >
+                          <SlidersHorizontal size={15} aria-hidden="true" />
+                          {t("Filtros")}
+                          {advancedFilters > 0 && (
+                            <span className="count">
+                              {number(advancedFilters)}
+                            </span>
+                          )}
+                        </button>
+                      )}
                     </div>
                   </div>
                   {workspace?.category === "university" && (
-                    <div className="list-toolbar">
+                    <div
+                      id="advanced-filters"
+                      className={
+                        "list-toolbar advanced-filters" +
+                        (filtersOpen ? " open" : "")
+                      }
+                    >
                       <label>
                         {t("Aberta no Canvas?")}
                         <select
@@ -1113,7 +1195,13 @@ export function App() {
                     </div>
                   )}
                   {workspace?.category === "work" && (
-                    <div className="list-toolbar category-filters">
+                    <div
+                      id="advanced-filters"
+                      className={
+                        "list-toolbar category-filters advanced-filters" +
+                        (filtersOpen ? " open" : "")
+                      }
+                    >
                       <label>
                         {t("Agendamento")}
                         <select
@@ -1187,7 +1275,11 @@ export function App() {
                                 {isOverdue(a) && ` · ${t("Atrasada")}`}
                               </span>
                             )}
-                            <p>
+                            <p
+                              className={
+                                a.description ? undefined : "placeholder"
+                              }
+                            >
                               {a.description ||
                                 t("Seu próximo registro começa aqui.")}
                             </p>

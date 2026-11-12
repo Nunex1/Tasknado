@@ -34,7 +34,7 @@ export function WorkspaceDirectory({
           <h1>{t("Workspaces")}</h1>
           <p>{t("Um lugar para cada parte da sua vida.")}</p>
         </div>
-        <Button onClick={onCreate}>
+        <Button className="heading-action" onClick={onCreate}>
           <Plus size={16} />
           {t("Criar workspace")}
         </Button>

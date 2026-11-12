@@ -2,6 +2,8 @@
 
 Redesign visual e de experiência da landing page e da área autenticada. Branco predominante, azul Primary para ação e estado, azul Royal para identidade. Nenhum schema, migration, política RLS, endpoint, fluxo de autenticação ou regra de negócio foi alterado.
 
+> Atualização de 11/11/2026: a navegação do celular, o seletor de workspaces e os temas claro, escuro e do sistema estão descritos em [MOBILE-THEMES.md](MOBILE-THEMES.md). Onde este documento e aquele divergirem, vale o mais recente; os trechos alterados estão indicados abaixo.
+
 ## 1. Diagnóstico da interface anterior
 
 Problemas comprovados no código e nas capturas anteriores:
@@ -89,7 +91,7 @@ Comportamento por largura:
 | ≥ 1100 px | Trilho lateral de 92 px | Fixo, recolhível (preferência salva) | Seis colunas |
 | 900–1099 px | Trilho lateral | Fixo, recolhível | Seis colunas compactas; abaixo de 1024 px sai a data de criação |
 | 768–899 px | Trilho lateral | Gaveta sobre o conteúdo | Cinco colunas |
-| < 768 px | Barra inferior com cinco destinos; Perfil, Configurações e Sair no menu da conta | Gaveta aberta pelo botão no cabeçalho | Cartões |
+| < 768 px | Drawer aberto pelo botão de menu do cabeçalho; nada fica na tela por padrão (substituiu a barra inferior em 11/11/2026) | Dentro do mesmo drawer, com o seletor de workspaces | Cartões |
 
 ## 5. Melhorias de usabilidade
 
@@ -128,7 +130,7 @@ Medição do próprio navegador na landing, build de produção, máquina local 
 - **Fechamento de modal sem animação**: a abertura é animada; o fechamento é imediato porque os modais são desmontados pelo componente pai.
 - **Confirmações com `prompt()`/`confirm()` do navegador** permanecem na exclusão de workspace, de conta e de observação. Trocá-las pelo `ConfirmDialog` altera os testes existentes.
 - **Capturas da landing no celular**: a visão geral é a janela inteira reduzida e fica pouco legível em 375 px.
-- **Sem tema escuro.** Os tokens permitem, mas não foi especificado nem testado.
+- ~~Sem tema escuro.~~ Implementado em 11/11/2026 (Claro, Escuro e Sistema); ver [MOBILE-THEMES.md](MOBILE-THEMES.md).
 - **Testado apenas em Chromium.** Safari e Firefox não foram verificados; `:has()` e `mask` têm suporte amplo, mas sem evidência local.
 - **Ativos sem uso**: `public/images/ocean-depths.png` e `.webp` não são mais referenciados e foram mantidos.
 - **Cores de avatar** (`#0353a4` padrão) pertencem aos dados do usuário e não foram migradas para a nova paleta.
@@ -146,7 +148,7 @@ Medição do próprio navegador na landing, build de produção, máquina local 
 
 ## Manutenção
 
-- Novas cores, tamanhos ou espaçamentos entram primeiro em `tokens.css`.
+- Novas cores, tamanhos ou espaçamentos entram primeiro em `tokens.css`. Cores têm valor claro e escuro; o bloco escuro é declarado duas vezes e `pnpm test` confere que são iguais e que o contraste se mantém.
 - `pnpm capture:landing` refaz as capturas da landing depois de mudanças visuais (requer `pnpm local:setup` e o app em execução).
 - `pnpm test:responsive` deve passar antes de publicar mudanças de layout.
-- O ponto de 899 px da gaveta existe em `shell.css` e em `desktop-shell.tsx` (`compactQuery`); altere os dois juntos.
+- Os pontos de 767 px (celular) e 899 px (painel sobre o conteúdo) existem em `shell.css` e em `desktop-shell.tsx` (`phoneQuery`, `compactQuery`); altere os dois juntos.

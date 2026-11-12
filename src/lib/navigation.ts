@@ -41,3 +41,21 @@ export function workspacePath(
 ) {
   return `/workspaces/${id}${view === "dashboard" ? "" : `/${view}`}${item ? `/${item}` : ""}`;
 }
+/**
+ * Where switching the active workspace lands: the same module in the target
+ * when it exists there, otherwise its overview. `null` means every workspace.
+ * This only chooses an address — what the destination may show is still
+ * decided by the queries and the row-level policies behind them.
+ */
+export function switchWorkspacePath(
+  view: View,
+  target: { id: string; category: string } | null,
+) {
+  if (!target)
+    return view === "activities" || view === "notes" ? `/${view}` : "/";
+  const keep: View[] = ["activities", "notes", "observations", "history"];
+  if (keep.includes(view)) return workspacePath(target.id, view);
+  if (view === "matrix" && target.category === "work")
+    return workspacePath(target.id, "matrix");
+  return workspacePath(target.id);
+}

@@ -1,6 +1,6 @@
 "use client";
 import { useI18n } from "@/i18n/provider";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import { Button } from "./button";
@@ -24,6 +24,13 @@ export function Modal({
   className?: string;
 }) {
   const { t } = useI18n();
+  // Whatever had focus when the dialog was asked for gets it back on close,
+  // unless the caller names another element.
+  const [opener] = useState(() =>
+    typeof document === "undefined"
+      ? null
+      : (document.activeElement as HTMLElement | null),
+  );
   return (
     <Dialog.Root
       open
@@ -43,9 +50,10 @@ export function Modal({
             }
           }}
           onCloseAutoFocus={(event) => {
-            if (returnFocusRef?.current) {
+            const target = returnFocusRef?.current ?? opener;
+            if (target?.isConnected && target !== document.body) {
               event.preventDefault();
-              returnFocusRef.current.focus();
+              target.focus();
             }
           }}
         >

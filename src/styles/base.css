@@ -75,7 +75,7 @@ video {
 mark {
   padding: 0 1px;
   border-radius: 3px;
-  background: #dbeafe;
+  background: var(--mark);
   color: var(--primary-strong);
 }
 kbd {
@@ -170,7 +170,7 @@ select {
   max-width: 100%;
   padding-right: var(--space-8);
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-image: var(--select-chevron);
   background-repeat: no-repeat;
   background-position: right 10px center;
   cursor: pointer;
@@ -230,6 +230,13 @@ select:focus-visible {
   textarea {
     font-size: var(--text-md);
   }
+}
+
+/* A theme change repaints everything at once (see theme-provider.tsx). */
+:root[data-theme-switching] *,
+:root[data-theme-switching] *::before,
+:root[data-theme-switching] *::after {
+  transition: none !important;
 }
 
 @media (prefers-reduced-motion: no-preference) {

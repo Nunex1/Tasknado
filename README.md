@@ -1,6 +1,6 @@
 # Tasknado
 
-Plataforma individual de produtividade para computadores e celulares. Next.js, React, TypeScript, Radix, Supabase Auth, PostgreSQL e Storage privado. Interface clara, responsiva e em PT/EN, com landing page pública na rota `/`. Não há dados demonstrativos ou backend simulado na aplicação; as capturas da landing vêm de uma conta temporária de demonstração.
+Plataforma individual de produtividade para computadores e celulares. Next.js, React, TypeScript, Radix, Supabase Auth, PostgreSQL e Storage privado. Interface responsiva, pensada primeiro para o celular, em PT/EN, com temas claro, escuro e do sistema e landing page pública na rota `/`. Não há dados demonstrativos ou backend simulado na aplicação; as capturas da landing vêm de uma conta temporária de demonstração.
 
 A entrega atual está documentada no [relatório Desktop A–J](docs/DESKTOP-DELIVERY.md) e na [rastreabilidade R01–R50](docs/DESKTOP-TRACEABILITY.md), com evidências locais, arquivos, migrações e limites da validação.
 
@@ -45,7 +45,7 @@ pnpm test:notes
 pnpm test:responsive
 ```
 
-`test:responsive` percorre a landing e doze telas autenticadas em 375, 768, 1024 e 1440 px: rolagem horizontal, axe-core (WCAG A/AA), navegação por teclado, navegação inferior e gaveta do workspace no celular e criação de tarefa em tela pequena. `pnpm capture:landing` refaz as capturas reais usadas na landing (`src/assets/landing/`), com uma conta temporária e o conteúdo de `scripts/demo-data.mjs`.
+`test:responsive` percorre a landing e doze telas autenticadas em 375, 768, 1024 e 1440 px: rolagem horizontal, axe-core (WCAG A/AA) nos temas claro e escuro, drawer de navegação e troca de workspace no celular, criação e edição de tarefa em tela pequena, os três modos de aparência com persistência, navegação por teclado no desktop e isolamento entre contas. `pnpm capture:landing` refaz as capturas reais usadas na landing (`src/assets/landing/`), em dois idiomas e dois temas, com uma conta temporária e o conteúdo de `scripts/demo-data.mjs`.
 
 `test:notes` percorre no navegador a exclusão de blocos e notas (confirmação, autosave pendente, falha de rede, rotas e estados vazios), com conta temporária na instância local e a aplicação em execução.
 
@@ -95,6 +95,6 @@ Escolha a retenção e, se necessário, PITR no projeto Supabase. Faça backup s
 - [Fluxo local oficial do Supabase](https://supabase.com/docs/guides/local-development/cli-workflows)
 - [Autenticação no Next.js](https://nextjs.org/docs/app/guides/authentication)
 
-O design system atual está documentado em [docs/DESIGN-SYSTEM.md](docs/DESIGN-SYSTEM.md): tokens em `src/styles/tokens.css` e camadas de estilo em `src/styles/`, importadas por `src/app/globals.css`. Branco predomina; o azul Primary indica ação e estado e o azul Royal reforça a identidade. A marca reutilizável permanece em `src/components/brand.tsx`. Os documentos de entrega Desktop e de identidade oceânica são registros históricos e citam arquivos de estilo que foram substituídos.
+O design system atual está documentado em [docs/DESIGN-SYSTEM.md](docs/DESIGN-SYSTEM.md): tokens em `src/styles/tokens.css` e camadas de estilo em `src/styles/`, importadas por `src/app/globals.css`. Branco predomina no tema claro; o azul Primary indica ação e estado e o azul Royal reforça a identidade. A navegação do celular, o seletor de workspaces e os temas (Claro, Escuro, Sistema) estão em [docs/MOBILE-THEMES.md](docs/MOBILE-THEMES.md). A marca reutilizável permanece em `src/components/brand.tsx`. Os documentos de entrega Desktop e de identidade oceânica são registros históricos e citam arquivos de estilo que foram substituídos.
 
 Identidade oficial atual: [tubarão e logotipo gráfico TASKNADO](docs/BRAND_IDENTITY.md), com componentes compartilhados e variantes clara e escura.

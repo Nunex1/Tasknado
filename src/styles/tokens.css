@@ -2,18 +2,34 @@
  * Tasknado Design System — tokens.
  * Every colour, size, radius, shadow and duration used by the interface is
  * declared here. Component styles reference these names only.
+ *
+ * Themes: the light values are the defaults. The dark values are declared
+ * twice with the same content — once for "System" (no data-theme attribute,
+ * operating system in dark mode) and once for an explicit "Dark" choice.
+ * src/styles/tokens.test.ts fails when the two blocks drift apart or when a
+ * pair of colours drops below its WCAG contrast target.
  */
 :root {
   color-scheme: light;
 
-  /* Brand and surfaces */
+  /* Surfaces: page, tinted areas, cards and floating layers. */
   --background: #ffffff;
   --surface: #f8fafc;
+  --panel: #ffffff;
+  --surface-elevated: #ffffff;
+  --surface-elevated-hover: #f8fafc;
   --surface-hover: #f1f5f9;
+  --row-hover: #f8fafc;
   --blue-surface: #eff6ff;
+  --glass: rgb(255 255 255 / 88%);
+
+  /* Brand. --primary colours text, icons, borders and indicators;
+     --primary-fill is the background of filled controls with white text. */
   --primary: #2563eb;
   --primary-strong: #1d4ed8;
   --royal: #4169e1;
+  --primary-fill: #2563eb;
+  --primary-fill-hover: #1d4ed8;
   --on-primary: #ffffff;
 
   /* Text. --text-subtle replaces --text-secondary over tinted surfaces,
@@ -26,9 +42,12 @@
   --border: #e2e8f0;
   --border-hover: #cbd5e1;
   --border-control: #8793a6;
+  --swatch-border: rgb(15 23 42 / 16%);
   --focus: #1d4ed8;
   --focus-ring: rgb(37 99 235 / 22%);
   --overlay: rgb(15 23 42 / 40%);
+  --mark: #dbeafe;
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
 
   /* Semantic states: text colour, surface and border for each meaning. */
   --info: #1d4ed8;
@@ -46,6 +65,11 @@
   --neutral: #475569;
   --neutral-surface: #f1f5f9;
   --neutral-border: #e2e8f0;
+
+  /* Elevation — only for surfaces that float above the page */
+  --shadow-sm: 0 1px 2px rgb(15 23 42 / 6%);
+  --shadow-md: 0 8px 24px rgb(15 23 42 / 8%), 0 1px 2px rgb(15 23 42 / 4%);
+  --shadow-lg: 0 24px 64px rgb(15 23 42 / 14%), 0 2px 6px rgb(15 23 42 / 5%);
 
   /* Typography */
   --font-sans:
@@ -93,11 +117,6 @@
   --control-height: 36px;
   --control-height-lg: 44px;
 
-  /* Elevation — only for surfaces that float above the page */
-  --shadow-sm: 0 1px 2px rgb(15 23 42 / 6%);
-  --shadow-md: 0 8px 24px rgb(15 23 42 / 8%), 0 1px 2px rgb(15 23 42 / 4%);
-  --shadow-lg: 0 24px 64px rgb(15 23 42 / 14%), 0 2px 6px rgb(15 23 42 / 5%);
-
   /* Motion */
   --duration-fast: 150ms;
   --duration: 200ms;
@@ -108,9 +127,9 @@
   --header-height: 64px;
   --rail-width: 92px;
   --context-width: 240px;
+  --drawer-width: 320px;
   --content-width: 1200px;
   --public-width: 1160px;
-  --bottom-nav-height: 60px;
   --layer-content: 1;
   --layer-panel: 20;
   --layer-rail: 30;
@@ -120,4 +139,125 @@
   --layer-modal: 60;
   --layer-toast: 80;
   --layer-skip: 100;
+}
+
+/* Phones: a shorter header leaves more room for content. */
+@media (max-width: 767px) {
+  :root {
+    --header-height: 56px;
+  }
+}
+
+/* Dark theme — System (operating system in dark mode, no explicit choice). */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --background: #0b1220;
+    --surface: #111827;
+    --panel: #111827;
+    --surface-elevated: #1e293b;
+    --surface-elevated-hover: #27344a;
+    --surface-hover: rgb(148 163 184 / 14%);
+    --row-hover: rgb(148 163 184 / 8%);
+    --blue-surface: #16263f;
+    --glass: rgb(11 18 32 / 86%);
+
+    --primary: #60a5fa;
+    --primary-strong: #93c5fd;
+    --royal: #678cf8;
+    --primary-fill: #2563eb;
+    --primary-fill-hover: #1d4ed8;
+    --on-primary: #ffffff;
+
+    --text: #f8fafc;
+    --text-secondary: #cbd5e1;
+    --text-subtle: #e2e8f0;
+
+    --border: #334155;
+    --border-hover: #475569;
+    --border-control: #7385a0;
+    --swatch-border: rgb(248 250 252 / 28%);
+    --focus: #93c5fd;
+    --focus-ring: rgb(96 165 250 / 32%);
+    --overlay: rgb(2 6 23 / 64%);
+    --mark: #1e3a8a;
+    --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23cbd5e1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+
+    --info: #93c5fd;
+    --info-surface: #16263f;
+    --info-border: #1e40af;
+    --success: #4ade80;
+    --success-surface: #0f2a1f;
+    --success-border: #166534;
+    --warning: #fbbf24;
+    --warning-surface: #2a2110;
+    --warning-border: #854d0e;
+    --danger: #f87171;
+    --danger-surface: #2c1519;
+    --danger-border: #991b1b;
+    --neutral: #cbd5e1;
+    --neutral-surface: #1e293b;
+    --neutral-border: #334155;
+
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 40%);
+    --shadow-md: 0 8px 24px rgb(0 0 0 / 40%), 0 1px 2px rgb(0 0 0 / 30%);
+    --shadow-lg: 0 24px 64px rgb(0 0 0 / 55%), 0 2px 6px rgb(0 0 0 / 35%);
+  }
+}
+
+/* Dark theme — explicit choice. Keep identical to the block above. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --background: #0b1220;
+  --surface: #111827;
+  --panel: #111827;
+  --surface-elevated: #1e293b;
+  --surface-elevated-hover: #27344a;
+  --surface-hover: rgb(148 163 184 / 14%);
+  --row-hover: rgb(148 163 184 / 8%);
+  --blue-surface: #16263f;
+  --glass: rgb(11 18 32 / 86%);
+
+  --primary: #60a5fa;
+  --primary-strong: #93c5fd;
+  --royal: #678cf8;
+  --primary-fill: #2563eb;
+  --primary-fill-hover: #1d4ed8;
+  --on-primary: #ffffff;
+
+  --text: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-subtle: #e2e8f0;
+
+  --border: #334155;
+  --border-hover: #475569;
+  --border-control: #7385a0;
+  --swatch-border: rgb(248 250 252 / 28%);
+  --focus: #93c5fd;
+  --focus-ring: rgb(96 165 250 / 32%);
+  --overlay: rgb(2 6 23 / 64%);
+  --mark: #1e3a8a;
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23cbd5e1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+
+  --info: #93c5fd;
+  --info-surface: #16263f;
+  --info-border: #1e40af;
+  --success: #4ade80;
+  --success-surface: #0f2a1f;
+  --success-border: #166534;
+  --warning: #fbbf24;
+  --warning-surface: #2a2110;
+  --warning-border: #854d0e;
+  --danger: #f87171;
+  --danger-surface: #2c1519;
+  --danger-border: #991b1b;
+  --neutral: #cbd5e1;
+  --neutral-surface: #1e293b;
+  --neutral-border: #334155;
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 40%);
+  --shadow-md: 0 8px 24px rgb(0 0 0 / 40%), 0 1px 2px rgb(0 0 0 / 30%);
+  --shadow-lg: 0 24px 64px rgb(0 0 0 / 55%), 0 2px 6px rgb(0 0 0 / 35%);
 }
