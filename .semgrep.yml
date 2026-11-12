@@ -1,0 +1,22 @@
+rules:
+  - id: no-executable-user-html
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: Render user content as text; review any HTML execution boundary.
+    pattern-either:
+      - pattern: <$TAG dangerouslySetInnerHTML={$VALUE} ... />
+      - pattern: $EL.innerHTML = $VALUE
+      - pattern: eval(...)
+      - pattern: new Function(...)
+  - id: no-public-service-role
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: Privileged keys must never be public build variables.
+    pattern-regex: 'process\.env\.NEXT_PUBLIC_[A-Z_]*(SERVICE_ROLE|SECRET|PRIVATE_KEY)[A-Z_]*'
+  - id: no-shell-command-interpolation
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: Prefer execFile with separately passed arguments and no shell.
+    pattern-either:
+      - pattern: exec(`...${$VALUE}...`, ...)
+      - pattern: execSync(`...${$VALUE}...`, ...)
