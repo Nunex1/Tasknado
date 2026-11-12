@@ -1,4 +1,5 @@
 import { connection } from "next/server";
+import { headers } from "next/headers";
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -42,11 +43,14 @@ export const viewport: Viewport = {
 };
 export default async function Layout({ children }: { children: React.ReactNode }) {
   await connection();
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     // The script below sets data-theme before React hydrates.
     <html lang="pt-BR" className={inter.variable} suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        {/* Static, reviewed source constant; never user content. */}
+        {/* nosemgrep: no-executable-user-html */}
+        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body>
         <ThemeProvider>

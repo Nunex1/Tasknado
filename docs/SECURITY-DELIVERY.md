@@ -4,7 +4,7 @@ Data: 12/11/2026, America/Sao_Paulo. Branch: `codex/security-hardening`. Sem mer
 
 ## Resultado e limites
 
-A auditoria começou no commit `7a26ed67ced2128035b0dc0538a79cef477a5802`. Durante o trabalho, a branch foi atualizada sobre `main` `e2b87af37e75d40e59a825f38c2d5a49f7108fd7`; os novos componentes de landing, dashboard, estilos e scripts também receberam revisão independente. As alterações não commitadas do diretório original foram preservadas em outro worktree.
+A auditoria começou no commit `7a26ed67ced2128035b0dc0538a79cef477a5802`. Durante o trabalho, a branch foi atualizada sobre `main` `e2b87af37e75d40e59a825f38c2d5a49f7108fd7`; posteriormente incorporou main `7dbe4990b654a8b2870a9967527ade7bf5aa767b` (temas/navegação). Os novos componentes receberam revisão independente; o script constante de tema recebeu nonce explícito e teste antes da hidratação. O script test-responsive teve revisão parcial nesta última passagem. As alterações não commitadas do diretório original foram preservadas em outro worktree.
 
 Não foi confirmado acesso entre proprietários nem execução de conteúdo de notas. Foi confirmado um bypass concorrente do limite de eventos, corrigido. O registro de dependências sinalizou cinco avisos no conjunto de testes, incluindo dois críticos em Tinypool; após atualizar Vitest, a consulta retornou zero avisos. Isso não comprova ausência de vulnerabilidades desconhecidas.
 
@@ -15,7 +15,7 @@ A entrega é código e validação local para revisão humana, não uma certific
 | Item | Classificação e evidência | Tratamento |
 |---|---|---|
 | Limite de eventos não atômico | Baixa, CWE-362. `202611090001_reopen_completed.sql:6,20-21` bloqueava a atividade, mas contava eventos de toda a conta. Chamadas em workspaces distintos podiam passar simultaneamente. Sem acesso cruzado. | `202611100002_event_quota.sql`: lock transacional por conta antes de consultar/alterar; relógio real; índice owner/created. Teste PostgreSQL: 59 existentes + 12 chamadas concorrentes = exatamente 60. |
-| Dependências de teste com avisos | `pnpm-lock.yaml`: Vitest 3.2.7, Tinypool 1.1.1. GHSA-82fw-gwwq-j7x9, GHSA-qxg6-89mg-rqv8, GHSA-5gmw-xhrv-c9v3, GHSA-85c8-ppgw-ccpr. Cinco entradas de registro, quatro advisories únicos; severidade do registro não equivale a exploração da aplicação. Tinypool requer uma primitiva adicional de prototype pollution; servidor de mocks não é usado pelo frontend. | Vitest 5.1.0 e lock atualizado; 47 testes passam; audit final com zero avisos. |
+| Dependências de teste com avisos | `pnpm-lock.yaml`: Vitest 3.2.7, Tinypool 1.1.1. GHSA-82fw-gwwq-j7x9, GHSA-qxg6-89mg-rqv8, GHSA-5gmw-xhrv-c9v3, GHSA-85c8-ppgw-ccpr. Cinco entradas de registro, quatro advisories únicos; severidade do registro não equivale a exploração da aplicação. Tinypool requer uma primitiva adicional de prototype pollution; servidor de mocks não é usado pelo frontend. | Vitest 5.1.0 e lock atualizado; 59 testes passam; audit final com zero avisos. |
 | Privilégios SQL excessivos | Hardening confirmado sob os defaults modelados do Supabase: GRANT ALL deixa TRUNCATE, que ignora RLS. Não foi encontrado endpoint de SQL arbitrário ou credencial SQL de anon/authenticated; não é um bypass remoto demonstrado. | Revogação e concessões mínimas, sem TRUNCATE/REFERENCES/TRIGGER, sem CREATE no public, sem EXECUTE de triggers pelo cliente. pg_temp explícito por último. Testado em PGlite e PostgreSQL. |
 | MIME declarado sem inspeção | Lacuna confirmada em `files.tsx`, `domain.ts` e policies antigas. Um usuário podia armazenar bytes com MIME mentido. Bucket privado, ownership e preview img/video limitavam impacto; não foi demonstrada vítima de outra conta. | Quarentena fail-closed, assinatura/conteúdo, tamanho real, scanner obrigatório, sem overwrite/move/delete direto, paths não reutilizáveis. |
 | Fila e quota durante implementação | Revisão independente detectou dois problemas médios antes da entrega: dez objetos ausentes bloqueavam a fila; tamanho mentido/rejeição/deleção liberava quota antes de apagar bytes. Detectou ainda corrida baixa entre cleanup e resize. | Backoff persistente antes de I/O; reservas independentes da metadata; zero terminal após remoção física. Regressões SQL/HTTP cobrem esses casos. Não foram publicados sem correção. |
@@ -36,12 +36,12 @@ A entrega é código e validação local para revisão humana, não uma certific
 | Comando / verificação | Resultado observado | Limite |
 |---|---|---|
 | Baseline Vitest | 42 testes passaram | Antes do hardening |
-| Vitest final 5.1.0 | 47 testes, dez arquivos, passaram após incorporar main | Não cobre todos os navegadores |
+| Vitest final 5.1.0 | 59 testes, 12 arquivos, passaram após incorporar main | Não cobre todos os navegadores |
 | `node scripts/test-database.mjs` | 18 grupos passaram | PostgreSQL embarcado com harness Auth/Storage; não é HTTP |
 | `node scripts/test-security-postgres.mjs` | Concorrência 12 transações, privilégios e pg_dump/restore passaram | Container descartável, sem portas/mounts; dados sintéticos |
 | `node scripts/test-security-http.mjs` | Seis grupos passaram: acesso cruzado/anônimo, quarentena, assinatura, imutabilidade, reuso, cleanup/resize, JWT/logout e justiça da fila/falha do scanner | Stack exclusivo tasknado_security, porta 56431; aprovação clean de fixture é administrativa, não um scan ClamAV real |
 | Replay de URL assinada após apagar metadata | HTTP 200 antes de expirar | Janela residual de 60 segundos documentada; não prometer revogação instantânea |
-| `next build --webpack` | Compilação e TypeScript passaram; rotas dinâmicas e Proxy presentes | Build em cópia isolada; Turbopack não aceitou junction node_modules nessa cópia. CI usa build padrão em instalação real |
+| `next build --webpack` | Compilação e TypeScript passaram; rotas dinâmicas e Proxy presentes | Build final no worktree dedicado; uma tentativa anterior com Turbopack não aceitou junction node_modules numa cópia. CI usa build padrão em instalação real |
 | `test-security-browser.mjs` | Edge Chromium: hidratação, troca de modo, nonce por script, rotação, HSTS/no-store e bloqueio de script sem nonce passaram | Shell público; não foi repetida toda a jornada visual/autenticada |
 | `pnpm install --frozen-lockfile --ignore-scripts` | Lock consistente | Instalação normal anterior executou somente build permitido de esbuild |
 | `pnpm audit --json` | Zero info/low/moderate/high/critical | Consulta pontual ao registro, incluindo dev dependencies |
