@@ -77,12 +77,12 @@ Nenhum projeto na nuvem ou publicação é criado por estes arquivos. Há etapas
 - Atividades e contagens são lidas em páginas de 500 até completar o conjunto autorizado. O dashboard mostra apenas atividades não iniciadas e atividades iniciadas ainda não concluídas. Busca, notas, observações e histórico oferecem paginação própria.
 - Links de download expiram em 60 segundos. Depois de emitidos, podem continuar válidos até expirar mesmo após excluir o vínculo.
 - Exclusão de workspace exige digitar o nome. Remove registros em cascata e revoga imediatamente o acesso por RLS. Os objetos ficam em fila `storage_cleanup` para remoção física.
-- Agende `node scripts/cleanup-storage.mjs` em um backend confiável, com `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` como secrets. O script remove até 100 objetos por execução e pode ser repetido. Não há agendamento de produção configurado neste repositório.
+- Agende `node scripts/cleanup-storage.mjs` em um backend confiável, com `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` e `TASKNADO_WORKER_TARGET` como configuração de destino explícita. O script remove até 100 objetos por execução e pode ser repetido. Não há agendamento de produção configurado neste repositório.
 - A exportação em Configurações gera JSON dos registros do proprietário; anexos devem ser baixados separadamente. A exclusão da conta exige digitar o e-mail e remove os registros em cascata; objetos entram na fila de limpeza.
-- Anexos permitidos: PDF, PNG/JPEG/WebP, MP4/WebM, TXT/CSV, DOCX/XLSX/PPTX. SVG, HTML e executáveis são recusados. Não existe antivírus integrado: a declaração de MIME não comprova segurança do conteúdo. Antes de produção, integrar scanner/quarentena conforme política de risco.
-- Auth possui limites de requisição configurados no Supabase. A RPC de eventos limita a 60 registros por minuto por conta. Quotas gerais de armazenamento e retenção dependem da política de produção.
+- Anexos permitidos: PDF, PNG/JPEG/WebP, MP4/WebM, TXT/CSV, DOCX/XLSX/PPTX. SVG, HTML e executáveis são recusados. Uploads ficam em quarentena até validação de conteúdo e aprovação pelo worker ClamAV. O scanner e seu agendamento precisam ser provisionados e homologados antes de produção.
+- Auth possui limites de requisição configurados no Supabase. A RPC de eventos limita a 60 registros por minuto por conta. Uploads reservam até 1 GiB por conta, com até dez pendentes. Retenção depende da política de produção.
 - Sem service role no cliente. Dados são protegidos por JWT, RLS e chaves estrangeiras compostas por proprietário. O shell da rota `/` é público, mas o conteúdo privado só é obtido após autenticação e autorização no Supabase.
-- Sessão gerenciada pelo SDK Supabase no navegador. Nenhum conteúdo HTML de nota é executado; links abrem com `noopener noreferrer`. Produção exige HTTPS e revisão adicional de CSP e ameaças de XSS.
+- Sessão gerenciada pelo SDK Supabase no navegador. Nenhum conteúdo HTML de nota é executado; links abrem com `noopener noreferrer`. CSP com nonce por resposta limita scripts; produção exige HTTPS e verificação dos headers no provedor.
 
 ## Backups e recuperação
 
@@ -98,3 +98,7 @@ Escolha a retenção e, se necessário, PITR no projeto Supabase. Faça backup s
 O design system atual está documentado em [docs/DESIGN-SYSTEM.md](docs/DESIGN-SYSTEM.md): tokens em `src/styles/tokens.css` e camadas de estilo em `src/styles/`, importadas por `src/app/globals.css`. Branco predomina no tema claro; o azul Primary indica ação e estado e o azul Royal reforça a identidade. A navegação do celular, o seletor de workspaces e os temas (Claro, Escuro, Sistema) estão em [docs/MOBILE-THEMES.md](docs/MOBILE-THEMES.md). A marca reutilizável permanece em `src/components/brand.tsx`. Os documentos de entrega Desktop e de identidade oceânica são registros históricos e citam arquivos de estilo que foram substituídos.
 
 Identidade oficial atual: [tubarão e logotipo gráfico TASKNADO](docs/BRAND_IDENTITY.md), com componentes compartilhados e variantes clara e escura.
+
+## Engenharia de segurança
+
+Consulte [achados, testes e gates de implantação](docs/SECURITY-DELIVERY.md) e o [runbook operacional](docs/SECURITY-OPERATIONS.md). As migrações de quarentena tornam anexos existentes pendentes até inspeção. Não publicar sem preparar e homologar o worker.
