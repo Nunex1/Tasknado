@@ -7,7 +7,7 @@ const pass = (s) => {
   checks.push(s);
   console.log("PASS " + s);
 };
-await pg.exec(`create role anon; create role authenticated; create schema auth; create schema storage;
+await pg.exec(`create role service_role bypassrls; create role anon; create role authenticated; create schema auth; create schema storage;
 create table auth.users(id uuid primary key);
 create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
 create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);
@@ -581,7 +581,81 @@ await pg.query(
   "insert into storage.objects(bucket_id,name) values('attachments',$1)",
   [path],
 );
+assert.equal((await pg.query("select * from storage.objects")).rows.length, 0);
+await fails("update attachments set scan_status='clean' where id=$1", [file]);
+await fails("truncate attachments cascade");
+await fails("select reserve_attachment_path()");
+await pg.exec("reset role");
+await pg.query("update attachments set scan_status='clean' where id=$1", [
+  file,
+]);
+await as(a);
 assert.equal((await pg.query("select * from storage.objects")).rows.length, 1);
+await fails(
+  "insert into storage.objects(bucket_id,name) values('attachments',$1)",
+  [path],
+);
+assert.equal(
+  (
+    await pg.query("delete from storage.objects where name=$1 returning id", [
+      path,
+    ])
+  ).rows.length,
+  0,
+);
+pass(
+  "Quarantine hides pending bytes, denies client verdicts, replacement/deletion and RLS-bypassing privileges",
+);
+const disposable = crypto.randomUUID(),
+  disposablePath = a + "/" + disposable;
+await pg.query(
+  "insert into attachments(id,activity_id,name,path,mime,size) values($1,$2,'deleted.txt',$3,'text/plain',1)",
+  [disposable, activity.id, disposablePath],
+);
+await pg.query("delete from attachments where id=$1", [disposable]);
+await assert.rejects(
+  pg.query(
+    "insert into attachments(id,activity_id,name,path,mime,size) values($1,$2,'reused.txt',$3,'text/plain',1)",
+    [disposable, activity.id, disposablePath],
+  ),
+  /duplicate key/,
+);
+await pg.exec("reset role");
+assert.equal(
+  Number(
+    (
+      await pg.query(
+        "select reserved_bytes from attachment_paths where path=$1",
+        [disposablePath],
+      )
+    ).rows[0].reserved_bytes,
+  ),
+  20971520,
+);
+// Keep the existing cleanup expectations focused on their own fixtures.
+await pg.query("delete from storage_cleanup where path=$1", [disposablePath]);
+await pg.exec("begin");
+await pg.query(
+  "insert into attachment_paths(path,owner_id) select $1::text || '/' || gen_random_uuid()::text,$1::uuid from generate_series(1,52)",
+  [a],
+);
+await as(a);
+await assert.rejects(
+  pg.query(
+    "insert into attachments(activity_id,name,path,mime,size,id) values($1,'quota.txt',$2,'text/plain',1,$3)",
+    [
+      activity.id,
+      a + "/eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+      "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+    ],
+  ),
+  /Storage quota exceeded/,
+);
+await pg.exec("rollback");
+await as(a);
+pass(
+  "Permanent tombstones prevent path reuse; deleted/rejected-byte reservations cannot be bypassed by declared size=1",
+);
 await as(b);
 assert.equal((await pg.query("select * from storage.objects")).rows.length, 0);
 await fails(

@@ -15,7 +15,9 @@
     "test:notes": "node scripts/test-notes-deletion.mjs",
     "format": "prettier --write src scripts",
     "test:responsive": "node scripts/test-responsive.mjs",
-    "capture:landing": "node scripts/capture-landing.mjs"
+    "capture:landing": "node scripts/capture-landing.mjs",
+    "scan:uploads": "node scripts/scan-uploads.mjs",
+    "test:security:postgres": "node scripts/test-security-postgres.mjs"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.0",
@@ -27,7 +29,9 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-i18next": "^17.0.17",
-    "tailwind-merge": "^3.0.0"
+    "tailwind-merge": "^3.0.0",
+    "fflate": "0.8.3",
+    "file-type": "22.3.0"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.9",
@@ -40,6 +44,7 @@
     "supabase": "^2.50.0",
     "tailwindcss": "^4.1.0",
     "typescript": "^5.9.0",
-    "vitest": "^3.2.0"
-  }
+    "vitest": "^5.1.0"
+  },
+  "packageManager": "pnpm@11.25.0"
 }

@@ -501,5 +501,11 @@
   "Trocar workspace": "Trocar workspace",
   "Workspace ativo: {{name}}": "Workspace ativo: {{name}}",
   "Geral": "Geral",
-  "Filtros": "Filtros"
+  "Filtros": "Filtros",
+  "Em verificação": "Em verificação",
+  "Bloqueado": "Bloqueado",
+  "Arquivo bloqueado pela verificação de segurança.": "Arquivo bloqueado pela verificação de segurança.",
+  "Arquivo em verificação. Tente novamente em instantes.": "Arquivo em verificação. Tente novamente em instantes.",
+  "Arquivo recebido. Aguardando verificação de segurança.": "Arquivo recebido. Aguardando verificação de segurança.",
+  "Verificado": "Verificado"
 }
