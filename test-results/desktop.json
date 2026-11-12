@@ -1,5 +1,5 @@
 {
-  "date": "2026-11-11T01:56:12.635Z",
+  "date": "2026-11-12T07:16:16.097Z",
   "passed": 22,
   "checks": [
     "Real UI authentication, Workspace creation and dedicated route; Work schedule/date/time and Q1 persist",
@@ -225,7 +225,7 @@
       "passedRules": 25
     },
     {
-      "path": "/workspaces/3b8a9b71-a251-4be2-bbac-6de435ebd0f3/activities",
+      "path": "/workspaces/b38e2457-45e0-447b-a67c-72c1555cf8c0/activities",
       "violations": [],
       "manualReview": [
         {
@@ -255,7 +255,7 @@
       "passedRules": 25
     },
     {
-      "path": "/workspaces/3b8a9b71-a251-4be2-bbac-6de435ebd0f3/activities/f4effb24-1f63-4f2d-93a2-acf9b064019d",
+      "path": "/workspaces/b38e2457-45e0-447b-a67c-72c1555cf8c0/activities/c8d4c4ca-1ecb-4e11-a4f7-0ad224064750",
       "violations": [],
       "manualReview": [
         {
@@ -297,7 +297,7 @@
       "passedRules": 28
     },
     {
-      "path": "/workspaces/3b8a9b71-a251-4be2-bbac-6de435ebd0f3/observations",
+      "path": "/workspaces/b38e2457-45e0-447b-a67c-72c1555cf8c0/observations",
       "violations": [],
       "manualReview": [
         {
@@ -321,7 +321,7 @@
       "passedRules": 25
     },
     {
-      "path": "/workspaces/3b8a9b71-a251-4be2-bbac-6de435ebd0f3/history",
+      "path": "/workspaces/b38e2457-45e0-447b-a67c-72c1555cf8c0/history",
       "violations": [],
       "manualReview": [
         {
@@ -339,7 +339,7 @@
       "passedRules": 25
     },
     {
-      "path": "/workspaces/3b8a9b71-a251-4be2-bbac-6de435ebd0f3/matrix",
+      "path": "/workspaces/b38e2457-45e0-447b-a67c-72c1555cf8c0/matrix",
       "violations": [],
       "manualReview": [
         {
@@ -387,7 +387,7 @@
       "passedRules": 25
     },
     {
-      "path": "/workspaces/3b8a9b71-a251-4be2-bbac-6de435ebd0f3/notes/ce7ade7d-f76a-472c-8e10-67ee8a0bc373",
+      "path": "/workspaces/b38e2457-45e0-447b-a67c-72c1555cf8c0/notes/e7ad083f-6ab7-4be0-ae53-304e1149822b",
       "violations": [],
       "manualReview": [
         {

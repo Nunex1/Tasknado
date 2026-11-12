@@ -4,9 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import {
-  Home,
   Folder,
-  ListTodo,
   Search,
   UserRound,
   Plus,
@@ -14,13 +12,9 @@ import {
   PanelLeftOpen,
   Globe,
   LockKeyhole,
-  NotebookPen,
+  Menu,
   Settings,
   LogOut,
-  LayoutDashboard,
-  MessageSquareText,
-  History,
-  Grid2x2,
 } from "lucide-react";
 import { useI18n } from "@/i18n/provider";
 import {
@@ -34,43 +28,47 @@ import { BrandSymbol, BrandWordmark } from "./brand";
 import { ProfileMenu } from "./profile-menu";
 import { HeaderSearch } from "./header-search";
 import { WorkspaceIcon } from "./workspace-icon";
-export const workspaceTabs: { view: View; label: string }[] = [
-  { view: "dashboard", label: "Visão geral" },
-  { view: "activities", label: "Tarefas" },
-  { view: "observations", label: "Observações" },
-  { view: "history", label: "Histórico" },
-  { view: "matrix", label: "Matriz de Eisenhower" },
-  { view: "notes", label: "Notas" },
-];
-const tabIcons: Partial<Record<View, typeof Folder>> = {
-  dashboard: LayoutDashboard,
-  activities: ListTodo,
-  observations: MessageSquareText,
-  history: History,
-  matrix: Grid2x2,
-  notes: NotebookPen,
-};
-// Below this width the workspace panel opens over the content instead of
-// beside it. Keep in sync with the 899px breakpoint in shell.css.
+import { WorkspaceSwitcher } from "./workspace-switcher";
+import { NavDrawer } from "./nav-drawer";
+import { primaryNav, tabIcons, tabsFor, workspaceTabs } from "./nav-items";
+export { workspaceTabs };
+
+/*
+ * Three layouts, chosen by the space available — never by the user agent:
+ *   phone   (up to 767px)  header with a menu button; navigation in a drawer
+ *   tablet  (768–899px)    icon rail; the workspace panel opens over content
+ *   desktop (900px and up) icon rail and a collapsible workspace panel
+ * Keep the two queries in sync with the 767px and 899px rules in shell.css.
+ */
+const phoneQuery = "(max-width: 767px)";
 const compactQuery = "(max-width: 899px)";
-function subscribeCompact(onChange: () => void) {
-  const media = window.matchMedia(compactQuery);
-  media.addEventListener("change", onChange);
-  return () => media.removeEventListener("change", onChange);
-}
-function useCompact() {
+function useMedia(query: string) {
   return useSyncExternalStore(
-    subscribeCompact,
-    () => window.matchMedia(compactQuery).matches,
+    (onChange) => {
+      const media = window.matchMedia(query);
+      media.addEventListener("change", onChange);
+      return () => media.removeEventListener("change", onChange);
+    },
+    () => window.matchMedia(query).matches,
     () => false,
   );
 }
+const sectionTitles: Record<string, string> = {
+  "/": "Início",
+  "/workspaces": "Workspaces",
+  "/activities": "Tarefas",
+  "/search": "Pesquisar",
+  "/notes": "Notas",
+  "/settings": "Configurações",
+  "/perfil": "Perfil",
+};
 export function DesktopShell({
   user,
   workspaces,
   workspace,
   activities,
   view,
+  action,
   canLeave,
   go,
   onCreate,
@@ -83,6 +81,8 @@ export function DesktopShell({
   workspace?: Workspace;
   activities: Activity[];
   view: View;
+  /** The main action of the current screen, shown in the phone header. */
+  action?: { label: string; run: () => void };
   canLeave: () => boolean;
   go: (path: string) => void;
   onCreate: () => void;
@@ -92,8 +92,10 @@ export function DesktopShell({
 }) {
   const { t, locale, setLocale, storageError } = useI18n();
   const path = usePathname();
-  const compact = useCompact();
+  const phone = useMedia(phoneQuery);
+  const compact = useMedia(compactQuery);
   const toggle = useRef<HTMLButtonElement>(null);
+  const menu = useRef<HTMLButtonElement>(null);
   const [collapsed, setCollapsed] = useState(false);
   const [drawer, setDrawer] = useState(false);
   useEffect(() => {
@@ -115,11 +117,11 @@ export function DesktopShell({
     });
   }
   const contextual = path.startsWith("/workspaces");
-  // The drawer never outlives the page it was opened on.
-  useEffect(() => setDrawer(false), [path, compact]);
-  const panelOpen = contextual && (compact ? drawer : !collapsed);
+  // A drawer never outlives the page or the layout it was opened on.
+  useEffect(() => setDrawer(false), [path, compact, phone]);
+  const panelOpen = !phone && contextual && (compact ? drawer : !collapsed);
   useEffect(() => {
-    if (!compact || !drawer) return;
+    if (phone || !compact || !drawer) return;
     const escape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setDrawer(false);
@@ -128,14 +130,38 @@ export function DesktopShell({
     };
     document.addEventListener("keydown", escape);
     return () => document.removeEventListener("keydown", escape);
-  }, [compact, drawer]);
+  }, [phone, compact, drawer]);
+  // Tells assistive technology that the context changed after a switch.
+  const [announcement, setAnnouncement] = useState("");
+  const lastWorkspace = useRef<string | undefined>(undefined);
+  const workspaceName = workspace?.name;
+  useEffect(() => {
+    const current = workspace?.id ?? (contextual ? undefined : "all");
+    if (current === undefined) return;
+    if (lastWorkspace.current && lastWorkspace.current !== current)
+      setAnnouncement(
+        t("Workspace ativo: {{name}}", {
+          name: workspaceName ?? t("Todos os workspaces"),
+        }),
+      );
+    lastWorkspace.current = current;
+  }, [workspace?.id, workspaceName, contextual, t]);
   const guard = (event: { preventDefault: () => void }) => {
     if (!canLeave()) event.preventDefault();
   };
+  const moduleLabel =
+    view === "settings"
+      ? "Configurações"
+      : (workspaceTabs.find((tab) => tab.view === view)?.label ??
+        "Visão geral");
+  const title = workspace
+    ? workspace.name
+    : t(sectionTitles[path] ?? "Workspaces");
   return (
     <div
       className={[
         "desktop-app",
+        phone ? "phone" : "",
         contextual ? "contextual" : "",
         panelOpen ? (compact ? "drawer-open" : "with-context") : "",
       ]
@@ -145,51 +171,105 @@ export function DesktopShell({
       <a href="#main" className="skip-link">
         {t("Ir para o conteúdo")}
       </a>
-      <header className="global-header">
-        <div className="brand brand--sm brand--horizontal">
-          <Link
-            href="/"
-            className="brand-home-link brand-home-symbol"
-            aria-label={t("Tubarão-martelo — Visão geral")}
-            onNavigate={guard}
+      <div className="visually-hidden" role="status" aria-live="polite">
+        {announcement}
+      </div>
+      {phone ? (
+        <header className="global-header">
+          <button
+            ref={menu}
+            type="button"
+            className="icon-button header-menu"
+            aria-label={t("Abrir menu")}
+            aria-haspopup="dialog"
+            aria-expanded={drawer}
+            aria-controls={drawer ? "nav-drawer" : undefined}
+            onClick={() => setDrawer(true)}
           >
-            <BrandSymbol size="sm" decorative />
-          </Link>
-          <Link
-            href="/"
-            className="brand-home-link brand-home-wordmark"
-            aria-label={t("TASKNADO — Visão geral")}
-            onNavigate={guard}
-          >
-            <BrandWordmark size="sm" tone="blue" decorative />
-          </Link>
-        </div>
-        <div className="header-center">
-          <HeaderSearch workspaces={workspaces} onOpen={onResult} />
-          <label className="header-language">
-            <Globe size={16} aria-hidden="true" />
-            <select
-              aria-label={t("Idioma da interface")}
-              value={locale}
-              onChange={(e) => setLocale(e.target.value as "pt-BR" | "en-US")}
+            <Menu size={22} aria-hidden="true" />
+          </button>
+          <div className="header-title">
+            <strong>{title}</strong>
+            {workspace && <span>{t(moduleLabel)}</span>}
+          </div>
+          <div className="header-actions">
+            <Link
+              href="/search"
+              onNavigate={guard}
+              className="icon-button"
+              aria-label={t("Pesquisar")}
+              aria-current={path === "/search" ? "page" : undefined}
             >
-              <option value="pt-BR">PT</option>
-              <option value="en-US">EN</option>
-            </select>
-          </label>
-        </div>
-        <div className="header-account">
-          <span className="private-label">
-            <LockKeyhole size={13} aria-hidden="true" />
-            {t("Pessoal e privado")}
-          </span>
-          <ProfileMenu
-            user={user}
-            canNavigate={canLeave}
-            onSignOut={onSignOut}
-          />
-        </div>
-      </header>
+              <Search size={20} aria-hidden="true" />
+            </Link>
+            {action && (
+              <button
+                type="button"
+                className="header-action"
+                aria-label={t(action.label)}
+                onClick={action.run}
+              >
+                <Plus size={20} aria-hidden="true" />
+              </button>
+            )}
+          </div>
+        </header>
+      ) : (
+        <header className="global-header">
+          <div className="header-start">
+            <div className="brand brand--sm brand--horizontal">
+              <Link
+                href="/"
+                className="brand-home-link brand-home-symbol"
+                aria-label={t("Tubarão-martelo — Visão geral")}
+                onNavigate={guard}
+              >
+                <BrandSymbol size="sm" decorative />
+              </Link>
+              <Link
+                href="/"
+                className="brand-home-link brand-home-wordmark"
+                aria-label={t("TASKNADO — Visão geral")}
+                onNavigate={guard}
+              >
+                <BrandWordmark size="sm" tone="blue" decorative />
+              </Link>
+            </div>
+            <WorkspaceSwitcher
+              workspaces={workspaces}
+              workspace={workspace}
+              view={view}
+              guard={guard}
+              onCreate={onCreate}
+            />
+          </div>
+          <div className="header-center">
+            <HeaderSearch workspaces={workspaces} onOpen={onResult} />
+            <label className="header-language">
+              <Globe size={16} aria-hidden="true" />
+              <select
+                aria-label={t("Idioma da interface")}
+                value={locale}
+                onChange={(e) => setLocale(e.target.value as "pt-BR" | "en-US")}
+              >
+                <option value="pt-BR">PT</option>
+                <option value="en-US">EN</option>
+              </select>
+            </label>
+          </div>
+          <div className="header-account">
+            <span className="private-label">
+              <LockKeyhole size={13} aria-hidden="true" />
+              {t("Pessoal e privado")}
+            </span>
+            <ProfileMenu
+              user={user}
+              canNavigate={canLeave}
+              onSignOut={onSignOut}
+            />
+          </div>
+        </header>
+      )}
       {storageError && (
         <div className="preference-error" role="alert">
           {t(
@@ -197,54 +277,62 @@ export function DesktopShell({
           )}
         </div>
       )}
-      <nav className="primary-rail" aria-label={t("Navegação principal")}>
-        {[
-          { href: "/", label: "Início", icon: Home },
-          { href: "/workspaces", label: "Workspaces", icon: Folder },
-          { href: "/activities", label: "Tarefas", icon: ListTodo },
-          { href: "/search", label: "Pesquisar", icon: Search },
-          { href: "/notes", label: "Notas", icon: NotebookPen },
-          {
-            href: "/settings",
-            label: "Configurações",
-            icon: Settings,
-            secondary: true,
-          },
-        ].map(({ href, label, icon: Icon, secondary }) => {
-          const active =
-            path === href || (href === "/workspaces" && contextual);
-          return (
-            <Link
-              key={href}
-              href={href}
-              onNavigate={guard}
-              className={`rail-item ${secondary ? "rail-secondary" : ""} ${active ? "active" : ""}`}
-              aria-current={active ? "page" : undefined}
-            >
-              <Icon size={20} aria-hidden="true" />
-              <span>{t(label)}</span>
-            </Link>
-          );
-        })}
-        {/* On phones these three live in the account menu of the header. */}
-        <Link
-          href="/perfil"
-          onNavigate={guard}
-          className={`rail-item rail-secondary rail-profile ${path === "/perfil" ? "active" : ""}`}
-          aria-current={path === "/perfil" ? "page" : undefined}
-        >
-          <UserRound size={20} aria-hidden="true" />
-          <span>{t("Perfil")}</span>
-        </Link>
-        <button
-          className="rail-item rail-secondary rail-signout"
-          onClick={onSignOut}
-        >
-          <LogOut size={20} aria-hidden="true" />
-          <span>{t("Sair")}</span>
-        </button>
-      </nav>
-      {contextual && (
+      {phone ? (
+        <NavDrawer
+          open={drawer}
+          onOpenChange={setDrawer}
+          returnFocusRef={menu}
+          user={user}
+          workspaces={workspaces}
+          workspace={workspace}
+          activities={activities}
+          view={view}
+          guard={guard}
+          go={go}
+          onCreate={onCreate}
+          onSignOut={onSignOut}
+        />
+      ) : (
+        <nav className="primary-rail" aria-label={t("Navegação principal")}>
+          {[
+            ...primaryNav,
+            {
+              href: "/settings",
+              label: "Configurações",
+              icon: Settings,
+            },
+          ].map(({ href, label, icon: Icon }) => {
+            const active =
+              path === href || (href === "/workspaces" && contextual);
+            return (
+              <Link
+                key={href}
+                href={href}
+                onNavigate={guard}
+                className={`rail-item ${active ? "active" : ""}`}
+                aria-current={active ? "page" : undefined}
+              >
+                <Icon size={20} aria-hidden="true" />
+                <span>{t(label)}</span>
+              </Link>
+            );
+          })}
+          <Link
+            href="/perfil"
+            onNavigate={guard}
+            className={`rail-item rail-profile ${path === "/perfil" ? "active" : ""}`}
+            aria-current={path === "/perfil" ? "page" : undefined}
+          >
+            <UserRound size={20} aria-hidden="true" />
+            <span>{t("Perfil")}</span>
+          </Link>
+          <button className="rail-item rail-signout" onClick={onSignOut}>
+            <LogOut size={20} aria-hidden="true" />
+            <span>{t("Sair")}</span>
+          </button>
+        </nav>
+      )}
+      {contextual && !phone && (
         <button
           ref={toggle}
           className="context-toggle icon-button"
@@ -309,26 +397,21 @@ export function DesktopShell({
                 {t(workspaceCategories[workspace.category])}
               </div>
               <nav aria-label={t("Navegação do Workspace")}>
-                {workspaceTabs
-                  .filter(
-                    (tab) =>
-                      tab.view !== "matrix" || workspace.category === "work",
-                  )
-                  .map((tab) => {
-                    const Icon = tabIcons[tab.view] ?? Folder;
-                    return (
-                      <Link
-                        key={tab.view}
-                        href={workspacePath(workspace.id, tab.view)}
-                        onNavigate={guard}
-                        className={`context-link ${view === tab.view ? "active" : ""}`}
-                        aria-current={view === tab.view ? "page" : undefined}
-                      >
-                        <Icon size={16} aria-hidden="true" />
-                        {t(tab.label)}
-                      </Link>
-                    );
-                  })}
+                {tabsFor(workspace.category).map((tab) => {
+                  const Icon = tabIcons[tab.view] ?? Folder;
+                  return (
+                    <Link
+                      key={tab.view}
+                      href={workspacePath(workspace.id, tab.view)}
+                      onNavigate={guard}
+                      className={`context-link ${view === tab.view ? "active" : ""}`}
+                      aria-current={view === tab.view ? "page" : undefined}
+                    >
+                      <Icon size={16} aria-hidden="true" />
+                      {t(tab.label)}
+                    </Link>
+                  );
+                })}
               </nav>
               <div className="context-category">{t("Conteúdos recentes")}</div>
               {activities

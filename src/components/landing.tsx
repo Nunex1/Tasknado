@@ -13,7 +13,9 @@ import {
   UserX,
 } from "lucide-react";
 import { useI18n } from "@/i18n/provider";
+import { useTheme } from "@/lib/theme-provider";
 import { BrandLogo } from "./brand";
+import { ThemeControl } from "./theme";
 import { shots, type ShotName } from "./landing-shots";
 
 type Access = (mode: "login" | "signup") => void;
@@ -115,7 +117,8 @@ function Shot({
   sizes: string;
 }) {
   const { locale } = useI18n();
-  const image = shots[name][locale];
+  const { resolved } = useTheme();
+  const image = shots[name][resolved][locale];
   return (
     <figure className="shot">
       <Image
@@ -342,6 +345,7 @@ export function Landing({
               {t("Entrar")}
             </a>
           </nav>
+          <ThemeControl name="theme-landing" />
         </div>
       </footer>
     </div>

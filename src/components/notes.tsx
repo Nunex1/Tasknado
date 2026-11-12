@@ -429,7 +429,7 @@ export function Notes({
           <h1>{t("Bloco de notas")}</h1>
           <p>{t("Um lugar para suas ideias, referências e descobertas.")}</p>
         </div>
-        <Button onClick={onCreate}>
+        <Button className="heading-action" onClick={onCreate}>
           <Plus size={17} /> {t("Nova nota")}
         </Button>
       </div>

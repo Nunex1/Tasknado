@@ -484,5 +484,22 @@
   "Nenhuma prioridade pendente.": "Nenhuma prioridade pendente.",
   "Iniciadas e ainda não concluídas.": "Iniciadas e ainda não concluídas.",
   "Nenhuma atividade em andamento.": "Nenhuma atividade em andamento.",
-  "Ver todas": "Ver todas"
+  "Ver todas": "Ver todas",
+  "Aparência": "Aparência",
+  "Claro": "Claro",
+  "Escuro": "Escuro",
+  "Sistema": "Sistema",
+  "Escolha o tema claro, o escuro ou acompanhe a configuração do seu dispositivo.": "Escolha o tema claro, o escuro ou acompanhe a configuração do seu dispositivo.",
+  "Não foi possível salvar a aparência neste navegador. Ela permanece ativa nesta sessão.": "Não foi possível salvar a aparência neste navegador. Ela permanece ativa nesta sessão.",
+  "Seguindo o dispositivo: tema escuro.": "Seguindo o dispositivo: tema escuro.",
+  "Seguindo o dispositivo: tema claro.": "Seguindo o dispositivo: tema claro.",
+  "Preferência salva neste navegador.": "Preferência salva neste navegador.",
+  "Você ainda não tem workspaces.": "Você ainda não tem workspaces.",
+  "Trocar workspace. Ativo: {{name}}": "Trocar workspace. Ativo: {{name}}",
+  "Menu de navegação": "Menu de navegação",
+  "Workspace ativo": "Workspace ativo",
+  "Trocar workspace": "Trocar workspace",
+  "Workspace ativo: {{name}}": "Workspace ativo: {{name}}",
+  "Geral": "Geral",
+  "Filtros": "Filtros"
 }

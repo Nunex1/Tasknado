@@ -484,5 +484,22 @@
   "Nenhuma prioridade pendente.": "No pending priorities.",
   "Iniciadas e ainda não concluídas.": "Started and not yet completed.",
   "Nenhuma atividade em andamento.": "No tasks in progress.",
-  "Ver todas": "View all"
+  "Ver todas": "View all",
+  "Aparência": "Appearance",
+  "Claro": "Light",
+  "Escuro": "Dark",
+  "Sistema": "System",
+  "Escolha o tema claro, o escuro ou acompanhe a configuração do seu dispositivo.": "Choose the light theme, the dark theme, or follow your device setting.",
+  "Não foi possível salvar a aparência neste navegador. Ela permanece ativa nesta sessão.": "The appearance could not be saved in this browser. It stays active for this session.",
+  "Seguindo o dispositivo: tema escuro.": "Following your device: dark theme.",
+  "Seguindo o dispositivo: tema claro.": "Following your device: light theme.",
+  "Preferência salva neste navegador.": "Preference saved in this browser.",
+  "Você ainda não tem workspaces.": "You have no workspaces yet.",
+  "Trocar workspace. Ativo: {{name}}": "Switch workspace. Active: {{name}}",
+  "Menu de navegação": "Navigation menu",
+  "Workspace ativo": "Active workspace",
+  "Trocar workspace": "Switch workspace",
+  "Workspace ativo: {{name}}": "Active workspace: {{name}}",
+  "Geral": "General",
+  "Filtros": "Filters"
 }

@@ -7,6 +7,8 @@ import { usePathname } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { LogOut, Settings, UserRound } from "lucide-react";
 import { userProfile, avatarForeground } from "@/lib/user-profile";
+import { useTheme } from "@/lib/theme-provider";
+import { themeOptions } from "./theme";
 
 const links = [
   { href: "/perfil", label: "Editar perfil", icon: UserRound },
@@ -23,6 +25,7 @@ export function ProfileMenu({
   onSignOut: () => void;
 }) {
   const { t } = useI18n();
+  const { mode, setMode } = useTheme();
   const [open, setOpen] = useState(false);
   const container = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -31,7 +34,8 @@ export function ProfileMenu({
   const triggerId = useId();
   const pathname = usePathname();
   const { initial, color, displayName, email } = userProfile(user);
-  const count = links.length + 1;
+  // Links, the three appearance options, then Sign Out.
+  const count = links.length + themeOptions.length + 1;
   function focusItem(index: number) {
     items.current[(index + count) % count]?.focus();
   }
@@ -109,8 +113,10 @@ export function ProfileMenu({
               const current = items.current.findIndex(
                 (item) => item === document.activeElement,
               );
-              if (event.key === "ArrowDown") focusItem(current + 1);
-              else if (event.key === "ArrowUp") focusItem(current - 1);
+              if (event.key === "ArrowDown" || event.key === "ArrowRight")
+                focusItem(current + 1);
+              else if (event.key === "ArrowUp" || event.key === "ArrowLeft")
+                focusItem(current - 1);
               else if (event.key === "Home") focusItem(0);
               else if (event.key === "End") focusItem(count - 1);
               else if (event.key === "Tab") {
@@ -151,9 +157,36 @@ export function ProfileMenu({
               </Link>
             ))}
             <div className="profile-menu-separator" role="separator" />
+            <div role="group" aria-labelledby={`${menuId}-theme`}>
+              <div className="profile-menu-label" id={`${menuId}-theme`}>
+                {t("Aparência")}
+              </div>
+              <div className="profile-menu-theme">
+                {themeOptions.map(
+                  ({ mode: value, label, icon: Icon }, index) => (
+                    <button
+                      key={value}
+                      ref={(element) => {
+                        items.current[links.length + index] = element;
+                      }}
+                      type="button"
+                      role="menuitemradio"
+                      aria-checked={mode === value}
+                      tabIndex={-1}
+                      className="profile-theme-option"
+                      onClick={() => setMode(value)}
+                    >
+                      <Icon size={14} aria-hidden="true" />
+                      {t(label)}
+                    </button>
+                  ),
+                )}
+              </div>
+            </div>
+            <div className="profile-menu-separator" role="separator" />
             <button
               ref={(element) => {
-                items.current[links.length] = element;
+                items.current[links.length + themeOptions.length] = element;
               }}
               type="button"
               role="menuitem"
