@@ -87,6 +87,8 @@ describe("Appearance preference", () => {
           return stored;
         },
       };
+      // Executes only the imported static bootstrap against test doubles.
+      // nosemgrep: no-executable-user-html
       new Function("document", "localStorage", themeScript)(doc, localStorage);
       return attributes.get("data-theme");
     };

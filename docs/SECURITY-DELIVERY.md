@@ -45,8 +45,8 @@ A entrega é código e validação local para revisão humana, não uma certific
 | `test-security-browser.mjs` | Edge Chromium: hidratação, troca de modo, nonce por script, rotação, HSTS/no-store e bloqueio de script sem nonce passaram | Shell público; não foi repetida toda a jornada visual/autenticada |
 | `pnpm install --frozen-lockfile --ignore-scripts` | Lock consistente | Instalação normal anterior executou somente build permitido de esbuild |
 | `pnpm audit --json` | Zero info/low/moderate/high/critical | Consulta pontual ao registro, incluindo dev dependencies |
-| Gitleaks 8.30.0, diretório atual, redacted | Nenhum segredo encontrado; aproximadamente 1,05 MB examinados na passagem inicial | Não é prova sobre todo o histórico Git; CI configurado com checkout completo |
-| Semgrep 1.145.0, três regras locais | 70 arquivos JS/TS, zero achados, linhas parseadas ~100% na passagem inicial | Primeira tentativa sobre worktree montado examinou zero arquivos e foi descartada; repetição usou cópia real |
+| Gitleaks 8.30.0, diretório atual, redacted | Nenhum segredo encontrado no snapshot versionado final; aproximadamente 3,11 MB examinados | Não é prova sobre todo o histórico Git; CI configurado com checkout completo |
+| Semgrep 1.145.0, três regras locais | 89 arquivos JS/TS, zero achados, linhas parseadas ~100% na passagem final | Primeira tentativa sobre worktree montado examinou zero arquivos e foi descartada; repetição usou cópia real |
 | Revisão independente | Baseline, arquitetura, upload e revisão das correções | Estática; achados e contraprovas preservados |
 
 Não realizados: scanner ClamAV real com assinaturas atualizadas/EICAR, fuzzing completo de codecs/arquivos, carga prolongada, restauração de produção com objetos/Auth/SMTP, recuperação de senha por e-mail ponta a ponta, verificação de rate limits hospedados/CAPTCHA/MFA, Safari/Firefox, pentest externo e inspeção de configuração de produção. Assets binários e resultados históricos não foram tratados como código auditado; bibliotecas não receberam auditoria integral de fonte vendor.
