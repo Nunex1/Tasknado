@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { execFileSync, spawnSync } from "node:child_process";
 import { createRequire } from "node:module";
 import assert from "node:assert/strict";
+import { resizeReservation } from "./upload-reservations.mjs";
 const cli = createRequire(import.meta.url).resolve("supabase/dist/supabase.js");
 const state = JSON.parse(
   execFileSync(process.execPath, [cli, "status", "-o", "json"], {
@@ -159,6 +160,30 @@ try {
   console.log(
     `INFO pre-issued signed URL after metadata deletion returned HTTP ${(await fetch(signed.signedUrl)).status}; expiry remains 60 seconds`,
   );
+  const cleanup = spawnSync(process.execPath, ["scripts/cleanup-storage.mjs"], {
+    encoding: "utf8",
+    env: {
+      ...process.env,
+      SUPABASE_URL: state.API_URL,
+      TASKNADO_WORKER_TARGET: state.API_URL,
+      SUPABASE_SERVICE_ROLE_KEY: state.SERVICE_ROLE_KEY,
+    },
+  });
+  assert.equal(cleanup.status, 0);
+  ok(await resizeReservation(admin, path, 5)); // scanner finishing after cleanup
+  assert.equal(
+    ok(
+      await admin
+        .from("attachment_paths")
+        .select("reserved_bytes")
+        .eq("path", path)
+        .single(),
+    ).reserved_bytes,
+    0,
+  );
+  console.log(
+    "PASS physical cleanup releases quota and a late scanner cannot resurrect the charge",
+  );
   const expired = await fetch(`${state.API_URL}/rest/v1/notes?select=id`, {
     headers: { apikey: state.ANON_KEY, Authorization: "Bearer invalid-token" },
   });
@@ -207,16 +232,14 @@ try {
     validPath = `${ids[1]}/${validId}`;
   paths.push(validPath);
   ok(
-    await second
-      .from("attachments")
-      .insert({
-        id: validId,
-        note_id: otherNote.id,
-        name: "valid.txt",
-        path: validPath,
-        mime: "text/plain",
-        size: 5,
-      }),
+    await second.from("attachments").insert({
+      id: validId,
+      note_id: otherNote.id,
+      name: "valid.txt",
+      path: validPath,
+      mime: "text/plain",
+      size: 5,
+    }),
   );
   ok(
     await second.storage

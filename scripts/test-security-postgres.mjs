@@ -9,7 +9,7 @@ const docker = (...args) =>
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
   });
-function sql(source) {
+function sql(source, database = "postgres") {
   return new Promise((resolve, reject) => {
     const child = spawn(
       "docker",
@@ -20,6 +20,8 @@ function sql(source) {
         "psql",
         "-U",
         "postgres",
+        "-d",
+        database,
         "-v",
         "ON_ERROR_STOP=1",
         "-At",
@@ -92,6 +94,35 @@ try {
   assert.equal(privileges, "0");
   console.log(
     "PASS anon/authenticated cannot TRUNCATE any application table in real PostgreSQL",
+  );
+  const dump = docker(
+    "exec",
+    name,
+    "pg_dump",
+    "-U",
+    "postgres",
+    "--no-owner",
+    "postgres",
+  );
+  await sql("create database recovery_drill");
+  await sql(dump, "recovery_drill");
+  assert.equal(
+    await sql("select count(*) from activity_events", "recovery_drill"),
+    "60",
+  );
+  assert.equal(
+    (
+      await sql(
+        "set role authenticated; set request.jwt.claim.sub='22222222-2222-4222-8222-222222222222'; select count(*) from activities",
+        "recovery_drill",
+      )
+    )
+      .split("\n")
+      .at(-1),
+    "0",
+  );
+  console.log(
+    "PASS synthetic pg_dump restore preserves event data and owner RLS in a second isolated database (Storage bytes not included)",
   );
 } finally {
   // Only the UUID-named container created by this invocation is removed.

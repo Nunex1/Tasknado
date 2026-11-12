@@ -57,7 +57,7 @@ try {
     nonce,
   );
   await page.getByRole("button", { name: "Criar conta", exact: true }).click();
-  await page.getByRole("heading", { name: "Comece seu novo espaço" }).waitFor();
+  await page.getByRole("heading", { name: "Crie sua conta" }).waitFor();
   assert.deepEqual(errors, []);
   console.log(
     "PASS production browser hydrates, navigation works, script nonces match, nonces rotate and untrusted inline script is blocked",

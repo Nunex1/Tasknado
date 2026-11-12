@@ -6,6 +6,7 @@ import { mkdtemp, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, isAbsolute } from "node:path";
 import { inspectContent } from "./upload-content.mjs";
+import { resizeReservation } from "./upload-reservations.mjs";
 
 const {
   SUPABASE_URL,
@@ -118,12 +119,7 @@ for (const file of pending) {
       scanned++;
       if (verdict === "rejected") rejected++;
       if (verdict === "clean")
-        ok(
-          await db
-            .from("attachment_paths")
-            .update({ reserved_bytes: bytes.length })
-            .eq("path", file.path),
-        );
+        ok(await resizeReservation(db, file.path, bytes.length));
     }
   } catch {
     retry++;
