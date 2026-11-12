@@ -49,8 +49,11 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
-        with:
-          python-version: "3.12"
-      - run: pip install semgrep==1.145.0
-      - run: semgrep scan --config .semgrep.yml --error --metrics=off
+      # Same immutable environment validated locally; avoids floating Python
+      # transitive dependencies breaking Semgrep before any source is scanned.
+      - run: >-
+          docker run --rm --network none
+          -v "$GITHUB_WORKSPACE:/src:ro"
+          semgrep/semgrep@sha256:b68f9b68483955b85042dac7b4533757779625a02dcf91e470da4c2df1b430be
+          semgrep scan --config /src/.semgrep.yml --no-git-ignore
+          --error --metrics=off /src
