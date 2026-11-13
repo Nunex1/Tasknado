@@ -27,6 +27,7 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm test:database
+      - run: pnpm test:professional:database
       - run: pnpm test:security:postgres
       - run: pnpm build
   secrets:

@@ -1,4 +1,6 @@
 import type {
+  CareerTarget,
+  DevelopmentItem,
   Workspace,
   WorkspaceCategory,
   CategoryAttributes,
@@ -14,6 +16,7 @@ import type {
   WorkspaceObservation,
   WorkspaceEvent,
 } from "./domain";
+import type { CareerValues, DevelopmentValues } from "./professional";
 type Owned<T> = T & { owner_id: string };
 type Table<Row, Insert, Update = Partial<Insert>> = {
   Row: { [K in keyof Row]: Row[K] };
@@ -25,6 +28,16 @@ type OptionalOwnership = { id?: string; owner_id?: string };
 export type Database = {
   public: {
     Tables: {
+      career_targets: Table<
+        CareerTarget,
+        CareerValues & { workspace_id: string },
+        Partial<CareerValues>
+      >;
+      professional_development_items: Table<
+        DevelopmentItem,
+        DevelopmentValues & { workspace_id: string },
+        Partial<DevelopmentValues>
+      >;
       workspace_observations: Table<
         Owned<WorkspaceObservation>,
         { workspace_id: string; content: string },
@@ -104,6 +117,13 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      export_professional_plans: {
+        Args: {
+          p_table: "career_targets" | "professional_development_items";
+          p_offset?: number;
+        };
+        Returns: (CareerTarget | DevelopmentItem)[];
+      };
       workspace_timeline: {
         Args: { p_workspace: string; p_offset?: number };
         Returns: WorkspaceEvent[];
