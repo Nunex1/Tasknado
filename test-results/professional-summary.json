@@ -1,0 +1,43 @@
+{
+  "date": "2026-11-13T23:32:46.494Z",
+  "source_commit": "ca31221d3a8ddbfa9cd3aefad95747c2af76b25b",
+  "next_version": "16.4.1",
+  "scope": "Local only. Final professional browser acceptance ran against next build + next start, real local Supabase Auth/PostgREST, and Edge Chromium.",
+  "typecheck": "passed",
+  "unit_tests": {
+    "passed": 65,
+    "files": 13
+  },
+  "production_build": "passed",
+  "database_groups": 18,
+  "professional_database_groups": 9,
+  "postgres_security_groups": 3,
+  "integration_groups": 18,
+  "professional_live_groups": 12,
+  "responsive_regression_groups": 13,
+  "professional_axe_checks": 34,
+  "regression_axe_checks": 68,
+  "axe_violations": 0,
+  "widths": [
+    375,
+    768,
+    1024,
+    1440
+  ],
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "locales": [
+    "pt-BR",
+    "en-US"
+  ],
+  "production_migration_applied": false,
+  "production_deployed": false,
+  "not_tested": [
+    "Safari",
+    "Firefox",
+    "physical devices",
+    "manual screen reader"
+  ]
+}

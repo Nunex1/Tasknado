@@ -25,3 +25,5 @@ Aplicação individual Next.js/React/TypeScript, tokens Tailwind e componentes a
 ## Relações
 auth.users → workspaces → activities → activity_events.
 workspaces → notes → note_entries. attachments possui vínculo exclusivo com atividade ou nota. Todas as entidades incluem owner_id e os vínculos são validados pelo banco. audit_logs guarda operações sensíveis, sem copiar conteúdo privado.
+
+workspaces → professional_development_items / career_targets. Os planos profissionais estão disponíveis somente na categoria `work`, com RLS de proprietário e categoria, revisão otimista e vínculo opcional dentro do mesmo workspace. A exportação privada inclui também registros preservados em categorias incompatíveis. Ver [Gestão de desenvolvimento profissional](PROFESSIONAL-DEVELOPMENT.md) para uso, validação e ordem de aplicação da migração/publicação.
