@@ -86,7 +86,7 @@ export function Files({
       );
       uploaded = true;
       await load();
-      report("Arquivo salvo.");
+      report("Arquivo recebido. Aguardando verificação de segurança.");
     } catch (e) {
       if (!uploaded && path)
         await client().storage.from("attachments").remove([path]);
@@ -98,6 +98,15 @@ export function Files({
     }
   }
   async function open(file: Attachment, download = false) {
+    if (file.scan_status !== "clean") {
+      report(
+        file.scan_status === "rejected"
+          ? "Arquivo bloqueado pela verificação de segurança."
+          : "Arquivo em verificação. Tente novamente em instantes.",
+      );
+      await load().catch(() => {});
+      return;
+    }
     try {
       const data = check(
         await client()
@@ -124,7 +133,6 @@ export function Files({
       return;
     setBusy(true);
     try {
-      check(await client().storage.from("attachments").remove([file.path]));
       check(await client().from("attachments").delete().eq("id", file.id));
       setPreview(null);
       await load();
@@ -199,7 +207,14 @@ export function Files({
           <button className="file-name" onClick={() => void open(file)}>
             <strong>{file.name}</strong>
             <small>
-              {bytes(file.size)} · {date(file.created_at)}
+              {bytes(file.size)} · {date(file.created_at)} ·{" "}
+              {t(
+                file.scan_status === "clean"
+                  ? "Verificado"
+                  : file.scan_status === "rejected"
+                    ? "Bloqueado"
+                    : "Em verificação",
+              )}
             </small>
           </button>
           <button

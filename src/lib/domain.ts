@@ -72,6 +72,7 @@ export interface Entry {
   updated_at: string;
 }
 export interface Attachment {
+  scan_status: "pending" | "clean" | "rejected";
   id: string;
   activity_id: string | null;
   note_id: string | null;

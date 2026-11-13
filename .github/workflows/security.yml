@@ -1,0 +1,59 @@
+name: Security and regression
+on:
+  pull_request:
+  push:
+    branches: [main, "codex/**"]
+  schedule:
+    - cron: "23 7 * * 1"
+permissions:
+  contents: read
+concurrency:
+  group: security-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "24"
+      - run: npm install --global pnpm@11.25.0
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm audit --audit-level=moderate
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm test:database
+      - run: pnpm test:security:postgres
+      - run: pnpm build
+  secrets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: gitleaks/gitleaks-action@dcedce43c6f43de0b836d1fe38946645c9c638dc # v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_VERSION: 8.30.0
+          GITLEAKS_ENABLE_COMMENTS: false
+  static-analysis:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      # Same immutable environment validated locally; avoids floating Python
+      # transitive dependencies breaking Semgrep before any source is scanned.
+      - run: >-
+          docker run --rm --network none
+          -v "$GITHUB_WORKSPACE:/src:ro"
+          semgrep/semgrep@sha256:b68f9b68483955b85042dac7b4533757779625a02dcf91e470da4c2df1b430be
+          semgrep scan --config /src/.semgrep.yml --no-git-ignore
+          --error --metrics=off /src
