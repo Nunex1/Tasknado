@@ -1,13 +1,16 @@
 // Responsive, theme, navigation and accessibility checks for the interface.
 //
-// Runs the public page and the authenticated screens at the four reference
-// widths (375, 768, 1024 and 1440 CSS px) against the local Supabase stack,
+// Runs the public page and the authenticated screens at the reference widths
+// (320, 375, 390, 768, 1024, 1280 and 1440 CSS px) against the local Supabase stack,
 // with a temporary account filled by demo-data.mjs and a second account that
 // must stay invisible to the first. It asserts that nothing scrolls sideways,
 // that axe-core finds no WCAG A/AA violation in the light and in the dark
 // theme, and walks the test matrix of the mobile-first specification: phone
 // drawer, workspace switching, task creation and editing, Light/Dark/System
-// with persistence, tablet and desktop navigation, and data isolation.
+// with persistence, tablet and desktop navigation, and data isolation. The
+// navigation is one bar at the top at every width: no side navigation, a
+// horizontal row of links from 768 px up, and on phones a drawer that enters
+// from the right edge under a menu button in the top right corner.
 // Screenshots: test-results/responsive/.
 import { localStack } from "./security-stack.mjs";
 import assert from "node:assert/strict";
@@ -373,6 +376,158 @@ try {
     "Twelve authenticated screens at 375, 768, 1024 and 1440 px: no horizontal overflow or clipped content; no WCAG A/AA violations at 375, 768 and 1024 px",
   );
 
+  // ----- The other reference widths: layout only -----
+  for (const [width, height] of [
+    [320, 568],
+    [390, 844],
+    [1280, 720],
+  ]) {
+    await page.setViewportSize({ width, height });
+    for (const [name, path, selector] of routes) {
+      await page.goto(root + path);
+      await page.locator(selector).first().waitFor();
+      await inspect(name, width, height);
+    }
+  }
+  pass(
+    "The same twelve screens at 320, 390 and 1280 px: no horizontal overflow or clipped content",
+  );
+
+  // ----- Navigation architecture at every reference width -----
+  const bar = () =>
+    page.evaluate(() => {
+      const box = (el) => {
+        const b = el.getBoundingClientRect();
+        return { x: b.x, y: b.y, right: b.right, bottom: b.bottom };
+      };
+      const header = document.querySelector(".global-header");
+      const seen = (el) => {
+        const b = el.getBoundingClientRect();
+        return b.width > 1 && getComputedStyle(el).visibility !== "hidden";
+      };
+      return {
+        header: {
+          ...box(header),
+          position: getComputedStyle(header).position,
+        },
+        // Anything tall and narrow that stays in place is side navigation.
+        docked: [...document.querySelectorAll("body *")]
+          .filter((el) => {
+            const style = getComputedStyle(el);
+            const b = el.getBoundingClientRect();
+            return (
+              ["fixed", "sticky"].includes(style.position) &&
+              b.width > 1 &&
+              b.width < innerWidth / 2 &&
+              b.height > innerHeight / 2
+            );
+          })
+          .map((el) => el.className),
+        links: [...document.querySelectorAll(".top-nav a")]
+          .filter(seen)
+          .map((a) => ({ text: a.textContent, ...box(a) })),
+        controls: [
+          ...header.querySelectorAll(
+            ".brand-home-link, .workspace-switch, .top-nav a, .header-search-field, .header-language select, .profile-menu-trigger, .header-actions > *",
+          ),
+        ]
+          .filter(seen)
+          .map((el) => ({
+            name:
+              el.getAttribute("aria-label") ||
+              el.textContent.trim() ||
+              el.className,
+            ...box(el),
+          })),
+        main: box(document.querySelector(".main-content")),
+        client: document.documentElement.clientWidth,
+        scroll: document.documentElement.scrollWidth,
+      };
+    });
+  for (const [width, height] of [
+    [320, 568],
+    [375, 812],
+    [390, 844],
+    [768, 1024],
+    [1024, 768],
+    [1280, 720],
+    [1440, 900],
+  ]) {
+    await page.setViewportSize({ width, height });
+    await page.goto(`${root}/workspaces/${work}/activities`);
+    await page.locator(".activity-row").first().waitFor();
+    await settle();
+    const at = `at ${width} px`;
+    const g = await bar();
+    assert.equal(g.header.position, "fixed", at);
+    assert.deepEqual(
+      [g.header.x, g.header.y, g.header.right, g.header.bottom],
+      [0, 0, g.client, width < 768 ? 56 : 64],
+      `The bar spans the top of the window ${at}`,
+    );
+    assert.deepEqual(g.docked, [], `No side navigation ${at}`);
+    assert.ok(g.scroll <= g.client, `Horizontal overflow ${at}`);
+    assert.ok(
+      Math.abs(g.main.x - (g.client - g.main.right)) <= 1,
+      `Content is centred, with nothing docked beside it ${at}: ${JSON.stringify(g.main)}`,
+    );
+    for (const control of g.controls)
+      assert.ok(
+        control.x >= 0 && control.right <= g.client && control.bottom <= 64,
+        `${control.name} leaves the bar ${at}`,
+      );
+    const row = g.controls.slice().sort((a, b) => a.x - b.x);
+    for (let i = 1; i < row.length; i++)
+      assert.ok(
+        row[i - 1].right <= row[i].x + 0.5,
+        `${row[i - 1].name} overlaps ${row[i].name} ${at}`,
+      );
+    const menuButton = page.getByRole("button", { name: "Abrir menu" });
+    if (width < 768) {
+      assert.equal(g.links.length, 0, `No links on screen ${at}`);
+      assert.equal(await page.locator(".nav-drawer").count(), 0);
+      const corner = row.at(-1);
+      assert.equal(corner.name, "Abrir menu", `Menu button last ${at}`);
+      assert.ok(
+        corner.right >= g.client - 12 && corner.y < 12,
+        `Menu button in the top right corner ${at}`,
+      );
+      assert.equal(Math.round(g.main.x), 0);
+      assert.equal(Math.round(g.main.right), g.client);
+    } else {
+      assert.equal(await menuButton.count(), 0, `No menu button ${at}`);
+      assert.deepEqual(
+        g.links.map((link) => link.text),
+        ["Início", "Workspaces", "Tarefas", "Notas"],
+        at,
+      );
+      assert.equal(
+        new Set(g.links.map((link) => Math.round(link.y))).size,
+        1,
+        `Links share one row ${at}`,
+      );
+      assert.equal(
+        await page.locator('.top-nav a[aria-current="page"]').textContent(),
+        "Workspaces",
+      );
+      // The brand is the first thing in the bar, the account the last.
+      assert.match(row[0].name, /Tubarão-martelo/);
+      assert.equal(row.at(-1).name, "Menu do usuário");
+      assert.equal(
+        row.some((control) => control.name.startsWith("TASKNADO")),
+        width >= 1024,
+        `Wordmark from 1024 px ${at}`,
+      );
+    }
+    // The bar stays in place while the page scrolls.
+    await page.evaluate(() => window.scrollTo(0, 400));
+    assert.equal((await bar()).header.y, 0, `Bar stays on scroll ${at}`);
+    await page.screenshot({ path: `${shots}/navigation-${width}.png` });
+  }
+  pass(
+    "Navigation at 320, 375, 390, 768, 1024, 1280 and 1440 px: one fixed bar across the top that stays while scrolling, nothing docked to the sides and content centred; from 768 px the brand, four links in one row marking the current place and the account controls fit without overlapping; below it no link is on screen and the menu button is the last control, in the top right corner",
+  );
+
   // ----- Dark theme, as the system preference (no stored choice) -----
   await page.emulateMedia({ colorScheme: "dark" });
   const darkViolations = [];
@@ -408,8 +563,7 @@ try {
   await page.goto(`${root}/workspaces/${work}/activities`);
   await page.locator(".activity-row").first().waitFor();
   await settle();
-  assert.equal(await page.locator(".primary-rail").count(), 0);
-  assert.equal(await page.locator(".context-panel").count(), 0);
+  assert.equal(await page.locator(".top-nav").count(), 0);
   assert.equal(await page.locator(".nav-drawer").count(), 0);
   const content = await page.locator(".main-content").boundingBox();
   assert.equal(content.x, 0);
@@ -452,8 +606,77 @@ try {
     note: "Longest event duration reported by the Event Timing API for this one tap; below 16 ms is reported as 0. Local machine, not a field INP.",
   });
   const drawerBox = await drawer.boundingBox();
-  assert.ok(drawerBox.x === 0 && drawerBox.width <= 375 - 44);
+  // Against the right edge, 80 to 90% of the width, the page visible beside it.
+  assert.equal(Math.round(drawerBox.x + drawerBox.width), 375);
+  assert.ok(
+    drawerBox.width >= 375 * 0.8 && drawerBox.width <= 375 * 0.9,
+    `Drawer width ${drawerBox.width}`,
+  );
   assert.equal(Math.round(drawerBox.height), 812);
+  assert.equal(
+    await drawer.evaluate((e) => getComputedStyle(e).animationName),
+    "drawer-slide-in",
+  );
+  // It enters from beyond the right edge: the first frame is a full width away.
+  assert.match(
+    await page.evaluate(() => {
+      for (const sheet of document.styleSheets)
+        for (const rule of sheet.cssRules)
+          if (rule.type === 7 && rule.name === "drawer-slide-in")
+            return rule.cssRules[0].style.transform;
+    }),
+    /^translateX?\(100%\)$/,
+  );
+  const overlay = page.locator(".drawer-overlay");
+  assert.deepEqual(
+    await overlay.evaluate((e) => {
+      const b = e.getBoundingClientRect();
+      return [b.x, b.y, b.width, b.height];
+    }),
+    [0, 0, 375, 812],
+  );
+  assert.ok(
+    (
+      await overlay.evaluate((e) => getComputedStyle(e).backgroundColor)
+    ).includes("0.4"),
+    "The page behind is dimmed, not hidden",
+  );
+  // The three groups, in order: everywhere, this workspace, the account.
+  const groupTops = [];
+  for (const group of [
+    drawer.getByRole("navigation", { name: "Navegação principal" }),
+    drawer.getByRole("button", { name: /Trocar workspace/ }),
+    drawer.getByRole("navigation", { name: "Navegação do Workspace" }),
+    drawer.getByRole("heading", { name: "Conta e preferências" }),
+  ])
+    groupTops.push(
+      await group.evaluate(
+        (e) =>
+          e.getBoundingClientRect().y + e.closest(".nav-drawer-body").scrollTop,
+      ),
+    );
+  assert.deepEqual(
+    groupTops,
+    groupTops.slice().sort((a, b) => a - b),
+  );
+  assert.deepEqual(
+    await drawer
+      .getByRole("navigation", { name: "Navegação principal" })
+      .getByRole("link")
+      .allTextContents(),
+    ["Início", "Workspaces", "Tarefas", "Notas", "Pesquisar"],
+  );
+  assert.match(
+    await drawer
+      .getByRole("button", { name: /Trocar workspace/ })
+      .textContent(),
+    /Lançamento do app/,
+  );
+  // Nothing is offered twice.
+  const offeredOnce = await drawer
+    .locator("a[href]")
+    .evaluateAll((links) => links.map((link) => link.getAttribute("href")));
+  assert.equal(new Set(offeredOnce).size, offeredOnce.length);
   assert.equal(await page.evaluate(() => scrollY), 240);
   assert.equal((await page.locator(".main-content").boundingBox()).x, 0);
   assert.equal(await focusIn(".nav-drawer"), true);
@@ -497,7 +720,7 @@ try {
   );
   assert.equal(await page.evaluate(() => scrollY), 240);
   drawer = await openDrawer();
-  await page.mouse.click(360, 400); // outside the panel
+  await page.mouse.click(20, 400); // outside the panel, on the dimmed page
   await drawer.waitFor({ state: "detached" });
   drawer = await openDrawer();
   await drawer
@@ -519,8 +742,41 @@ try {
   await page.keyboard.press("Escape");
   await drawer.waitFor({ state: "detached" });
   await page.emulateMedia({ reducedMotion: "no-preference" });
+  // The close button, and the language from inside the drawer.
+  drawer = await openDrawer();
+  await drawer.getByRole("button", { name: "Fechar menu" }).click();
+  await drawer.waitFor({ state: "detached" });
+  drawer = await openDrawer();
+  await drawer.getByRole("radio", { name: "English", exact: true }).check();
+  await page.getByRole("dialog", { name: "Navigation menu" }).waitFor();
+  assert.equal(
+    await page.evaluate(() => document.documentElement.lang),
+    "en-US",
+  );
+  await page
+    .getByRole("dialog", { name: "Navigation menu" })
+    .getByRole("radio", { name: "Português", exact: true })
+    .check();
+  drawer = page.getByRole("dialog", { name: "Menu de navegação" });
+  await drawer.waitFor();
+  // Profile and sign-out are in the account group; signing out is not tested here.
+  assert.equal(await drawer.getByRole("button", { name: "Sair" }).count(), 1);
+  await drawer.getByRole("link", { name: /Marina|Perfil/ }).click();
+  await page.waitForURL(root + "/perfil");
+  await drawer.waitFor({ state: "detached" });
+  await page.goto(root + "/notes");
+  await page
+    .locator(".header-title strong")
+    .filter({ hasText: "Notas" })
+    .waitFor();
+  // The brand in the bar leads home.
+  await page
+    .locator(".global-header")
+    .getByRole("link", { name: "Tubarão-martelo — Visão geral" })
+    .click();
+  await page.waitForURL(root + "/");
   pass(
-    "Phone (375 px): no navigation on screen until asked for and content at full width; the drawer opens over the page without moving or scrolling it, traps focus, hides the page from assistive technology, has 44 px targets and no WCAG A/AA violations; Escape, a tap outside and choosing a destination close it; focus returns to the menu button; reduced motion removes the animation",
+    "Phone (375 px): no navigation on screen until asked for and content at full width; the drawer enters from the right edge over a dimmed page, takes 80 to 90% of the width, does not move or scroll the page, traps focus, hides the page from assistive technology, has 44 px targets and no WCAG A/AA violations; its groups come in order (everywhere, this workspace, account) and offer nothing twice; Escape, the close button, a tap outside and choosing a destination close it; focus returns to the menu button; reduced motion removes the animation; the language changes from inside it; the brand leads home",
   );
 
   // ----- Phone: switching workspace -----
@@ -807,14 +1063,11 @@ try {
   await page.goto(`${root}/workspaces/${work}`);
   await page.locator(".stats-grid").waitFor();
   await settle();
-  const rail = await page.locator(".primary-rail").boundingBox();
-  assert.ok(rail.x === 0 && rail.width < 100 && rail.height > 900);
   assert.equal(await page.locator(".nav-drawer").count(), 0);
   assert.equal(
     await page.getByRole("button", { name: "Abrir menu" }).count(),
     0,
   );
-  assert.equal(await page.locator(".context-panel").count(), 0);
   const columns = new Set(
     await page
       .locator(".stats-grid .stat")
@@ -823,25 +1076,134 @@ try {
       ),
   );
   assert.equal(columns.size, 3, "Indicators sit side by side on a tablet");
-  const open = page.getByRole("button", { name: "Expandir painel" });
-  await open.click();
-  await page.locator(".context-panel").waitFor();
+  // The workspace menu: a sheet under the bar, over the page.
+  const switcher = page.locator(".workspace-switch");
+  const contentBefore = await page.locator(".main-content").boundingBox();
+  await switcher.click();
+  const sheet768 = page.locator(".workspace-popover");
+  await sheet768.waitFor();
   await settle();
-  const panel = await page.locator(".context-panel").boundingBox();
-  assert.ok(panel.x >= rail.width - 1 && panel.x + panel.width <= 768);
-  assert.equal(await page.locator(".context-scrim").count(), 1);
-  await page.screenshot({ path: `${shots}/drawer-768.png` });
+  const sheetBox = await sheet768.boundingBox();
+  assert.deepEqual(
+    [sheetBox.x, Math.round(sheetBox.y), sheetBox.width],
+    [0, 64, 768],
+  );
+  assert.ok(sheetBox.height < 1024 - 64);
+  assert.deepEqual(
+    await page.locator(".main-content").boundingBox(),
+    contentBefore,
+    "Opening the menu does not move the content",
+  );
+  assert.equal(await page.locator(".workspace-scrim").count(), 1);
+  assert.equal(await switcher.getAttribute("aria-expanded"), "true");
+  // Everything the side panel offered: workspaces, modules, settings, recents.
+  assert.deepEqual(
+    await sheet768.locator(".workspace-option span").allTextContents(),
+    [
+      "Todos os workspaces",
+      "Lançamento do app",
+      "Faculdade",
+      "Estudos de design",
+      "Vida pessoal",
+      "Criar workspace",
+    ],
+  );
+  assert.deepEqual(
+    await sheet768
+      .getByRole("navigation", { name: "Navegação do Workspace" })
+      .getByRole("link")
+      .allTextContents(),
+    [
+      "Visão geral",
+      "Tarefas",
+      "Observações",
+      "Histórico",
+      "Matriz de Eisenhower",
+      "Notas",
+      "Plano de Desenvolvimento Individual",
+      "Plano de Carreira",
+      "Configurações",
+    ],
+  );
+  assert.equal(
+    await sheet768.locator('.context-link[aria-current="page"]').textContent(),
+    "Visão geral",
+  );
+  assert.equal(await sheet768.locator(".context-recent").count(), 3);
+  assert.deepEqual(await audit("workspace-menu@768"), []);
+  await page.screenshot({ path: `${shots}/workspace-menu-768.png` });
   await page.keyboard.press("Escape");
-  assert.equal(await page.locator(".context-panel").count(), 0);
-  assert.equal(await open.evaluate((e) => document.activeElement === e), true);
-  await open.click();
-  await page
-    .locator(".context-panel")
-    .getByRole("link", { name: "Tarefas", exact: true })
-    .click();
+  assert.equal(await sheet768.count(), 0);
+  assert.equal(
+    await switcher.evaluate((e) => document.activeElement === e),
+    true,
+  );
+  await switcher.click();
+  await page.mouse.click(400, 900); // on the dimmed page
+  assert.equal(await sheet768.count(), 0);
+  await switcher.click();
+  await sheet768.getByRole("link", { name: "Tarefas", exact: true }).click();
   await page.waitForURL(`${root}/workspaces/${work}/activities`);
   await page.locator(".activity-row").first().waitFor();
-  assert.equal(await page.locator(".context-panel").count(), 0);
+  assert.equal(await sheet768.count(), 0);
+  // A category without the matrix or the plans does not offer them.
+  await page.goto(`${root}/workspaces/${university.id}`);
+  await page.locator(".stats-grid").waitFor();
+  await switcher.click();
+  assert.deepEqual(
+    await sheet768
+      .getByRole("navigation", { name: "Navegação do Workspace" })
+      .getByRole("link")
+      .allTextContents(),
+    [
+      "Visão geral",
+      "Tarefas",
+      "Observações",
+      "Histórico",
+      "Notas",
+      "Configurações",
+    ],
+  );
+  await page.keyboard.press("Escape");
+  // Search rests as an icon on the compact bar and opens over it.
+  const searchField = page.locator(".header-search-field");
+  assert.equal(Math.round((await searchField.boundingBox()).width), 40);
+  await searchField.click();
+  await page.locator(".search-popover").waitFor();
+  assert.equal(
+    await page.evaluate(() => document.activeElement.id),
+    "global-search",
+  );
+  const openField = await searchField.boundingBox();
+  assert.ok(openField.width >= 300 && openField.x >= 0);
+  assert.ok(openField.x + openField.width <= 768);
+  await page.locator("#global-search").fill("Revisar");
+  await page.getByRole("option").first().waitFor();
+  const results = await page.locator(".search-popover").boundingBox();
+  assert.ok(results.x >= 0 && results.x + results.width <= 768);
+  await page.keyboard.press("Escape");
+  assert.equal(await page.locator(".search-popover").count(), 0);
+  await page.waitForFunction(
+    () => document.querySelector(".header-search-field").offsetWidth === 40,
+  );
+  await page.keyboard.press("Control+k");
+  await page.locator(".search-popover").waitFor();
+  await page.getByRole("link", { name: "Pesquisa avançada" }).click();
+  await page.waitForURL(root + "/search");
+  await page.locator(".search-filters").waitFor();
+  // Having led somewhere, the field folds back to its icon.
+  await page.waitForFunction(
+    () => document.querySelector(".header-search-field").offsetWidth === 40,
+  );
+  await page.locator(".header-search-field").click();
+  await page.locator("#global-search").fill("Revisar");
+  await page.getByRole("option").first().click();
+  await page.waitForURL(/\/workspaces\//);
+  await page.waitForFunction(
+    () => document.querySelector(".header-search-field").offsetWidth === 40,
+  );
+  await page.goto(`${root}/workspaces/${work}/activities`);
+  await page.locator(".activity-row").first().waitFor();
   // Forms: a centred dialog here, with usable fields.
   await page
     .locator(".main-content")
@@ -859,7 +1221,6 @@ try {
   await dialog.getByRole("button", { name: "Cancelar", exact: true }).click();
   await dialog.waitFor({ state: "detached" });
   // Workspace and theme from the header.
-  const switcher = page.locator(".workspace-switch");
   await switcher.click();
   await page
     .locator(".workspace-popover")
@@ -882,12 +1243,21 @@ try {
   );
   assert.deepEqual(await audit("account-menu-dark@768"), []);
   await page.screenshot({ path: `${shots}/account-menu-dark-768.png` });
+  // The workspace menu in the dark theme as well.
+  await page.keyboard.press("Escape");
+  await switcher.click();
+  await page.locator(".workspace-popover").waitFor();
+  await settle();
+  assert.deepEqual(await audit("workspace-menu-dark@768"), []);
+  await page.screenshot({ path: `${shots}/workspace-menu-dark-768.png` });
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "Menu do usuário" }).click();
   await page.getByRole("menuitemradio", { name: "Sistema" }).click();
   assert.equal(await themeOf(), null);
   await page.keyboard.press("Escape");
   assert.deepEqual(await shownTitles(), universityTitles);
   pass(
-    "Tablet (768 px): icon rail instead of the drawer, indicators in three columns, the workspace panel opens over the content and closes with Escape or navigation, forms open as a centred dialog, the header switches workspace and the account menu switches theme",
+    "Tablet (768 px): the compact bar instead of the drawer, indicators in three columns; the workspace menu opens as a sheet under the bar without moving the content, offers the workspaces, the modules of the category, settings and recent tasks, has no WCAG A/AA violations and closes with Escape (focus back on the switcher), a press outside or navigation; search rests as an icon, opens over the bar, keeps its results on screen and leads to the search page; forms open as a centred dialog; the header switches workspace and the account menu switches theme",
   );
 
   // ----- Desktop (1440 px) -----
@@ -895,13 +1265,34 @@ try {
   await page.goto(`${root}/workspaces/${work}/activities`);
   await page.locator(".activity-row").first().waitFor();
   await settle();
-  const side = await page.locator(".context-panel").boundingBox();
+  // Nothing is docked beside the content: it uses the centred column.
   const main = await page.locator(".main-content").boundingBox();
-  assert.ok(main.x >= side.x + side.width, "The panel sits beside the content");
-  await page.getByRole("button", { name: "Recolher painel" }).click();
-  assert.equal(await page.locator(".context-panel").count(), 0);
-  await page.getByRole("button", { name: "Expandir painel" }).click();
-  await page.locator(".context-panel").waitFor();
+  assert.equal(Math.round(main.width), 1200);
+  assert.ok(Math.abs(main.x - (1440 - main.x - main.width)) <= 16);
+  // The four destinations of the bar, and the place each one marks.
+  for (const [label, path] of [
+    ["Início", "/"],
+    ["Tarefas", "/activities"],
+    ["Notas", "/notes"],
+    ["Workspaces", "/workspaces"],
+  ]) {
+    await page
+      .getByRole("navigation", { name: "Navegação principal" })
+      .getByRole("link", { name: label, exact: true })
+      .click();
+    await page.waitForURL(root + path);
+    assert.equal(
+      await page.locator('.top-nav a[aria-current="page"]').textContent(),
+      label,
+    );
+  }
+  await page.goto(`${root}/workspaces/${work}/activities`);
+  await page.locator(".activity-row").first().waitFor();
+  await settle();
+  // At this width the search field is in the bar itself.
+  assert.ok(
+    (await page.locator(".header-search-field").boundingBox()).width > 200,
+  );
   assert.equal(await page.locator(".table-head").isVisible(), true);
   assert.equal(
     await page
@@ -949,10 +1340,29 @@ try {
   await page.locator(".activity-row").first().waitFor();
   await settle();
   assert.deepEqual(await shownTitles(), universityTitles);
+  assert.match(await switcher.textContent(), /Faculdade/);
+  await switcher.click();
   assert.equal(
-    await page.locator(".context-workspace.selected").textContent(),
+    await page
+      .locator('.workspace-popover .workspace-option[aria-current="true"]')
+      .textContent(),
     "Faculdade",
   );
+  // Arrow keys walk the whole menu, past the workspaces into the modules.
+  await page.keyboard.press("End");
+  assert.equal(
+    await page.evaluate(() => document.activeElement.className),
+    "context-recent",
+  );
+  await page.keyboard.press("Home");
+  assert.equal(
+    await page.evaluate(() => document.activeElement.textContent),
+    "Todos os workspaces",
+  );
+  // Tabbing out of the menu closes it.
+  await page.keyboard.press("Shift+Tab");
+  await page.keyboard.press("Shift+Tab");
+  assert.equal(await page.locator(".workspace-popover").count(), 0);
   // The matrix does not exist outside the Work category: fall back.
   await page.goto(`${root}/workspaces/${work}/matrix`);
   await page.locator(".matrix-card").first().waitFor();
@@ -1032,7 +1442,7 @@ try {
   await page.goto(`${root}/workspaces/${work}/activities`);
   await page.locator(".activity-row").first().waitFor();
   const tabOrder = [];
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < 12; i++) {
     await page.keyboard.press("Tab");
     tabOrder.push(
       await page.evaluate(() => {
@@ -1043,11 +1453,84 @@ try {
       }),
     );
   }
-  assert.equal(tabOrder[0], "Ir para o conteúdo");
-  assert.ok(tabOrder.some((label) => label.startsWith("Trocar workspace")));
-  assert.ok(tabOrder.includes("Busca global"));
+  // Left to right, as the bar reads.
+  assert.deepEqual(
+    tabOrder.map((label) => label.replace(/\. Ativo:.*/, "")),
+    [
+      "Ir para o conteúdo",
+      "Tubarão-martelo — Visão geral",
+      "TASKNADO — Visão geral",
+      "Trocar workspace",
+      "Início",
+      "Workspaces",
+      "Tarefas",
+      "Notas",
+      "Busca global",
+      // Focusing the field opens its panel, whose link is the next stop.
+      "Pesquisa avançada",
+      "Idioma da interface",
+      "Menu do usuário",
+    ],
+  );
+  // The language from the bar.
+  await page.locator(".header-language select").selectOption("en-US");
+  await page
+    .getByRole("navigation", { name: "Main navigation" })
+    .getByRole("link", { name: "Tasks", exact: true })
+    .waitFor();
+  await page.locator(".header-language select").selectOption("pt-BR");
+  await page
+    .getByRole("navigation", { name: "Navegação principal" })
+    .getByRole("link", { name: "Tarefas", exact: true })
+    .waitFor();
   pass(
-    "Desktop (1440 px): the workspace panel sits beside the content and collapses; tasks are a six-column table; the workspace switcher and the account menu work by keyboard alone; Light, Dark and System apply from Settings, Light overrides a dark device and survives a reload, System follows it",
+    "Desktop (1440 px): nothing beside the content, which takes the centred 1200 px column; the four links of the bar navigate and mark the current place; tasks are a six-column table; the workspace menu and the account menu work by keyboard alone, with arrow keys through workspaces, modules and recent tasks; the tab order follows the bar from the brand to the account; the language changes from the bar; Light, Dark and System apply from Settings, Light overrides a dark device and survives a reload, System follows it",
+  );
+
+  // ----- Landscape phones and zoomed desktops -----
+  // A phone on its side: still the drawer, and all of it can be reached.
+  await page.setViewportSize({ width: 667, height: 375 });
+  await page.goto(`${root}/workspaces/${work}/activities`);
+  await page.locator(".activity-row").first().waitFor();
+  await settle();
+  assert.equal(await page.locator(".top-nav").count(), 0);
+  drawer = await openDrawer();
+  const landscape = await drawer.boundingBox();
+  assert.equal(Math.round(landscape.x + landscape.width), 667);
+  assert.equal(Math.round(landscape.height), 375);
+  const signOut = drawer.getByRole("button", { name: "Sair", exact: true });
+  await signOut.scrollIntoViewIfNeeded();
+  const signOutBox = await signOut.boundingBox();
+  assert.ok(signOutBox.y >= 0 && signOutBox.y + signOutBox.height <= 375);
+  assert.ok((await overflow()).scroll <= 667);
+  await page.screenshot({ path: `${shots}/drawer-landscape-667.png` });
+  await page.keyboard.press("Escape");
+  await drawer.waitFor({ state: "detached" });
+  // 200% zoom on a 1280 px window leaves 640 CSS px: the phone layout.
+  await page.setViewportSize({ width: 640, height: 360 });
+  await page.goto(`${root}/workspaces/${work}/matrix`);
+  await page.locator(".matrix-card").first().waitFor();
+  assert.equal(
+    await page.getByRole("button", { name: "Abrir menu" }).count(),
+    1,
+  );
+  assert.deepEqual(await inspect("zoom-200-of-1280", 640, 360), []);
+  // 200% zoom on a 1920 px window leaves 960 CSS px: the compact bar.
+  await page.setViewportSize({ width: 960, height: 540 });
+  await page.goto(`${root}/workspaces/${work}/matrix`);
+  await page.locator(".matrix-card").first().waitFor();
+  assert.equal(await page.locator(".top-nav a").count(), 4);
+  assert.deepEqual(
+    await inspect("zoom-200-of-1920", 960, 540, { axe: true }),
+    [],
+  );
+  await page.locator(".workspace-switch").click();
+  const zoomed = await page.locator(".workspace-popover").boundingBox();
+  assert.ok(zoomed.y + zoomed.height <= 540, "The menu fits the short window");
+  await page.keyboard.press("Escape");
+  await page.setViewportSize({ width: 1440, height: 900 });
+  pass(
+    "Landscape phone (667×375): drawer from the right at full height with its last control reachable by scrolling; 200% zoom of a 1280 px window keeps the phone layout and of a 1920 px window the compact bar, without overflow, with the workspace menu inside the short window",
   );
 
   // ----- Isolation -----

@@ -1,11 +1,14 @@
 "use client";
 import { useSearch } from "@/hooks/use-search";
 import { useEffect, useRef, useState } from "react";
-import { Search, X } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, Search, X } from "lucide-react";
 import { useI18n } from "@/i18n/provider";
 import { client, check, errorMessage } from "@/lib/supabase";
 import { SearchResult, Workspace } from "@/lib/domain";
 
+/** Keep in sync with the 1279px rule for .header-search in shell.css. */
+const collapsedSearchQuery = "(max-width: 1279px)";
 export const searchKinds: Record<string, string> = {
   workspace: "Workspace",
   activity: "Atividade",
@@ -31,12 +34,20 @@ export function Highlight({ text, query }: { text: string; query: string }) {
     </>
   );
 }
+/**
+ * Global search in the top bar. On narrower bars the field rests as an icon
+ * and opens over the bar when it receives focus (see shell.css); the input is
+ * always in the document, so Ctrl/⌘ K and the Tab key reach it either way.
+ */
 export function HeaderSearch({
   workspaces,
   onOpen,
+  guard,
 }: {
   workspaces: Workspace[];
   onOpen: (r: SearchResult) => void;
+  /** Refuses to leave the page while it holds unsaved changes. */
+  guard: (event: { preventDefault: () => void }) => void;
 }) {
   const { t } = useI18n();
   const root = useRef<HTMLDivElement>(null),
@@ -55,7 +66,15 @@ export function HeaderSearch({
   function close(restore = false) {
     setOpen(false);
     setActive(-1);
-    if (restore) (returnFocus.current || input.current)?.focus();
+    if (!restore) return;
+    const previous = returnFocus.current;
+    returnFocus.current = null;
+    if (previous && previous !== document.body && previous !== input.current)
+      previous.focus();
+    // Where the field rests as an icon, leaving it lets it fold back.
+    else if (window.matchMedia(collapsedSearchQuery).matches)
+      input.current?.blur();
+    else input.current?.focus();
   }
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
@@ -90,8 +109,18 @@ export function HeaderSearch({
         .getElementById(`global-result-${active}`)
         ?.scrollIntoView({ block: "nearest" });
   }, [active]);
+  // After leaving through a result or the link, the resting icon comes back.
+  function fold() {
+    if (
+      window.matchMedia(collapsedSearchQuery).matches &&
+      document.activeElement instanceof HTMLElement &&
+      root.current?.contains(document.activeElement)
+    )
+      document.activeElement.blur();
+  }
   function choose(r: SearchResult) {
     close();
+    fold();
     onOpen(r);
   }
   return (
@@ -102,7 +131,20 @@ export function HeaderSearch({
         if (!e.currentTarget.contains(e.relatedTarget)) close();
       }}
     >
-      <div className="header-search-field">
+      <div
+        className="header-search-field"
+        // The resting icon is the whole target: a press anywhere on the
+        // field puts the caret in the input.
+        onMouseDown={(e) => {
+          if (
+            e.target !== input.current &&
+            !(e.target as Element).closest("button")
+          ) {
+            e.preventDefault();
+            input.current?.focus();
+          }
+        }}
+      >
         <Search size={17} aria-hidden="true" />
         <input
           id="global-search"
@@ -224,6 +266,26 @@ export function HeaderSearch({
               ) : null;
             })}
           </div>
+          <Link
+            href="/search"
+            className="search-advanced"
+            onNavigate={(event) => {
+              let refused = false;
+              guard({
+                preventDefault() {
+                  refused = true;
+                  event.preventDefault();
+                },
+              });
+              if (!refused) {
+                close();
+                fold();
+              }
+            }}
+          >
+            {t("Pesquisa avançada")}
+            <ArrowRight size={14} aria-hidden="true" />
+          </Link>
         </div>
       )}
     </div>

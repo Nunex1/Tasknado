@@ -66,31 +66,101 @@
   max-width: 100%;
 }
 
-/* Header */
+/*
+ * Top bar. The only navigation chrome of the application: it stays in place
+ * while the page scrolls and nothing is docked to the sides. Its content
+ * shares the centred column of the page below it.
+ */
 .global-header {
   position: fixed;
   inset: 0 0 auto;
   z-index: var(--layer-header);
+  height: var(--header-height);
+  border-bottom: 1px solid var(--border);
+  background: var(--glass);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+}
+.header-inner {
   display: grid;
-  grid-template-columns: auto minmax(0, 640px) auto;
-  justify-content: space-between;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--space-6);
-  height: var(--header-height);
-  padding: 0 var(--space-6);
-  border-bottom: 1px solid var(--border);
-  background: var(--background);
+  height: 100%;
+  max-width: var(--content-width);
+  margin: 0 auto;
+  padding: 0 var(--space-10);
 }
 .header-start {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
+  gap: var(--space-3);
+  min-width: 0;
+}
+.header-end {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
   min-width: 0;
 }
 
-/* Workspace switcher: where you are, and the way to somewhere else. */
-.workspace-switcher {
+/* Places that span every workspace, side by side. */
+.top-nav {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: var(--space-1);
+  height: 100%;
+  min-width: 0;
+}
+.top-nav-link {
   position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--space-3);
+  color: var(--text-subtle);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color var(--duration-fast) var(--ease);
+}
+.top-nav-link:hover,
+.top-nav-link[aria-current="page"] {
+  color: var(--text);
+}
+/* The current place: a short line on the lower edge of the bar. */
+.top-nav-link::after {
+  content: "";
+  position: absolute;
+  right: var(--space-3);
+  bottom: 0;
+  left: var(--space-3);
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--primary);
+  opacity: 0;
+  transform: scaleX(0.4);
+  transition:
+    opacity var(--duration) var(--ease),
+    transform var(--duration) var(--ease);
+}
+.top-nav-link[aria-current="page"]::after {
+  opacity: 1;
+  transform: none;
+}
+.top-nav-link:focus-visible {
+  outline-offset: -6px;
+  border-radius: var(--radius-sm);
+}
+
+/*
+ * Workspace switcher: where you are, and the way to somewhere else. The
+ * switcher itself is not positioned, so its menu is laid out against the bar
+ * and spans the whole width of the window.
+ */
+.workspace-switcher {
   min-width: 0;
 }
 .workspace-switch {
@@ -101,7 +171,7 @@
   min-height: var(--control-height);
   padding: 0 var(--space-2) 0 var(--space-3);
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-full);
   color: var(--text);
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
@@ -115,31 +185,67 @@
   background: var(--surface-hover);
 }
 .workspace-switch > svg {
+  flex-shrink: 0;
   color: var(--text-secondary);
+  transition: transform var(--duration) var(--ease);
 }
 .workspace-switch > svg:first-child {
   color: var(--primary);
+}
+.workspace-switch[aria-expanded="true"] > svg:last-child {
+  transform: rotate(180deg);
 }
 .workspace-switch span {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* The workspace menu: a sheet under the bar, over the page. */
 .workspace-popover {
   position: absolute;
-  top: calc(100% + var(--space-2));
+  top: calc(100% + 1px);
+  right: 0;
   left: 0;
-  z-index: var(--layer-menu);
-  width: 280px;
-  max-width: calc(100vw - var(--space-8));
-  max-height: min(420px, calc(100dvh - var(--header-height) - var(--space-6)));
-  padding: var(--space-1);
+  z-index: 1;
+  max-height: calc(100dvh - var(--header-height) - var(--space-10));
   overflow-y: auto;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--surface-elevated);
-  box-shadow: var(--shadow-md);
-  animation: menu-in var(--duration-fast) var(--ease);
+  overscroll-behavior: contain;
+  border-bottom: 1px solid var(--border);
+  background: var(--background);
+  box-shadow: var(--shadow-lg);
+  animation: sheet-down var(--duration) var(--ease);
+}
+.workspace-menu {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 320px));
+  gap: var(--space-10);
+  max-width: var(--content-width);
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-10) var(--space-8);
+}
+.workspace-menu .context-category {
+  margin-top: 0;
+}
+.workspace-scrim {
+  position: absolute;
+  top: calc(100% + 1px);
+  right: 0;
+  left: 0;
+  height: 100vh;
+  background: var(--overlay);
+  opacity: 0.55;
+  animation: scrim-in var(--duration) var(--ease);
+}
+@keyframes sheet-down {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+@keyframes scrim-in {
+  from {
+    opacity: 0;
+  }
 }
 .workspace-option {
   display: flex;
@@ -193,23 +299,11 @@
   padding: var(--space-2) var(--space-3);
   font-size: var(--text-sm);
 }
-.header-center {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  min-width: 0;
-}
-.header-account {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: var(--space-4);
-  min-width: 0;
-}
 .private-label {
   display: flex;
   align-items: center;
   gap: 6px;
+  margin-top: var(--space-2);
   color: var(--text-secondary);
   font-size: var(--text-xs);
   white-space: nowrap;
@@ -225,6 +319,7 @@
   min-height: 32px;
   padding: 4px 26px 4px 6px;
   border-color: transparent;
+  background-color: transparent;
   background-position: right 6px center;
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
@@ -238,8 +333,8 @@
 /* Global search */
 .header-search {
   position: relative;
-  flex: 1;
-  min-width: 0;
+  flex: 0 1 280px;
+  min-width: 200px;
 }
 .header-search-field {
   display: flex;
@@ -255,6 +350,9 @@
     background-color var(--duration-fast) var(--ease),
     border-color var(--duration-fast) var(--ease),
     box-shadow var(--duration-fast) var(--ease);
+}
+.header-search-field > svg {
+  flex-shrink: 0;
 }
 .header-search-field:hover {
   border-color: var(--border-hover);
@@ -278,6 +376,7 @@
   padding: 0;
   border: 0;
   background: transparent;
+  white-space: nowrap;
 }
 .header-search-field button {
   display: inline-flex;
@@ -297,8 +396,9 @@
   position: absolute;
   top: calc(100% + var(--space-2));
   right: 0;
-  left: 0;
-  max-height: min(480px, calc(100vh - 96px));
+  width: max(100%, 420px);
+  max-width: calc(100vw - var(--space-8));
+  max-height: min(480px, calc(100dvh - 96px));
   overflow: auto;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
@@ -351,122 +451,29 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
 }
-
-/* Primary navigation */
-.primary-rail {
-  position: fixed;
-  top: var(--header-height);
-  bottom: 0;
-  left: 0;
-  z-index: var(--layer-rail);
+/* The way to the full search page, with its filters. */
+.search-advanced {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  width: var(--rail-width);
-  padding: var(--space-3) 6px;
-  overflow-y: auto;
-  border-right: 1px solid var(--border);
-  background: var(--surface);
-}
-.rail-item {
-  position: relative;
-  display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: var(--space-1);
-  width: 100%;
-  min-height: 56px;
-  flex-shrink: 0;
-  border-radius: var(--radius-sm);
-  color: var(--text-secondary);
-  font-size: var(--text-2xs);
-  font-weight: var(--weight-medium);
-  line-height: 1.2;
-  text-align: center;
-  text-decoration: none;
-  transition:
-    background-color var(--duration-fast) var(--ease),
-    color var(--duration-fast) var(--ease);
-}
-.rail-item:hover {
-  background: var(--surface-hover);
-  color: var(--text);
-}
-.rail-item.active {
-  background: var(--blue-surface);
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: 40px;
+  padding: var(--space-2) var(--space-4);
+  border-top: 1px solid var(--border);
   color: var(--primary-strong);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  text-decoration: none;
+  transition: background-color var(--duration-fast) var(--ease);
 }
-.rail-item.active::before {
-  content: "";
-  position: absolute;
-  left: -6px;
-  width: 3px;
-  height: 24px;
-  border-radius: 0 3px 3px 0;
-  background: var(--primary);
+.search-advanced:hover {
+  background: var(--surface-hover);
 }
-.rail-profile {
-  margin-top: auto;
-}
-.rail-signout {
-  margin-top: var(--space-1);
-}
-.rail-signout::after {
-  content: "";
-  position: absolute;
-  top: -3px;
-  right: var(--space-2);
-  left: var(--space-2);
-  height: 1px;
-  background: var(--border);
+.search-advanced:focus-visible {
+  outline-offset: -2px;
 }
 
-/* Workspace context panel */
-.context-toggle {
-  position: fixed;
-  top: calc(var(--header-height) + var(--space-3));
-  left: calc(var(--rail-width) + var(--space-1));
-  z-index: calc(var(--layer-rail) + 1);
-}
-.with-context .context-toggle {
-  left: calc(var(--rail-width) + var(--context-width) - 40px);
-}
-.context-panel {
-  position: fixed;
-  top: var(--header-height);
-  bottom: 0;
-  left: var(--rail-width);
-  z-index: var(--layer-panel);
-  width: var(--context-width);
-  padding: var(--space-4) var(--space-3) var(--space-6);
-  overflow-y: auto;
-  border-right: 1px solid var(--border);
-  background: var(--background);
-}
-.context-heading {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  min-height: 32px;
-  margin-bottom: var(--space-2);
-  padding: 0 var(--space-8) 0 var(--space-2);
-}
-.context-heading h2 {
-  flex: 1;
-  font-size: var(--text-sm);
-  font-weight: var(--weight-semibold);
-  letter-spacing: 0;
-}
-.context-heading .icon-button {
-  width: 28px;
-  height: 28px;
-}
-.context-workspaces {
-  max-height: 30vh;
-  overflow: auto;
-}
-.context-workspace,
+/* Links shared by the workspace menu and the phone drawer. */
 .context-link,
 .context-recent {
   display: flex;
@@ -484,72 +491,52 @@
     background-color var(--duration-fast) var(--ease),
     color var(--duration-fast) var(--ease);
 }
-.context-workspace svg,
 .context-link svg {
+  flex-shrink: 0;
   color: var(--text-secondary);
 }
-.context-workspace span,
 .context-recent {
+  display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.context-recent {
-  display: block;
-}
-.context-workspace:hover,
 .context-link:hover,
 .context-recent:hover {
   background: var(--surface-hover);
   color: var(--text);
 }
-.context-workspace.selected,
 .context-link.active {
   background: var(--blue-surface);
   color: var(--primary-strong);
   font-weight: var(--weight-semibold);
 }
-.context-workspace.selected svg,
 .context-link.active svg {
   color: var(--primary);
-}
-.context-create {
-  margin: var(--space-2) var(--space-2) 0;
 }
 .context-category {
   margin: var(--space-6) var(--space-2) var(--space-2);
   color: var(--text-secondary);
   font-size: var(--text-xs);
   font-weight: var(--weight-medium);
+  letter-spacing: 0;
 }
 .context-settings {
-  margin-top: var(--space-4);
+  margin-top: var(--space-3);
   padding-top: var(--space-3);
   border-top: 1px solid var(--border);
   border-radius: 0 0 var(--radius-sm) var(--radius-sm);
 }
-.context-scrim {
-  position: fixed;
-  inset: var(--header-height) 0 0;
-  z-index: calc(var(--layer-drawer) - 1);
-  background: var(--overlay);
-  animation: fade-in var(--duration) var(--ease);
-}
 
-/* Content column */
+/* Content column: the full width of the window, under the bar. */
 .desktop-content {
   position: relative;
   min-width: 0;
   min-height: 100vh;
   min-height: 100dvh;
-  margin-left: var(--rail-width);
   padding-top: var(--header-height);
   display: flex;
   flex-direction: column;
-  transition: margin-left var(--duration) var(--ease);
-}
-.with-context .desktop-content {
-  margin-left: calc(var(--rail-width) + var(--context-width));
 }
 .main-content {
   flex: 1;
@@ -600,79 +587,148 @@
   }
 }
 
-/* Zoomed desktops and small laptops */
-@media (max-width: 1100px) {
-  .global-header {
+/*
+ * Compact bar (below 1280px). Search rests as an icon and opens over the bar
+ * when it receives focus; the field is always in the document, so the
+ * keyboard reaches it the same way at every width. Keep this boundary in sync
+ * with collapsedSearchQuery in header-search.tsx.
+ */
+@media (max-width: 1279px) {
+  .header-inner {
     gap: var(--space-4);
-    padding: 0 var(--space-4);
   }
-  .private-label {
+  .header-search {
+    flex: none;
+    width: 40px;
+    min-width: 0;
+    height: 40px;
+  }
+  .header-search-field {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 2;
+    justify-content: center;
+    gap: 0;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border-color: transparent;
+    background: transparent;
+    color: var(--text-subtle);
+    cursor: pointer;
+  }
+  .header-search-field:hover {
+    border-color: transparent;
+    background: var(--surface-hover);
+    color: var(--text);
+  }
+  .header-search-field input {
+    width: 0;
+    padding: 0;
+    opacity: 0;
+  }
+  .header-search-field kbd,
+  .header-search-field button {
     display: none;
   }
-  .header-start {
-    gap: var(--space-3);
+  .header-search:focus-within .header-search-field {
+    justify-content: flex-start;
+    gap: var(--space-2);
+    width: min(420px, calc(100vw - var(--space-8)));
+    padding: 0 var(--space-3);
+    border-color: var(--primary);
+    background: var(--background);
+    color: var(--text-secondary);
+    cursor: text;
+    animation: search-open var(--duration) var(--ease);
   }
-  .workspace-switch {
-    max-width: 168px;
+  .header-search:focus-within .header-search-field input {
+    width: 100%;
+    padding: 6px 0;
+    opacity: 1;
   }
-  .main-content {
-    padding-right: var(--space-6);
+  .header-search:focus-within .header-search-field button {
+    display: inline-flex;
   }
-  .app-footer {
-    padding-right: var(--space-6);
-  }
-}
-@media (max-height: 760px) {
-  .primary-rail {
-    gap: 2px;
-    padding-block: var(--space-2);
-  }
-  .rail-item {
-    min-height: 50px;
-  }
-}
-
-/* Below 900px the context panel becomes a drawer over the content. */
-@media (max-width: 899px) {
-  .context-panel {
-    z-index: var(--layer-drawer);
-    width: min(300px, calc(100vw - var(--rail-width) - var(--space-10)));
-    box-shadow: var(--shadow-lg);
-    animation: drawer-in var(--duration) var(--ease);
-  }
-  .drawer-open .context-toggle {
-    left: calc(
-      var(--rail-width) +
-        min(300px, calc(100vw - var(--rail-width) - var(--space-10))) - 40px
-    );
-    z-index: calc(var(--layer-drawer) + 1);
+  .search-popover {
+    width: min(420px, calc(100vw - var(--space-8)));
   }
 }
-@keyframes drawer-in {
+@keyframes search-open {
   from {
     opacity: 0;
-    transform: translateX(-16px);
+    transform: translateX(12px);
   }
 }
 
-/* Between the phone and the small laptop the wordmark gives way first. */
+/* Zoomed desktops and small laptops: the same column, with less margin. */
+@media (max-width: 1100px) {
+  .header-inner {
+    padding: 0 var(--space-6);
+  }
+  .workspace-menu {
+    gap: var(--space-6);
+    padding: var(--space-5) var(--space-6) var(--space-6);
+  }
+  .main-content {
+    padding-inline: var(--space-6);
+  }
+  .app-footer {
+    padding-inline: var(--space-6);
+  }
+}
+
+/* Below 1024px the wordmark gives way to the symbol and the bar tightens. */
 @media (max-width: 1023px) {
   .brand-home-wordmark {
     display: none;
+  }
+  .header-inner {
+    gap: var(--space-3);
+    padding: 0 var(--space-4);
+  }
+  .header-start {
+    gap: var(--space-2);
+  }
+  .top-nav {
+    gap: 0;
+  }
+  .top-nav-link {
+    padding: 0 10px;
+  }
+  .top-nav-link::after {
+    right: 10px;
+    left: 10px;
+  }
+  .workspace-switch {
+    max-width: 152px;
+  }
+  .header-end {
+    gap: var(--space-1);
+  }
+  .workspace-menu {
+    gap: var(--space-4);
+    padding-inline: var(--space-4);
   }
 }
 
 /*
  * Phones. No navigation is on screen until the menu button is pressed: the
- * header holds the menu, the current place and the main action; everything
- * else waits in the drawer and the content gets the full width.
+ * bar holds the brand, the current place, the main action and, in the top
+ * right corner, the menu; everything else waits in the drawer and the content
+ * gets the full width.
  */
-.phone .global-header {
-  grid-template-columns:
-    minmax(max-content, 1fr) minmax(0, auto)
-    minmax(max-content, 1fr);
-  gap: var(--space-2);
-  padding: 0 var(--space-2);
+.phone .header-inner {
+  gap: var(--space-1);
+  padding: 0 max(var(--space-2), env(safe-area-inset-right)) 0
+    max(var(--space-2), env(safe-area-inset-left));
+}
+.header-home {
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
 }
 .header-menu,
 .header-actions .icon-button {
@@ -683,10 +739,9 @@
 .header-title {
   display: flex;
   flex-direction: column;
-  align-items: center;
   min-width: 0;
+  padding-left: var(--space-1);
   line-height: 1.25;
-  text-align: center;
 }
 .header-title strong,
 .header-title span {
@@ -741,9 +796,6 @@
 .header-action:active {
   transform: scale(0.94);
 }
-.phone .desktop-content {
-  margin-left: 0;
-}
 .phone .main-content {
   padding: var(--space-5) var(--space-4) var(--space-10);
 }
@@ -754,14 +806,11 @@
   right: var(--space-3);
   left: var(--space-3);
 }
-.phone .search-popover {
-  position: fixed;
-  top: calc(var(--header-height) + var(--space-1));
-  right: var(--space-2);
-  left: var(--space-2);
-}
 
-/* Navigation drawer */
+/*
+ * Navigation drawer. Enters from the right edge, under the menu button that
+ * opens it, and lies over the page. Only transform and opacity animate.
+ */
 .drawer-overlay {
   position: fixed;
   inset: 0;
@@ -774,14 +823,19 @@
 }
 .nav-drawer {
   position: fixed;
-  inset: 0 auto 0 0;
+  top: 0;
+  right: 0;
   z-index: calc(var(--layer-drawer) + 1);
   display: flex;
   flex-direction: column;
-  width: min(var(--drawer-width), calc(100vw - 56px));
-  border-right: 1px solid var(--border);
+  width: min(var(--drawer-width), 88vw);
+  height: 100vh;
+  height: 100dvh;
+  padding-right: env(safe-area-inset-right);
+  /* No shadow: the dimmed page already sets the panel apart, and a shadow on
+     this animated layer made its first paint about three times slower. */
+  border-left: 1px solid var(--border);
   background: var(--panel);
-  box-shadow: var(--shadow-lg);
   animation: drawer-slide-in 220ms var(--ease);
 }
 .nav-drawer[data-state="closed"] {
@@ -796,8 +850,9 @@
   justify-content: space-between;
   gap: var(--space-3);
   min-height: var(--header-height);
-  padding: 0 var(--space-2) 0 var(--space-4);
+  padding: env(safe-area-inset-top) var(--space-2) 0 var(--space-4);
   border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
 }
 .nav-drawer-head .icon-button {
   width: 44px;
@@ -806,13 +861,15 @@
 .nav-drawer-body {
   flex: 1;
   min-height: 0;
-  padding: var(--space-3);
+  padding: var(--space-3) var(--space-3)
+    calc(var(--space-4) + env(safe-area-inset-bottom));
   overflow-y: auto;
   overscroll-behavior: contain;
 }
-.nav-drawer-foot {
-  padding: var(--space-3) var(--space-3)
-    calc(var(--space-3) + env(safe-area-inset-bottom));
+/* The second and third groups: a line and some air before each. */
+.drawer-group {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
   border-top: 1px solid var(--border);
 }
 .nav-drawer .context-link,
@@ -830,7 +887,15 @@
 }
 .nav-drawer .context-category {
   margin: var(--space-5) var(--space-3) var(--space-1);
-  letter-spacing: 0;
+}
+.nav-drawer .drawer-group > .context-category:first-child {
+  margin-top: 0;
+}
+.nav-drawer .context-settings {
+  margin-top: 0;
+  padding-top: 6px;
+  border-top: 0;
+  border-radius: var(--radius-sm);
 }
 .drawer-workspace {
   display: flex;
@@ -894,17 +959,18 @@
   border-radius: var(--radius-md);
   animation: menu-in var(--duration-fast) var(--ease);
 }
-.drawer-appearance {
-  margin-bottom: var(--space-2);
+/* Language and appearance: one labelled choice each. */
+.drawer-preference {
+  margin: var(--space-3) 0;
 }
-.nav-drawer .drawer-appearance .context-category {
+.nav-drawer .drawer-preference .context-category {
   display: block;
   margin: 0 var(--space-3) var(--space-2);
 }
-.drawer-appearance .segmented {
+.drawer-preference .segmented {
   display: grid;
 }
-.drawer-appearance .segmented-option span {
+.drawer-preference .segmented-option span {
   min-height: 44px;
 }
 .drawer-account {
@@ -926,12 +992,12 @@
 }
 @keyframes drawer-slide-in {
   from {
-    transform: translateX(-100%);
+    transform: translateX(100%);
   }
 }
 @keyframes drawer-slide-out {
   to {
-    transform: translateX(-100%);
+    transform: translateX(100%);
   }
 }
 @keyframes fade-out {
@@ -949,9 +1015,9 @@
   .brand-wordmark {
     background: CanvasText;
   }
-  .rail-item.active,
+  .top-nav-link[aria-current="page"],
   .context-link.active,
-  .context-workspace.selected,
+  .workspace-option.selected,
   .workspace-tabs a[aria-current="page"] {
     outline: 1px solid Highlight;
   }

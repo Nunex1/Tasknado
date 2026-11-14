@@ -62,6 +62,8 @@ Onde escolher: Configurações → Aparência (todas as larguras), menu da conta
 
 ## 5. Navegação em cada largura
 
+> **Substituída em 14/11/2026.** O trilho de ícones e o painel lateral descritos abaixo deram lugar a uma barra superior única, e o drawer do celular passou a abrir pela direita. A descrição atual está em [NAVIGATION.md](NAVIGATION.md); esta seção fica como registro da entrega de 11/11/2026.
+
 | Largura | Cabeçalho | Navegação global | Workspace |
 |---|---|---|---|
 | até 767 px | 56 px: menu, lugar atual, pesquisa, ação principal | Drawer, fechado por padrão | No drawer: workspace ativo, seletor, módulos, recentes |

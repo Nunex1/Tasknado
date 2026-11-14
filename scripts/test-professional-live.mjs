@@ -308,6 +308,19 @@ try {
     .getByLabel("Status", { exact: true })
     .last()
     .selectOption("in_progress");
+  // The inline change is saved in the background. Wait for the row itself:
+  // a quiet network can be observed before the request has even started.
+  for (let attempt = 0; attempt < 50; attempt++) {
+    const row = ok(
+      await api
+        .from("professional_development_items")
+        .select("status")
+        .eq("workspace_id", work.id)
+        .single(),
+    );
+    if (row.status === "in_progress") break;
+    await page.waitForTimeout(200);
+  }
   await page.waitForLoadState("networkidle");
   await page.reload();
   await plan()
@@ -332,10 +345,16 @@ try {
   );
 
   // Use SPA navigation so Back exercises the persistent App layout.
-  await page.locator(`.context-link[href="${paths.career}"]`).click();
+  // One step through the workspace tabs, the other through the workspace
+  // menu of the top bar: both lead to the plans.
+  await page.locator(`.workspace-tabs a[href="${paths.career}"]`).click();
   await page.waitForURL(root + paths.career);
-  await page.locator(`.context-link[href="${paths.development}"]`).click();
+  await page.locator(".workspace-switch").click();
+  await page
+    .locator(`.workspace-popover .context-link[href="${paths.development}"]`)
+    .click();
   await page.waitForURL(root + paths.development);
+  assert.equal(await page.locator(".workspace-popover").count(), 0);
   // Escape, reload and browser Back cannot silently destroy a draft.
   await plan().getByRole("button", { name: "Editar", exact: true }).click();
   await dialog()

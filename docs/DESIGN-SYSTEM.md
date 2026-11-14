@@ -72,7 +72,7 @@ Criados:
 Modificados:
 
 - `auth.tsx` — o formulário (mesmos campos, modos e chamadas ao Supabase) virou o cartão da landing; na recuperação de senha aparece sozinho.
-- `desktop-shell.tsx` — navegação inferior no celular, painel de workspace como gaveta abaixo de 900 px (Escape fecha e devolve o foco), ícones nos links do workspace.
+- `desktop-shell.tsx` — navegação inferior no celular, painel de workspace como gaveta abaixo de 900 px (Escape fecha e devolve o foco), ícones nos links do workspace. *Substituído em 14/11/2026 pela barra superior única; ver [NAVIGATION.md](NAVIGATION.md).*
 - `profile-menu.tsx` — nome e e-mail, Editar perfil, Configurações e Sair, com setas, Home/End, Escape e Tab.
 - `priority-matrix.tsx` — cabeçalho de quadrante em código (Q1–Q4), nome e ação; destaque do quadrante de destino durante o arraste. Regras de classificação e a RPC `set_priority` inalteradas.
 - `app.tsx` — ícones nos indicadores, listas de foco, `aria-pressed` nos filtros, rótulos de coluna dentro das células (leitores de tela e cartões no celular).
@@ -151,4 +151,4 @@ Medição do próprio navegador na landing, build de produção, máquina local 
 - Novas cores, tamanhos ou espaçamentos entram primeiro em `tokens.css`. Cores têm valor claro e escuro; o bloco escuro é declarado duas vezes e `pnpm test` confere que são iguais e que o contraste se mantém.
 - `pnpm capture:landing` refaz as capturas da landing depois de mudanças visuais (requer `pnpm local:setup` e o app em execução).
 - `pnpm test:responsive` deve passar antes de publicar mudanças de layout.
-- Os pontos de 767 px (celular) e 899 px (painel sobre o conteúdo) existem em `shell.css` e em `desktop-shell.tsx` (`phoneQuery`, `compactQuery`); altere os dois juntos.
+- Os pontos de quebra da navegação são 767 px (celular: drawer no lugar da barra), 1023 px (símbolo sem a palavra TASKNADO) e 1279 px (busca recolhida em ícone). O de 767 px existe em `shell.css`, `tokens.css` e `desktop-shell.tsx` (`phoneQuery`); o de 1279 px em `shell.css` e `header-search.tsx` (`collapsedSearchQuery`). Altere-os juntos: `src/components/nav-items.test.ts` falha se divergirem. A arquitetura está em [NAVIGATION.md](NAVIGATION.md).

@@ -5,7 +5,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
-import { LogOut, Settings, UserRound } from "lucide-react";
+import { LockKeyhole, LogOut, Settings, UserRound } from "lucide-react";
 import { userProfile, avatarForeground } from "@/lib/user-profile";
 import { useTheme } from "@/lib/theme-provider";
 import { themeOptions } from "./theme";
@@ -99,12 +99,14 @@ export function ProfileMenu({
       </button>
       {open && (
         <div className="profile-dropdown">
-          {(displayName || email) && (
-            <div className="profile-dropdown-header">
-              <strong>{displayName}</strong>
-              {email && email !== displayName && <small>{email}</small>}
-            </div>
-          )}
+          <div className="profile-dropdown-header">
+            <strong>{displayName}</strong>
+            {email && email !== displayName && <small>{email}</small>}
+            <span className="private-label">
+              <LockKeyhole size={13} aria-hidden="true" />
+              {t("Pessoal e privado")}
+            </span>
+          </div>
           <div
             id={menuId}
             role="menu"
