@@ -507,5 +507,7 @@
   "Arquivo bloqueado pela verificação de segurança.": "Arquivo bloqueado pela verificação de segurança.",
   "Arquivo em verificação. Tente novamente em instantes.": "Arquivo em verificação. Tente novamente em instantes.",
   "Arquivo recebido. Aguardando verificação de segurança.": "Arquivo recebido. Aguardando verificação de segurança.",
-  "Verificado": "Verificado"
+  "Verificado": "Verificado",
+  "Limite de armazenamento atingido. Exclua arquivos para liberar espaço.": "Limite de armazenamento atingido. Exclua arquivos para liberar espaço.",
+  "Limite de registros da conta atingido. Exclua itens antigos para continuar.": "Limite de registros da conta atingido. Exclua itens antigos para continuar."
 }
