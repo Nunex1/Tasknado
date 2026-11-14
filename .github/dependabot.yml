@@ -5,7 +5,18 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    # Routine updates wait a week after publication, so a hijacked release is
+    # usually withdrawn before it is proposed. Security updates are not delayed.
+    cooldown:
+      default-days: 7
   - package-ecosystem: github-actions
     directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+  # Engine image of the antivirus daemon, pinned by digest.
+  - package-ecosystem: docker-compose
+    directory: /ops/clamav
     schedule:
       interval: weekly

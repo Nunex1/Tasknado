@@ -19,21 +19,28 @@
     "test:responsive": "node scripts/test-responsive.mjs",
     "capture:landing": "node scripts/capture-landing.mjs",
     "scan:uploads": "node scripts/scan-uploads.mjs",
-    "test:security:postgres": "node scripts/test-security-postgres.mjs"
+    "test:security:postgres": "node scripts/test-security-postgres.mjs",
+    "security:stack": "node scripts/security-stack.mjs",
+    "test:security:http": "node scripts/test-security-http.mjs",
+    "test:security:backup": "node scripts/test-security-backup.mjs",
+    "test:security:clamav": "node scripts/test-security-clamav.mjs",
+    "security:health": "node scripts/security-health.mjs",
+    "security:probe": "node scripts/probe-deployment.mjs",
+    "backup:storage": "node scripts/backup-storage.mjs"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.0",
     "@supabase/supabase-js": "^2.80.0",
     "clsx": "^2.1.1",
+    "fflate": "0.8.3",
+    "file-type": "22.3.0",
     "i18next": "^26.4.5",
     "lucide-react": "^0.468.0",
-    "next": "^16.4.1",
+    "next": "^16.4.6",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-i18next": "^17.0.17",
-    "tailwind-merge": "^3.0.0",
-    "fflate": "0.8.3",
-    "file-type": "22.3.0"
+    "tailwind-merge": "^3.0.0"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.9",

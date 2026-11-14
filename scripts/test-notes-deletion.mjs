@@ -1,5 +1,6 @@
 // Browser journey for block and note deletion against the isolated local stack.
 // Uses a temporary account that is removed at the end; no existing data is touched.
+import { localStack } from "./security-stack.mjs";
 import assert from "node:assert/strict";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -16,13 +17,9 @@ const { chromium } = require(
     ),
 );
 const cli = require.resolve("supabase/dist/supabase.js");
-const state = JSON.parse(
-  execFileSync(process.execPath, [cli, "status", "-o", "json"], {
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "pipe"],
-  }),
-);
-assert.equal(state.API_URL, "http://127.0.0.1:55431");
+// Development stack by default; TASKNADO_TEST_STACK=security selects the
+// isolated stack that carries every migration. Loopback only, either way.
+const state = localStack();
 const options = { auth: { persistSession: false, autoRefreshToken: false } };
 const admin = createClient(state.API_URL, state.SERVICE_ROLE_KEY, options);
 const api = createClient(state.API_URL, state.ANON_KEY, options);

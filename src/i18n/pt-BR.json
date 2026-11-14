@@ -591,5 +591,7 @@
   "Nenhuma oportunidade encontrada.": "Nenhuma oportunidade encontrada.",
   "Prioridade": "Prioridade",
   "Todos os status": "Todos os status",
-  "Ordenar por": "Ordenar por"
+  "Ordenar por": "Ordenar por",
+  "Limite de armazenamento atingido. Exclua arquivos para liberar espaço.": "Limite de armazenamento atingido. Exclua arquivos para liberar espaço.",
+  "Limite de registros da conta atingido. Exclua itens antigos para continuar.": "Limite de registros da conta atingido. Exclua itens antigos para continuar."
 }

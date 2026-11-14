@@ -591,5 +591,7 @@
   "Nenhuma oportunidade encontrada.": "No opportunities found.",
   "Prioridade": "Priority",
   "Todos os status": "All statuses",
-  "Ordenar por": "Sort by"
+  "Ordenar por": "Sort by",
+  "Limite de armazenamento atingido. Exclua arquivos para liberar espaço.": "Storage limit reached. Delete files to free up space.",
+  "Limite de registros da conta atingido. Exclua itens antigos para continuar.": "Account record limit reached. Delete older items to continue."
 }

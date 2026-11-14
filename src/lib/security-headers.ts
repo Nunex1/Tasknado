@@ -23,9 +23,51 @@ export function contentSecurityPolicy(
     `img-src 'self' data: blob: ${origin}`,
     `media-src 'self' blob: ${origin}`,
     "font-src 'self'",
+    "manifest-src 'self'",
+    // The interface embeds no frames and starts no workers of its own.
+    "frame-src 'none'",
+    "worker-src 'self'",
     "object-src 'none'",
     "base-uri 'none'",
     "form-action 'self'",
     "frame-ancestors 'none'",
   ].join("; ");
 }
+
+/**
+ * Headers that do not depend on the request. next.config.ts sends them with
+ * everything Next.js serves; netlify.toml repeats the ones that matter for
+ * files the CDN serves directly, which never reach Next.js.
+ */
+export const staticSecurityHeaders = [
+  // Browsers ignore HSTS over HTTP. No preload/includeSubDomains until every
+  // subdomain has been inventoried by the deployment owner.
+  { key: "Strict-Transport-Security", value: "max-age=31536000" },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "X-Frame-Options", value: "DENY" },
+  // No other origin gets a window reference to the app or embeds its files.
+  { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+  { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
+  { key: "X-Permitted-Cross-Domain-Policies", value: "none" },
+  {
+    key: "Permissions-Policy",
+    value: [
+      "accelerometer",
+      "browsing-topics",
+      "camera",
+      "display-capture",
+      "geolocation",
+      "gyroscope",
+      "hid",
+      "magnetometer",
+      "microphone",
+      "midi",
+      "payment",
+      "serial",
+      "usb",
+    ]
+      .map((feature) => `${feature}=()`)
+      .join(", "),
+  },
+];

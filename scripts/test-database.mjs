@@ -14,7 +14,7 @@ create table storage.buckets(id text primary key,name text,public boolean,file_s
 create table storage.objects(id uuid primary key default gen_random_uuid(),bucket_id text,name text);
 alter table storage.objects enable row level security;
 create function storage.foldername(text) returns text[] language sql as $$ select string_to_array($1,'/') $$;
-grant usage on schema public,auth,storage to anon,authenticated;
+grant usage on schema public,auth,storage to anon,authenticated,service_role;
 grant all on all tables in schema storage to anon,authenticated;
 alter default privileges in schema public grant all on tables to anon,authenticated;
 alter default privileges in schema public grant all on sequences to anon,authenticated;`);
@@ -732,6 +732,296 @@ assert.equal(
   0,
 );
 pass("Account deletion cascades data without orphan audit references");
+// Per-account limits (202611130001). Fresh accounts keep these checks
+// independent of the fixtures above.
+const limitsA = "33333333-3333-4333-8333-333333333333",
+  limitsB = "44444444-4444-4444-8444-444444444444",
+  limitsC = "55555555-5555-4555-8555-555555555555";
+await pg.exec("reset role");
+await pg.query("insert into auth.users values($1),($2),($3)", [
+  limitsA,
+  limitsB,
+  limitsC,
+]);
+const message = async (sql, args = []) => {
+  try {
+    await pg.query(sql, args);
+  } catch (error) {
+    return error.message;
+  }
+  return "";
+};
+await as(limitsA);
+const limited = (
+  await pg.query("insert into workspaces(name) values('Limites') returning *")
+).rows[0];
+const limitedNote = (
+  await pg.query(
+    "insert into notes(workspace_id,title) values($1,'Limites') returning *",
+    [limited.id],
+  )
+).rows[0];
+const limitedEntry = (
+  await pg.query(
+    "insert into note_entries(note_id,content) values($1,'x') returning *",
+    [limitedNote.id],
+  )
+).rows[0];
+const observed = (
+  await pg.query(
+    "insert into workspace_observations(workspace_id,content) values($1,'auditada') returning *",
+    [limited.id],
+  )
+).rows[0];
+assert.equal(
+  (
+    await pg.query(
+      "select count(*)::int n from audit_logs where entity='workspace_observations' and entity_id=$1",
+      [observed.id],
+    )
+  ).rows[0].n,
+  1,
+);
+// 1201 audited changes inside the last minute: one more than the ceiling.
+await pg.exec("reset role");
+await pg.query(
+  "insert into audit_logs(owner_id,entity,entity_id,action) select $1,'burst',$2,'INSERT' from generate_series(1,1201)",
+  [limitsA, limited.id],
+);
+await as(limitsA);
+for (const [sql, args] of [
+  ["insert into workspaces(name) values('Excesso')", []],
+  ["update workspaces set name='Excesso' where id=$1", [limited.id]],
+  [
+    "insert into workspace_observations(workspace_id,content) values($1,'x')",
+    [limited.id],
+  ],
+  ["delete from workspace_observations where id=$1", [observed.id]],
+  ["select save_entry($1,'y',1)", [limitedEntry.id]],
+  ["select delete_note($1)", [limitedNote.id]],
+])
+  assert.match(await message(sql, args), /Too many requests/, sql);
+assert.equal(
+  (await pg.query("select name from workspaces where id=$1", [limited.id]))
+    .rows[0].name,
+  "Limites",
+);
+// Reads, other accounts and trusted backends are not throttled.
+assert.equal((await pg.query("select * from workspaces")).rows.length, 1);
+await as(limitsB);
+await pg.query("insert into workspaces(name) values('Outra conta')");
+await pg.exec("reset role");
+await pg.query("select set_config('request.jwt.claim.sub','',false)");
+await pg.query("update workspaces set description='backend' where id=$1", [
+  limited.id,
+]);
+// A throttled account can still be deleted by its owner.
+await pg.query(
+  "insert into audit_logs(owner_id,entity,entity_id,action) select $1,'burst',$2,'INSERT' from generate_series(1,1201)",
+  [limitsC, limited.id],
+);
+await as(limitsC);
+await pg.query("select delete_my_account()");
+await pg.exec("reset role");
+assert.equal(
+  (await pg.query("select 1 from auth.users where id=$1", [limitsC])).rows
+    .length,
+  0,
+);
+await pg.query("delete from audit_logs where entity='burst'");
+await as(limitsA);
+await pg.query("update workspaces set name='Liberado' where id=$1", [
+  limited.id,
+]);
+pass(
+  "Account write rate: 1201 audited changes in a minute block inserts, updates, deletes and RPCs for that account only; reads, other accounts, backends and account deletion continue",
+);
+// Row ceiling: also enforced inside a single multi-row statement.
+assert.match(
+  await message(
+    "insert into workspaces(name) select 'w'||g from generate_series(1,250) g",
+  ),
+  /Account limit reached/,
+);
+assert.equal((await pg.query("select * from workspaces")).rows.length, 1);
+await pg.query(
+  "insert into workspaces(name) select 'w'||g from generate_series(1,199) g",
+);
+assert.match(
+  await message("insert into workspaces(name) values('201')"),
+  /Account limit reached/,
+);
+await as(limitsB);
+await pg.query("insert into workspaces(name) values('Sem relação')");
+await as(limitsA);
+await pg.query(
+  "select delete_workspace((select id from workspaces where name='w1'))",
+);
+await pg.query("insert into workspaces(name) values('Vaga liberada')");
+pass(
+  "Account row ceiling: 200 workspaces per account, enforced within one bulk statement, released by deletion and independent between accounts",
+);
+// Professional plans (202611140002) share the limits. Work workspaces only.
+await as(limitsB);
+const career = (
+  await pg.query(
+    "insert into workspaces(name,category) values('Carreira','work') returning *",
+  )
+).rows[0];
+const targets =
+  "insert into career_targets(workspace_id,company,region,country,position) select $1,'Empresa '||g,'brazil','Brasil','Cargo' from generate_series(1,$2::int) g";
+assert.match(
+  await message(targets, [career.id, 1001]),
+  /Account limit reached/,
+);
+await pg.query(targets, [career.id, 1000]);
+assert.match(await message(targets, [career.id, 1]), /Account limit reached/);
+await pg.query(
+  "insert into professional_development_items(workspace_id,development_area,action_plan) values($1,'Idioma','Aulas')",
+  [career.id],
+);
+await pg.exec("reset role");
+await pg.query(
+  "insert into audit_logs(owner_id,entity,entity_id,action) select $1,'burst',$2,'INSERT' from generate_series(1,1201)",
+  [limitsB, career.id],
+);
+await as(limitsB);
+for (const sql of [
+  "update career_targets set notes='x' where workspace_id=$1",
+  "insert into professional_development_items(workspace_id,development_area,action_plan) values($1,'a','b')",
+  "delete from professional_development_items where workspace_id=$1",
+])
+  assert.match(await message(sql, [career.id]), /Too many requests/, sql);
+await pg.exec("reset role");
+await pg.query("delete from audit_logs where entity='burst'");
+await as(limitsA);
+pass(
+  "Professional plans obey the account limits: 1000 career targets per account, exact inside one bulk statement, and the shared write rate",
+);
+
+// Operational metrics (202611130002): aggregates for the trusted backend only.
+assert.match(await message("select security_metrics()"), /permission denied/);
+await pg.exec("reset role; set role anon");
+assert.match(await message("select security_metrics()"), /permission denied/);
+await pg.exec("reset role; set role service_role");
+const metrics = (await pg.query("select security_metrics() m")).rows[0].m;
+for (const key of [
+  "database_bytes",
+  "accounts",
+  "uploads_pending",
+  "uploads_pending_overdue",
+  "oldest_pending_seconds",
+  "uploads_clean_24h",
+  "uploads_rejected_24h",
+  "cleanup_backlog",
+  "cleanup_overdue",
+  "reserved_bytes",
+  "accounts_near_storage_quota",
+  "audited_changes_1h",
+  "busiest_account_changes_1m",
+])
+  assert.equal(typeof metrics[key], "number", key);
+assert.ok(metrics.accounts >= 3 && metrics.audited_changes_1h > 0);
+// Counters only: no identifier or text field can carry private data.
+assert.doesNotMatch(
+  JSON.stringify(metrics),
+  /[0-9a-f]{8}-[0-9a-f]{4}-|@|Limites|Liberado/,
+);
+pass(
+  "Security metrics return aggregate counters to service_role only; clients and anonymous callers are denied",
+);
+
+// Privilege snapshot. A new function or table that a client role can reach
+// must be added here on purpose; it never happens by default.
+await pg.exec("reset role");
+const executable = async (role) =>
+  (
+    await pg.query(
+      `select p.proname from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+       where n.nspname='public' and has_function_privilege($1,p.oid,'EXECUTE') order by 1`,
+      [role],
+    )
+  ).rows.map((row) => row.proname);
+assert.deepEqual(await executable("anon"), []);
+assert.deepEqual(await executable("authenticated"), [
+  "add_event",
+  "delete_entry",
+  "delete_my_account",
+  "delete_note",
+  "delete_observation",
+  "delete_workspace",
+  "edit_observation",
+  "export_professional_plans",
+  "observation_counts",
+  "save_entry",
+  "search_all",
+  "set_priority",
+  "workspace_timeline",
+]);
+assert.equal(
+  (
+    await pg.query(
+      `select count(*)::int n from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+       where n.nspname='public' and (p.proacl is null or exists(
+        select 1 from aclexplode(p.proacl) a where a.grantee=0))`,
+    )
+  ).rows[0].n,
+  0,
+  "no function is executable through PUBLIC",
+);
+// Every SECURITY DEFINER function pins its search_path with pg_temp last.
+assert.deepEqual(
+  (
+    await pg.query(
+      `select p.proname from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+       where n.nspname='public' and p.prosecdef and not coalesce(
+        array_to_string(p.proconfig,',') ~ 'search_path=pg_catalog, ?public, ?pg_temp$',false)`,
+    )
+  ).rows,
+  [],
+);
+const grants = Object.fromEntries(
+  (
+    await pg.query(
+      `select c.relname, array_remove(array[
+        case when has_table_privilege('authenticated',c.oid,'SELECT') then 'SELECT' end,
+        case when has_table_privilege('authenticated',c.oid,'INSERT') then 'INSERT' end,
+        case when has_table_privilege('authenticated',c.oid,'UPDATE') then 'UPDATE' end,
+        case when has_table_privilege('authenticated',c.oid,'DELETE') then 'DELETE' end,
+        case when has_table_privilege('authenticated',c.oid,'TRUNCATE') then 'TRUNCATE' end,
+        case when has_table_privilege('authenticated',c.oid,'REFERENCES') then 'REFERENCES' end,
+        case when has_table_privilege('authenticated',c.oid,'TRIGGER') then 'TRIGGER' end],null) privileges,
+        has_any_column_privilege('anon',c.oid,'SELECT,INSERT,UPDATE,REFERENCES')
+         or has_table_privilege('anon',c.oid,'DELETE,TRUNCATE,TRIGGER') anon,
+        c.relrowsecurity rls
+       from pg_class c join pg_namespace n on n.oid=c.relnamespace
+       where n.nspname='public' and c.relkind='r' order by 1`,
+    )
+  ).rows.map((row) => {
+    assert.equal(row.anon, false, row.relname + " is closed to anon");
+    assert.equal(row.rls, true, row.relname + " has row level security");
+    return [row.relname, row.privileges.join(",")];
+  }),
+);
+assert.deepEqual(grants, {
+  activities: "SELECT,INSERT",
+  activity_events: "SELECT",
+  attachment_paths: "",
+  attachments: "SELECT,DELETE",
+  audit_logs: "SELECT",
+  career_targets: "SELECT,DELETE",
+  note_entries: "SELECT,INSERT",
+  notes: "SELECT,INSERT,UPDATE",
+  priority_history: "SELECT",
+  professional_development_items: "SELECT,DELETE",
+  storage_cleanup: "",
+  workspace_events: "SELECT",
+  workspace_observations: "SELECT,DELETE",
+  workspaces: "SELECT,INSERT,UPDATE",
+});
+pass(
+  "Privilege snapshot: anon reaches nothing, authenticated reaches exactly the reviewed tables and 13 RPCs, nothing is granted through PUBLIC, every table has RLS and every definer function pins search_path",
+);
 await pg.close();
 mkdirSync("test-results", { recursive: true });
 writeFileSync(

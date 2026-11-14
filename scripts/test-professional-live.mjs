@@ -1,7 +1,7 @@
 // Authenticated HTTP + browser acceptance, temporary users on the local stack only.
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
-import { execFileSync } from "node:child_process";
+import { localStack } from "./security-stack.mjs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
@@ -14,14 +14,9 @@ const { chromium } = require(
       ".cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright",
     ),
 );
-const state = JSON.parse(
-  execFileSync(
-    process.execPath,
-    [require.resolve("supabase/dist/supabase.js"), "status", "-o", "json"],
-    { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
-  ),
-);
-assert.equal(state.API_URL, "http://127.0.0.1:55431");
+// Development stack by default; TASKNADO_TEST_STACK=security selects the
+// isolated stack that carries every migration. Loopback only, either way.
+const state = localStack();
 const root = process.env.TASKNADO_TEST_URL || "http://127.0.0.1:3107";
 assert.match(root, /^http:\/\/(127\.0\.0\.1|localhost):\d+$/);
 const admin = createClient(state.API_URL, state.SERVICE_ROLE_KEY, {

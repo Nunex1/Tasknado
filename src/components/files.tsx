@@ -14,10 +14,22 @@ import {
   Attachment,
   ActivityEvent,
   validateFile,
+  attachmentAccess,
   mimeTypes,
   eventNames,
 } from "@/lib/domain";
 import { Button } from "./ui/button";
+// No label without a verdict: an unscanned file is never shown as verified.
+function scanLabel(file: Attachment) {
+  return (
+    {
+      legacy: null,
+      available: "Verificado",
+      blocked: "Bloqueado",
+      pending: "Em verificação",
+    } as const
+  )[attachmentAccess(file)];
+}
 export function Files({
   id,
   kind,
@@ -37,15 +49,15 @@ export function Files({
       null,
     );
   async function load() {
-    setFiles(
-      check(
-        await client()
-          .from("attachments")
-          .select("*")
-          .eq(kind + "_id", id)
-          .order("created_at"),
-      ).map((x) => x as Attachment),
-    );
+    const rows = check(
+      await client()
+        .from("attachments")
+        .select("*")
+        .eq(kind + "_id", id)
+        .order("created_at"),
+    ).map((x) => x as Attachment);
+    setFiles(rows);
+    return rows;
   }
   useEffect(() => {
     void load().catch((e) => report(errorMessage(e)));
@@ -85,8 +97,12 @@ export function Files({
           .upload(path, file, { contentType: file.type, upsert: false }),
       );
       uploaded = true;
-      await load();
-      report("Arquivo recebido. Aguardando verificação de segurança.");
+      const stored = await load();
+      report(
+        attachmentAccess(stored.find((x) => x.id === metaId) ?? {}) === "legacy"
+          ? "Arquivo salvo."
+          : "Arquivo recebido. Aguardando verificação de segurança.",
+      );
     } catch (e) {
       if (!uploaded && path)
         await client().storage.from("attachments").remove([path]);
@@ -98,9 +114,10 @@ export function Files({
     }
   }
   async function open(file: Attachment, download = false) {
-    if (file.scan_status !== "clean") {
+    const access = attachmentAccess(file);
+    if (access === "pending" || access === "blocked") {
       report(
-        file.scan_status === "rejected"
+        access === "blocked"
           ? "Arquivo bloqueado pela verificação de segurança."
           : "Arquivo em verificação. Tente novamente em instantes.",
       );
@@ -207,14 +224,8 @@ export function Files({
           <button className="file-name" onClick={() => void open(file)}>
             <strong>{file.name}</strong>
             <small>
-              {bytes(file.size)} · {date(file.created_at)} ·{" "}
-              {t(
-                file.scan_status === "clean"
-                  ? "Verificado"
-                  : file.scan_status === "rejected"
-                    ? "Bloqueado"
-                    : "Em verificação",
-              )}
+              {bytes(file.size)} · {date(file.created_at)}
+              {scanLabel(file) && <> · {t(scanLabel(file)!)}</>}
             </small>
           </button>
           <button
