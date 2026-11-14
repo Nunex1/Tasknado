@@ -18,6 +18,8 @@ function sql(source, database = "postgres") {
         "-i",
         name,
         "psql",
+        "-h",
+        "127.0.0.1",
         "-U",
         "postgres",
         "-d",
@@ -55,7 +57,10 @@ try {
   let ready = false;
   for (let i = 0; i < 40; i++) {
     try {
-      docker("exec", name, "pg_isready", "-U", "postgres");
+      // The image first starts a socket-only setup server and then restarts it.
+      // TCP becomes available only on the final server; accepting the temporary
+      // socket here can race its shutdown before the first migration in CI.
+      docker("exec", name, "pg_isready", "-h", "127.0.0.1", "-U", "postgres");
       ready = true;
       break;
     } catch {

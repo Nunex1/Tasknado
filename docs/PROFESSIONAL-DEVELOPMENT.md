@@ -43,6 +43,8 @@ pnpm.cmd build
 
 Os testes de banco aplicam todas as migrações a PostgreSQL embarcado com um harness dos schemas Auth/Storage. O teste de segurança usa um contêiner PostgreSQL descartável. Nenhum desses comandos acessa produção.
 
+O teste de segurança espera o servidor definitivo pelo TCP de loopback dentro do contêiner. Isso evita considerar pronto o servidor temporário de inicialização da imagem PostgreSQL, cujo socket é fechado antes da execução normal; essa corrida foi observada na primeira execução do CI e corrigida no harness.
+
 Para integração/navegador, use o Supabase **local** em `127.0.0.1:55431`, com a migração aplicada, e configure `.env.local` apenas com sua URL e chave pública local. Os testes obtêm a chave administrativa local em memória via CLI, criam contas temporárias e as removem ao terminar. Não executá-los contra produção.
 
 ```powershell
