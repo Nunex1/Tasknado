@@ -1,5 +1,7 @@
 import {
   Folder,
+  BriefcaseBusiness,
+  TrendingUp,
   Grid2x2,
   History,
   Home,
@@ -11,7 +13,7 @@ import {
 } from "lucide-react";
 import type { View } from "@/lib/navigation";
 
-/** Modules inside a workspace. The matrix exists only in the Work category. */
+/** Matrix and professional plans exist only in the Work category. */
 export const workspaceTabs: { view: View; label: string }[] = [
   { view: "dashboard", label: "Visão geral" },
   { view: "activities", label: "Tarefas" },
@@ -19,6 +21,8 @@ export const workspaceTabs: { view: View; label: string }[] = [
   { view: "history", label: "Histórico" },
   { view: "matrix", label: "Matriz de Eisenhower" },
   { view: "notes", label: "Notas" },
+  { view: "development", label: "Plano de Desenvolvimento Individual" },
+  { view: "career", label: "Plano de Carreira" },
 ];
 export const tabIcons: Partial<Record<View, typeof Folder>> = {
   dashboard: LayoutDashboard,
@@ -27,6 +31,8 @@ export const tabIcons: Partial<Record<View, typeof Folder>> = {
   history: History,
   matrix: Grid2x2,
   notes: NotebookPen,
+  development: TrendingUp,
+  career: BriefcaseBusiness,
 };
 /** Destinations that span every workspace. */
 export const primaryNav = [
@@ -38,6 +44,8 @@ export const primaryNav = [
 ];
 export function tabsFor(category: string) {
   return workspaceTabs.filter(
-    (tab) => tab.view !== "matrix" || category === "work",
+    (tab) =>
+      !["matrix", "development", "career"].includes(tab.view) ||
+      category === "work",
   );
 }

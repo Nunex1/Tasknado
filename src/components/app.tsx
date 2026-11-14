@@ -2,6 +2,9 @@
 import { useI18n } from "@/i18n/provider";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
+import { exportUserData } from "@/lib/export-data";
+import { tabsFor } from "./nav-items";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import {
@@ -59,7 +62,7 @@ import {
 } from "./category-fields";
 import { PriorityMatrix } from "./priority-matrix";
 import { routeState, workspacePath, View } from "@/lib/navigation";
-import { DesktopShell, workspaceTabs } from "./desktop-shell";
+import { DesktopShell } from "./desktop-shell";
 import { WorkspaceObservations, WorkspaceHistory } from "./workspace-records";
 import { WorkspaceDirectory, RecentObservations } from "./workspace-overview";
 import { DashboardFocus } from "./dashboard-focus";
@@ -67,6 +70,9 @@ import { quadrant, quadrants, isStarted } from "@/lib/domain";
 import { fetchPages } from "@/lib/pagination";
 import { isGone, removeNote } from "@/lib/notes";
 const uuid = /^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
+const ProfessionalPlans = dynamic(() =>
+  import("./professional-plans").then((m) => m.ProfessionalPlans),
+);
 type Editor =
   | { kind: "workspace"; item?: Workspace }
   | { kind: "activity"; item?: Activity }
@@ -76,7 +82,8 @@ export function App() {
   const pathname = usePathname();
   const router = useRouter();
   const isProfile = pathname === "/perfil";
-  const { workspaceId, view, activityId, noteId } = routeState(pathname);
+  const { workspaceId, view, activityId, noteId, careerId } =
+    routeState(pathname);
   const searchParams = useSearchParams();
   const focusId = searchParams.get("focus");
   const requestedFilter = searchParams.get("status") || "";
@@ -122,6 +129,12 @@ export function App() {
   // Phones keep the category filters folded away until asked for.
   const [filtersOpen, setFiltersOpen] = useState(false);
   const dirty = useRef(new Set<string>());
+  const [professionalVisited, setProfessionalVisited] = useState(false);
+  useEffect(() => {
+    if (!user) setProfessionalVisited(false);
+    else if (view === "development" || view === "career")
+      setProfessionalVisited(true);
+  }, [view, user?.id]);
   useEffect(() => {
     if (ready)
       setAccount(user?.id ?? null, user?.user_metadata?.preferred_language);
@@ -446,7 +459,7 @@ export function App() {
     if (
       prompt(
         t(
-          "Esta ação exclui atividades, notas e arquivos. Digite o nome do workspace para confirmar: {{name}}",
+          "Esta ação exclui atividades, notas, arquivos, PDI e planos de carreira. Digite o nome do workspace para confirmar: {{name}}",
           { name: w.name },
         ),
       ) !== w.name
@@ -516,34 +529,7 @@ export function App() {
   async function exportData() {
     setBusy(true);
     try {
-      const output: Record<string, unknown[]> = {};
-      for (const table of [
-        "workspaces",
-        "activities",
-        "activity_events",
-        "notes",
-        "note_entries",
-        "attachments",
-        "audit_logs",
-        "priority_history",
-        "workspace_observations",
-        "workspace_events",
-      ]) {
-        let offset = 0;
-        output[table] = [];
-        while (true) {
-          const rows = check(
-            await client()
-              .from(table)
-              .select("*")
-              .order("id")
-              .range(offset, offset + 499),
-          );
-          output[table].push(...rows);
-          if (rows.length < 500) break;
-          offset += 500;
-        }
-      }
+      const output = await exportUserData(client());
       const url = URL.createObjectURL(
         new Blob([JSON.stringify(output, null, 2)], {
           type: "application/json",
@@ -674,7 +660,10 @@ export function App() {
     run: () => setEditor({ kind: "activity" }),
   };
   const action =
-    isProfile || ["search", "observations", "history"].includes(view)
+    isProfile ||
+    ["search", "observations", "history", "development", "career"].includes(
+      view,
+    )
       ? undefined
       : view === "settings" || view === "workspaces"
         ? createWorkspace
@@ -748,31 +737,27 @@ export function App() {
               </div>
               <Button
                 variant="ghost"
-                onClick={() =>
-                  setEditor({ kind: "workspace", item: workspace })
-                }
+                onClick={() => {
+                  if (canLeave())
+                    setEditor({ kind: "workspace", item: workspace });
+                }}
               >
                 {t("Editar workspace")}
               </Button>
             </div>
             <nav className="workspace-tabs" aria-label={t("Abas do Workspace")}>
-              {workspaceTabs
-                .filter(
-                  (tab) =>
-                    tab.view !== "matrix" || workspace.category === "work",
-                )
-                .map((tab) => (
-                  <Link
-                    key={tab.view}
-                    href={workspacePath(workspace.id, tab.view)}
-                    onNavigate={(e) => {
-                      if (!canLeave()) e.preventDefault();
-                    }}
-                    aria-current={view === tab.view ? "page" : undefined}
-                  >
-                    {t(tab.label)}
-                  </Link>
-                ))}
+              {tabsFor(workspace.category).map((tab) => (
+                <Link
+                  key={tab.view}
+                  href={workspacePath(workspace.id, tab.view)}
+                  onNavigate={(e) => {
+                    if (!canLeave()) e.preventDefault();
+                  }}
+                  aria-current={view === tab.view ? "page" : undefined}
+                >
+                  {t(tab.label)}
+                </Link>
+              ))}
             </nav>
           </>
         )}
@@ -790,6 +775,17 @@ export function App() {
           </p>
         )}
 
+        {professionalVisited && (
+          <ProfessionalPlans
+            key={user.id}
+            workspace={workspace}
+            view={workspaceId && !workspace ? "dashboard" : view}
+            careerId={careerId}
+            report={report}
+            onDirty={onDirty}
+            go={go}
+          />
+        )}
         {isProfile ? (
           <Profile
             key={user.id}
@@ -906,6 +902,10 @@ export function App() {
           <p role="status">
             {t(loading ? "Carregando…" : "Workspace indisponível.")}
           </p>
+        ) : view === "development" || view === "career" ? (
+          !professionalVisited ? (
+            <p role="status">{t("Carregando…")}</p>
+          ) : null
         ) : view === "observations" && workspace ? (
           <WorkspaceObservations
             key={workspace.id}

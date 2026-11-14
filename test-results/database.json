@@ -1,5 +1,5 @@
 {
-  "date": "2026-11-12T02:55:21.996Z",
+  "date": "2026-11-13T23:30:16.817Z",
   "checks": [
     "All migrations execute in real embedded PostgreSQL (Supabase auth/storage schema harness)",
     "RLS isolates users and composite foreign keys reject cross-account parents",
@@ -12,6 +12,8 @@
     "Block deletion removes one block, keeps order, the note and its other blocks, touches the note, rejects repeats and late saves; an emptied note accepts new blocks",
     "Note deletion removes the note with its blocks and file records in one step, queues storage cleanup, audits it, blocks late writes and preserves every other record",
     "Workspace observations preserve timestamps, search updates, history snapshots and ownership; forged history and timestamps rejected",
+    "Quarantine hides pending bytes, denies client verdicts, replacement/deletion and RLS-bypassing privileges",
+    "Permanent tombstones prevent path reuse; deleted/rejected-byte reservations cannot be bypassed by declared size=1",
     "Storage policies, RPCs and search reject another owner",
     "Portuguese full text search, filters and immutable audit logs",
     "Deletion cascades records and immediately revokes file visibility; cleanup queued",
