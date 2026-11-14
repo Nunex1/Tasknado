@@ -12,10 +12,10 @@ import assert from "node:assert/strict";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { createRequire } from "node:module";
-import { execFileSync } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 import { demoName, seedDemo } from "./demo-data.mjs";
+import { localStack } from "./security-stack.mjs";
 
 const require = createRequire(import.meta.url);
 const { chromium } = require(
@@ -27,14 +27,9 @@ const { chromium } = require(
 );
 // sharp ships with Next.js; it converts the PNG captures to WebP.
 const sharp = createRequire(require.resolve("next/package.json"))("sharp");
-const cli = require.resolve("supabase/dist/supabase.js");
-const state = JSON.parse(
-  execFileSync(process.execPath, [cli, "status", "-o", "json"], {
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "pipe"],
-  }),
-);
-assert.equal(state.API_URL, "http://127.0.0.1:55431");
+// Development stack by default; TASKNADO_TEST_STACK=security selects the
+// isolated stack that carries every migration. Loopback only, either way.
+const state = localStack();
 const root = process.env.TASKNADO_TEST_URL || "http://127.0.0.1:3000";
 const out = process.env.TASKNADO_CAPTURE_DIR || "src/assets/landing";
 mkdirSync(out, { recursive: true });
@@ -46,8 +41,8 @@ const admin = createClient(state.API_URL, state.SERVICE_ROLE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
 const labels = {
-  "pt-BR": { email: "E-mail", password: "Senha", collapse: "Recolher painel" },
-  "en-US": { email: "Email", password: "Password", collapse: "Collapse panel" },
+  "pt-BR": { email: "E-mail", password: "Senha" },
+  "en-US": { email: "Email", password: "Password" },
 };
 const browser = await chromium.launch({ headless: true, channel: "msedge" });
 let failed = false;
@@ -144,7 +139,6 @@ for (const locale of ["pt-BR", "en-US"]) {
       await page.goto(
         `${root}/workspaces/${work}/activities/${demo.activities.signup.id}`,
       );
-      await page.getByRole("button", { name: labels[locale].collapse }).click();
       await page.locator(".timeline-item").nth(3).waitFor();
       await settle();
       await save("task", await around(".thread", 24, 640));
