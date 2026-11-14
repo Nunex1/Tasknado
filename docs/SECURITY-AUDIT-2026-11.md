@@ -1,6 +1,6 @@
 # Tasknado — auditoria e hardening de segurança (novembro/2026)
 
-Data: 13/11/2026. Branch: `codex/tasknado-security-hardening`, criada a partir de `main` em `4c82991` (merge do PR #5). Nenhum merge, deploy, alteração de banco hospedado ou mudança de configuração administrativa foi feita por esta entrega.
+Data: 13/11/2026. Branch: `codex/tasknado-security-hardening`, criada a partir de `main` em `4c82991` (merge do PR #5) e depois integrada com `main` em `f81edd6` (merge do PR #14, PDI e Plano de Carreira), que entrou durante o trabalho. Nenhum merge em `main`, deploy, alteração de banco hospedado ou mudança de configuração administrativa foi feita por esta entrega.
 
 Operação, implantação e rollback estão em [SECURITY-OPERATIONS.md](SECURITY-OPERATIONS.md). O relatório da entrega anterior (PR #5) continua em [SECURITY-DELIVERY.md](SECURITY-DELIVERY.md).
 
@@ -40,6 +40,7 @@ Severidade considera probabilidade, impacto e facilidade de exploração no cont
 | A9 | Monitoramento insuficiente | Baixa | O health check contava dois itens e não verificava o scanner; nada detectava mudança de configuração em produção | Falhas e desvios passariam despercebidos | Função `security_metrics()` (só `service_role`), health check com nove alertas, sonda externa agendável | PGlite, HTTP real, 4 testes da sonda, execução contra a produção |
 | A10 | Uploads abandonados ocupavam a fila para sempre | Baixa | Registro sem bytes era reavaliado a cada cinco minutos indefinidamente | Vagas pendentes e ciclos do worker consumidos | Encerrado como `rejected` após 24 h (nunca `clean`) | Suíte HTTP |
 | A11 | Bytes do Storage sem procedimento de cópia executável | Média (continuidade) | Backups de banco não incluem os objetos; o runbook descrevia o procedimento sem ferramenta | Perda definitiva de anexos em exclusão acidental ou incidente | `scripts/backup-storage.mjs`: exportação cifrada, verificação offline e restauração que nunca sobrescreve | Ensaio no stack isolado |
+| A14 | Frontend do módulo profissional (PR #14) em `main` sem a migração correspondente em produção; e essa migração ficou na fila atrás da quarentena | Média (disponibilidade; processo) | Produção responde que `career_targets` não existe; `db push` aplica as pendentes em ordem | PDI, Plano de Carreira e a exportação de dados falham em produção até a migração; um `db push` comum, sem a trava de A5, aplicaria a quarentena junto | Limites por conta estendidos às duas tabelas novas (`202611140002`); procedimento para aplicar a `202611140001` sozinha documentado no runbook, seção 2. **A aplicação é decisão do proprietário** | PostgreSQL descartável: aplica sobre o nível da produção e as puladas aplicam depois |
 | A12 | `main` sem proteção; alertas do Dependabot desativados | Média (processo) | API do GitHub: `Branch not protected`; `Dependabot alerts are disabled` | Código sem revisão ou sem CI pode chegar à produção; avisos de dependências não chegam | **Pendente do proprietário.** Recomendações no runbook, seção 8. Workflow CodeQL adicionado | — |
 | A13 | Autenticação: MFA ausente, exclusão de conta sem reautenticação, sessão em `localStorage`, limites hospedados não verificados | Baixa a média | Revisão de código e do documento público do Auth | Um token de acesso roubado vale até uma hora, inclusive para excluir a conta | **Pendente / risco residual.** Descrito no runbook, seção 7 | — |
 
@@ -50,7 +51,7 @@ Sem achado nas verificações de: acesso entre contas por API, RPC e Storage; SQ
 - **Interface:** `attachmentAccess()` em `src/lib/domain.ts` e `src/components/files.tsx`; mensagens para limite de conta e de armazenamento em português e inglês. Nenhuma mudança visual além do selo de verificação, que só aparece quando há veredito.
 - **Cabeçalhos:** `src/lib/security-headers.ts`, `next.config.ts`, `netlify.toml`.
 - **Scanner:** `scripts/clamav.mjs`, `scripts/scan-uploads.mjs`, `ops/clamav/docker-compose.yml`. `CLAMSCAN_PATH` foi substituído por `CLAMD_HOST` e `CLAMD_PORT`.
-- **Banco:** trava no início de `202611100003_upload_quarantine.sql` (migração ainda não aplicada em produção); novas `202611130001_account_limits.sql`, `202611130002_security_metrics.sql` e `202611130003_activity_write_deadlock.sql`, todas reaplicáveis.
+- **Banco:** trava no início de `202611100003_upload_quarantine.sql` (migração ainda não aplicada em produção); novas `202611130001_account_limits.sql`, `202611130002_security_metrics.sql`, `202611130003_activity_write_deadlock.sql` e `202611140002_professional_plan_limits.sql`, todas reaplicáveis. A última estende os limites às tabelas criadas pelo PR #14.
 - **Operação:** `scripts/security-health.mjs`, `scripts/probe-deployment.mjs`, `scripts/backup-storage.mjs`, `scripts/security-stack.mjs`.
 - **CI:** jobs `isolation` e `antivirus`, workflows `codeql.yml` e `monitor.yml`, regra Semgrep contra chave privilegiada em `src/`, espera de sete dias e ecossistema `docker-compose` no Dependabot.
 - **Dependências:** `next` 16.4.1 → 16.4.6. Nenhuma dependência nova.
@@ -59,26 +60,29 @@ Impacto de desempenho: cada escrita de um cliente autenticado faz uma contagem i
 
 ## 5. Evidências
 
-Todos os resultados abaixo foram observados nesta máquina em 13/11/2026.
+Todos os resultados abaixo foram observados nesta máquina em 13/11/2026, sobre a árvore já integrada com `main` em `f81edd6`, salvo indicação em contrário.
 
 | Verificação | Resultado | Limite |
 |---|---|---|
 | `pnpm typecheck` | sem erros | — |
-| `pnpm test` (Vitest) | 75 testes, 14 arquivos, aprovados (eram 59 em 12) | Não cobre componentes renderizados |
+| `pnpm test` (Vitest) | 81 testes, 15 arquivos, aprovados (59 em 12 antes desta entrega; 6 vieram do PR #14) | Não cobre componentes renderizados |
 | `pnpm build` (Next.js 16.4.6) | compilado; 8 rotas dinâmicas e Proxy presentes | Build local |
-| `node scripts/test-database.mjs` | 22 grupos aprovados (eram 18): inclui limites por conta, métricas e snapshot de privilégios | PostgreSQL embarcado com esquemas mínimos de Auth/Storage |
+| `node scripts/test-database.mjs` | 23 grupos aprovados (eram 18): inclui limites por conta, limites do módulo profissional, métricas e snapshot de privilégios | PostgreSQL embarcado com esquemas mínimos de Auth/Storage |
+| `pnpm test:professional:database` (suíte do PR #14) | aprovada com as migrações desta entrega aplicadas antes da dela | Idem |
 | `pnpm test:security:postgres` | 7 grupos aprovados em 3 execuções seguidas: limite de eventos sob concorrência, sem `TRUNCATE`, dump/restore sintético, 40 escritas concorrentes sem deadlock, teto de 200 workspaces exato com 12 inserções simultâneas, trava da quarentena, reaplicação das migrações | PostgreSQL 16 em container sem rede; dados sintéticos |
 | Mesmo teste de concorrência sem as migrações novas | 9 de 40 transações falharam com `deadlock detected` | Reproduz o achado A4 em `main` |
-| `pnpm security:stack reset` | as 17 migrações aplicaram em Supabase real recriado do zero | Stack local |
+| `pnpm security:stack reset` | as 19 migrações aplicaram em Supabase real recriado do zero | Stack local |
 | `pnpm test:security:http` | 9 grupos aprovados: escrita anônima e leitura/exclusão entre contas recusadas; bytes pendentes ilegíveis até para o dono; veredito não forjável; sobrescrita e reuso de caminho negados; cleanup e reserva; JWT inválido e logout global; fila justa; quatro modos de falha do scanner mantêm quarentena; arquivo limpo liberado, tipo falsificado, arquivo de teste e upload abandonado rejeitados; inserção em massa recusada; métricas só para `service_role` | Scanner simulado em loopback nesta suíte |
-| `pnpm test:security:clamav` | 3 grupos aprovados com ClamAV 1.5.4 real, assinaturas 28182: texto, imagem e DOCX limpos liberados só ao dono; EICAR rejeitado como texto e dentro de um DOCX; com o daemon parado nada é aprovado | Homologação local; não substitui a do ambiente de produção |
+| `pnpm test:security:clamav` (executado antes da integração; o worker não mudou depois) | 3 grupos aprovados com ClamAV 1.5.4 real, assinaturas 28182: texto, imagem e DOCX limpos liberados só ao dono; EICAR rejeitado como texto e dentro de um DOCX; com o daemon parado nada é aprovado | Homologação local; não substitui a do ambiente de produção |
 | `pnpm test:security:backup` | 3 grupos aprovados: exportação cifrada sem identificadores nem conteúdo legíveis; um bit alterado e chave errada detectados; objeto apagado recuperado byte a byte, sem sobrescrever existentes | Dados sintéticos; não mede RPO/RTO |
-| Privilégios no Supabase isolado | `anon` sem funções nem tabelas; `authenticated` com exatamente 12 RPCs; nenhuma função via `PUBLIC`; todas as tabelas com RLS; todas as funções `SECURITY DEFINER` com `search_path` fixo | Consulta direta ao catálogo |
+| Privilégios no Supabase isolado | `anon` sem funções nem tabelas; `authenticated` com exatamente 13 RPCs (as 12 anteriores e a exportação do módulo profissional); nenhuma função via `PUBLIC`; todas as tabelas com RLS; todas as funções `SECURITY DEFINER` com `search_path` fixo | Consulta direta ao catálogo |
 | `pnpm test:integration`, `test:notes`, `test:desktop`, `test:responsive` | 18, 12, 22 e 13 grupos aprovados contra o banco de desenvolvimento (sem quarentena, como a produção) **e** contra o stack isolado com todas as migrações | Chromium/Edge; Safari e Firefox não executados |
+| `pnpm test:professional:live` (suíte do PR #14) | 12 grupos aprovados contra o stack isolado com todas as migrações, incluindo os limites novos | Não executada no banco de desenvolvimento, que não tem as tabelas do módulo |
+| Aplicação isolada da `202611140001` | aplica sobre o nível `202611090002`; cliente grava; exportação fechada a `anon`; migrações puladas aplicam depois | PostgreSQL 16 descartável |
 | `node scripts/test-security-browser.mjs` | aprovado: hidratação, nonce em todos os scripts, rotação, script injetado bloqueado | Página pública |
-| Navegador, anexos | Banco sem quarentena: arquivo abre com prévia, sem selo, em desktop e em celular com tema escuro. Banco com quarentena: "Verificado" abre; "Bloqueado" e "Em verificação" não abrem e mostram a mensagem correta | Verificação manual assistida, contas temporárias removidas |
+| Navegador, anexos (antes da integração; `files.tsx` não mudou depois) | Banco sem quarentena: arquivo abre com prévia, sem selo, em desktop e em celular com tema escuro. Banco com quarentena: "Verificado" abre; "Bloqueado" e "Em verificação" não abrem e mostram a mensagem correta | Verificação manual assistida, contas temporárias removidas |
 | `pnpm audit` | nenhuma vulnerabilidade conhecida | Consulta pontual ao registro |
-| Semgrep 1.145.0, regras do repositório | 97 arquivos, 0 achados | Quatro regras locais |
+| Semgrep 1.145.0, regras do repositório | 0 achados | Quatro regras locais |
 | Semgrep 1.145.0, regras públicas (`p/default`, `p/owasp-top-ten`, `p/javascript`, `p/typescript`, `p/react`, `p/nextjs`, `p/secrets`, `p/github-actions`, `p/dockerfile`) | 163 arquivos; 1 achado em código novo (tag GCM sem tamanho fixo no backup), corrigido; 2 avisos de espera do Dependabot, atendidos; 2 ocorrências em `.env.local` não versionado com a chave pública do stack local | Execução única; não está na CI |
 | Sonda externa contra a produção | Problemas: `opener_policy` e `static_nosniff` — as duas lacunas de A8, que este PR corrige. Demais verificações aprovadas | Estado anterior ao deploy desta entrega |
 | Gitleaks 8.30.0, histórico completo | 47 commits, nenhum segredo | Execução local; o job `secrets` repete na CI |

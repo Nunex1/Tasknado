@@ -861,6 +861,43 @@ await pg.query("insert into workspaces(name) values('Vaga liberada')");
 pass(
   "Account row ceiling: 200 workspaces per account, enforced within one bulk statement, released by deletion and independent between accounts",
 );
+// Professional plans (202611140002) share the limits. Work workspaces only.
+await as(limitsB);
+const career = (
+  await pg.query(
+    "insert into workspaces(name,category) values('Carreira','work') returning *",
+  )
+).rows[0];
+const targets =
+  "insert into career_targets(workspace_id,company,region,country,position) select $1,'Empresa '||g,'brazil','Brasil','Cargo' from generate_series(1,$2::int) g";
+assert.match(
+  await message(targets, [career.id, 1001]),
+  /Account limit reached/,
+);
+await pg.query(targets, [career.id, 1000]);
+assert.match(await message(targets, [career.id, 1]), /Account limit reached/);
+await pg.query(
+  "insert into professional_development_items(workspace_id,development_area,action_plan) values($1,'Idioma','Aulas')",
+  [career.id],
+);
+await pg.exec("reset role");
+await pg.query(
+  "insert into audit_logs(owner_id,entity,entity_id,action) select $1,'burst',$2,'INSERT' from generate_series(1,1201)",
+  [limitsB, career.id],
+);
+await as(limitsB);
+for (const sql of [
+  "update career_targets set notes='x' where workspace_id=$1",
+  "insert into professional_development_items(workspace_id,development_area,action_plan) values($1,'a','b')",
+  "delete from professional_development_items where workspace_id=$1",
+])
+  assert.match(await message(sql, [career.id]), /Too many requests/, sql);
+await pg.exec("reset role");
+await pg.query("delete from audit_logs where entity='burst'");
+await as(limitsA);
+pass(
+  "Professional plans obey the account limits: 1000 career targets per account, exact inside one bulk statement, and the shared write rate",
+);
 
 // Operational metrics (202611130002): aggregates for the trusted backend only.
 assert.match(await message("select security_metrics()"), /permission denied/);
@@ -914,6 +951,7 @@ assert.deepEqual(await executable("authenticated"), [
   "delete_observation",
   "delete_workspace",
   "edit_observation",
+  "export_professional_plans",
   "observation_counts",
   "save_entry",
   "search_all",
@@ -971,16 +1009,18 @@ assert.deepEqual(grants, {
   attachment_paths: "",
   attachments: "SELECT,DELETE",
   audit_logs: "SELECT",
+  career_targets: "SELECT,DELETE",
   note_entries: "SELECT,INSERT",
   notes: "SELECT,INSERT,UPDATE",
   priority_history: "SELECT",
+  professional_development_items: "SELECT,DELETE",
   storage_cleanup: "",
   workspace_events: "SELECT",
   workspace_observations: "SELECT,DELETE",
   workspaces: "SELECT,INSERT,UPDATE",
 });
 pass(
-  "Privilege snapshot: anon reaches nothing, authenticated reaches exactly the reviewed tables and 12 RPCs, nothing is granted through PUBLIC, every table has RLS and every definer function pins search_path",
+  "Privilege snapshot: anon reaches nothing, authenticated reaches exactly the reviewed tables and 13 RPCs, nothing is granted through PUBLIC, every table has RLS and every definer function pins search_path",
 );
 await pg.close();
 mkdirSync("test-results", { recursive: true });

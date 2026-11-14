@@ -10,6 +10,7 @@ Situação verificada em 13/11/2026 por requisições anônimas de leitura:
 
 - O site publicado (Netlify) já serve o frontend do PR #5, com CSP por nonce.
 - O banco de produção **não** tem a migração de quarentena (`attachments.scan_status` não existe).
+- O banco de produção também **não** tem as tabelas do módulo de PDI e Plano de Carreira (`career_targets` não existe), embora o frontend do PR #14 já esteja em `main`. Até a migração `202611140001` ser aplicada, esses dois módulos e a exportação de dados falham em produção.
 
 O frontend desta entrega funciona nos dois estados do banco. Sem a coluna de quarentena, os anexos abrem como antes e nenhum é apresentado como verificado. Com a coluna, só arquivos `clean` abrem. Por isso o código pode ser publicado antes das migrações.
 
@@ -17,10 +18,11 @@ Ordem recomendada:
 
 1. Revisar e fazer merge do PR. O Netlify publica o frontend. Conferir com a sonda (seção 6).
 2. Fazer backup do banco e do Storage e ensaiar a restauração (seção 5).
-3. Preparar o host do scanner e homologar com o banco de homologação (seção 3).
-4. Conferir `pnpm exec supabase migration list` e `db push --dry-run` contra o projeto vinculado.
-5. Registrar a homologação no banco e aplicar as migrações (seção 2).
-6. Ativar os agendamentos dos workers e do health check (seções 3 e 6).
+3. Decidir se o módulo profissional entra antes da quarentena (seção 2) ou junto com as demais migrações.
+4. Preparar o host do scanner e homologar com o banco de homologação (seção 3).
+5. Conferir `pnpm exec supabase migration list` e `db push --dry-run` contra o projeto vinculado.
+6. Registrar a homologação no banco e aplicar as migrações (seção 2).
+7. Ativar os agendamentos dos workers e do health check (seções 3 e 6).
 
 Não editar migrações já aplicadas em um ambiente. Nenhuma etapa deste runbook executa `db push` remoto por conta própria.
 
@@ -34,6 +36,20 @@ comment on table public.attachments is 'tasknado:scanner-validated';
 
 Sem esse registro a migração falha com `Deployment gate: ...` e nada é alterado (schema e políticas ficam como estavam). Como as migrações são aplicadas em ordem, as três migrações seguintes também aguardam. Bancos sem anexos (local, CI) não são afetados.
 
+### Módulo profissional antes da quarentena
+
+`supabase db push` aplica as migrações pendentes em ordem e não pula nenhuma. Em produção estão pendentes, nesta ordem: `202611100001`–`003`, `202611130001`–`003`, `202611140001` (PDI e Plano de Carreira) e `202611140002`. Portanto um `db push` comum só entrega o módulo profissional depois de passar pela trava da quarentena.
+
+Se o módulo profissional precisar entrar antes de o scanner estar homologado, a `202611140001` pode ser aplicada sozinha: ela depende apenas de tabelas e funções que a produção já tem. Verificado em PostgreSQL descartável partindo do nível `202611090002`: a migração aplica, o cliente autenticado grava, a exportação não fica acessível a `anon`, e as migrações puladas aplicam depois sem erro. O procedimento, com backup feito e em homologação primeiro:
+
+1. Executar o conteúdo de `202611140001_professional_plans.sql` no banco (SQL editor ou `psql`), em uma transação.
+2. Registrar no histórico: `pnpm exec supabase migration repair --status applied 202611140001`.
+3. Mais tarde, com o scanner homologado, aplicar as demais com `pnpm exec supabase db push --include-all` (necessário porque elas têm versão anterior à última registrada). Revisar antes com `--dry-run`.
+
+Enquanto a `202611140002` não for aplicada, as tabelas do módulo profissional ficam sem os limites por conta da seção 4.
+
+### Quando registrar o marcador
+
 Registre o marcador somente depois de:
 
 - o daemon ClamAV estar em execução no host do worker, com assinaturas atualizadas;
@@ -42,7 +58,7 @@ Registre o marcador somente depois de:
 
 O marcador não aprova arquivo algum. Se ele for registrado sem scanner funcionando, os anexos ficam em quarentena indefinidamente. Não existe, neste repositório, caminho para marcar um arquivo como limpo sem inspeção; não crie um.
 
-Rollback: as migrações `202611130001`–`003` podem ser desfeitas removendo os gatilhos `account_limits`, a função `enforce_account_limits`, a função `security_metrics` e restaurando `category_guard` da migração `202610210001` (com `search_path=pg_catalog,public,pg_temp`). A quarentena não deve ser revertida reabrindo a leitura de arquivos pendentes: mantenha o controle e corrija adiante. Para reverter o frontend, republique o deploy anterior no Netlify.
+Rollback: as migrações `202611130001`–`003` e `202611140002` podem ser desfeitas removendo os gatilhos `account_limits` (oito tabelas), a função `enforce_account_limits`, a função `security_metrics` e restaurando `category_guard` da migração `202610210001` (com `search_path=pg_catalog,public,pg_temp`). A quarentena não deve ser revertida reabrindo a leitura de arquivos pendentes: mantenha o controle e corrija adiante. Para reverter o frontend, republique o deploy anterior no Netlify.
 
 ## 3. Worker de inspeção de arquivos
 
@@ -96,7 +112,7 @@ Evite execuções sobrepostas. Links assinados já emitidos valem por até 60 se
 
 ## 4. Limites por conta
 
-A migração `202611130001_account_limits.sql` limita o que uma conta autenticada cria e a que velocidade altera dados. Backends com chave privilegiada não são limitados.
+As migrações `202611130001_account_limits.sql` e `202611140002_professional_plan_limits.sql` limitam o que uma conta autenticada cria e a que velocidade altera dados. Backends com chave privilegiada não são limitados.
 
 | Limite | Valor | Mensagem ao usuário |
 |---|---|---|
@@ -106,6 +122,8 @@ A migração `202611130001_account_limits.sql` limita o que uma conta autenticad
 | Notas | 2.000 | idem |
 | Blocos de nota | 20.000 | idem |
 | Observações de workspace | 20.000 | idem |
+| Alvos de carreira | 1.000 | idem |
+| Itens de PDI | 5.000 | idem |
 | Eventos de atividade | 60 por minuto (já existente) | Aguarde um momento antes de tentar novamente. |
 | Uploads | 20 MiB por arquivo, 10 pendentes, 1 GiB reservado (já existente) | Limite de armazenamento atingido. |
 
