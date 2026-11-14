@@ -1,0 +1,277 @@
+{
+  "date": "2026-11-13T23:31:38.548Z",
+  "checks": [
+    "Home does not query either professional table before visiting the modules",
+    "Brazil/abroad companies, custom country, region filter, individual direct route, editing, manual order and exact multiline requirements survive reload",
+    "PDI creation pairs both texts, saves optional fields and link, supports edit/status and preserves creation time after reload",
+    "Escape asks before discard, reload is guarded, and browser Back retains the open unsaved editor",
+    "A stale form preserves user text and concurrent authenticated HTTP updates admit exactly one revision",
+    "Real API RLS isolates owners/workspaces; incompatible category hides routes and rows, owner export includes preserved data, and Work restores them",
+    "Logout and a new real Auth login preserve the career requirements and opportunities",
+    "PDI/career pages and editors pass no-overflow and axe at 375/768/1024/1440 in light/dark; paired fields stack on phone and mobile drawer navigates",
+    "English UI translates modules/forms while preserving Portuguese user-authored text and whitespace",
+    "Server pagination returns 25 then 2 filtered records; priority change resets the page and filters all records",
+    "UI deletion confirms both record types; target deletion preserves/unlinks PDI; workspace deletion removes every new row",
+    "No browser runtime exceptions throughout professional acceptance"
+  ],
+  "accessibility": [
+    {
+      "label": "PDI editor desktop light",
+      "violations": [],
+      "incomplete": [
+        "aria-hidden-focus",
+        "color-contrast"
+      ]
+    },
+    {
+      "label": "development-375-light",
+      "violations": [],
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "label": "editor-development-375-light",
+      "violations": [],
+      "incomplete": [
+        "aria-hidden-focus",
+        "color-contrast"
+      ]
+    },
+    {
+      "label": "career-375-light",
+      "violations": [],
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "label": "editor-career-375-light",
+      "violations": [],
+      "incomplete": [
+        "aria-hidden-focus",
+        "color-contrast"
+      ]
+    },
+    {
+      "label": "development-375-dark",
+      "violations": [],
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "label": "editor-development-375-dark",
+      "violations": [],
+      "incomplete": [
+        "aria-hidden-focus",
+        "color-contrast"
+      ]
+    },
+    {
+      "label": "career-375-dark",
+      "violations": [],
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "label": "editor-career-375-dark",
+      "violations": [],
+      "incomplete": [
+        "aria-hidden-focus",
+        "color-contrast"
+      ]
+    },
+    {
+      "label": "development-768-light",
+      "violations": [],
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "label": "editor-development-768-light",
+      "violations": [],
+      "incomplete": [
+        "aria-hidden-focus",
+        "color-contrast"
+      ]
+    },
+    {
+      "label": "career-768-light",
+      "violations": [],
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "label": "editor-career-768-light",
+      "violations": [],
+      "incomplete": [
+        "aria-hidden-focus",
+        "color-contrast"
+      ]
+    },
+    {
+      "label": "development-768-dark",
+      "violations": [],
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "label": "editor-development-768-dark",
+      "violations": [],
+      "incomplete": [
+        "aria-hidden-focus",
+        "color-contrast"
+      ]
+    },
+    {
+      "label": "career-768-dark",
+      "violations": [],
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "label": "editor-career-768-dark",
+      "violations": [],
+      "incomplete": [
+        "aria-hidden-focus",
+        "color-contrast"
+      ]
+    },
+    {
+      "label": "development-1024-light",
+      "violations": [],
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "label": "editor-development-1024-light",
+      "violations": [],
+      "incomplete": [
+        "aria-hidden-focus",
+        "color-contrast"
+      ]
+    },
+    {
+      "label": "career-1024-light",
+      "violations": [],
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "label": "editor-career-1024-light",
+      "violations": [],
+      "incomplete": [
+        "aria-hidden-focus",
+        "color-contrast"
+      ]
+    },
+    {
+      "label": "development-1024-dark",
+      "violations": [],
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "label": "editor-development-1024-dark",
+      "violations": [],
+      "incomplete": [
+        "aria-hidden-focus",
+        "color-contrast"
+      ]
+    },
+    {
+      "label": "career-1024-dark",
+      "violations": [],
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "label": "editor-career-1024-dark",
+      "violations": [],
+      "incomplete": [
+        "aria-hidden-focus",
+        "color-contrast"
+      ]
+    },
+    {
+      "label": "development-1440-light",
+      "violations": [],
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "label": "editor-development-1440-light",
+      "violations": [],
+      "incomplete": [
+        "aria-hidden-focus",
+        "color-contrast"
+      ]
+    },
+    {
+      "label": "career-1440-light",
+      "violations": [],
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "label": "editor-career-1440-light",
+      "violations": [],
+      "incomplete": [
+        "aria-hidden-focus",
+        "color-contrast"
+      ]
+    },
+    {
+      "label": "development-1440-dark",
+      "violations": [],
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "label": "editor-development-1440-dark",
+      "violations": [],
+      "incomplete": [
+        "aria-hidden-focus",
+        "color-contrast"
+      ]
+    },
+    {
+      "label": "career-1440-dark",
+      "violations": [],
+      "incomplete": [
+        "color-contrast"
+      ]
+    },
+    {
+      "label": "editor-career-1440-dark",
+      "violations": [],
+      "incomplete": [
+        "aria-hidden-focus",
+        "color-contrast"
+      ]
+    },
+    {
+      "label": "career detail en-US",
+      "violations": [],
+      "incomplete": [
+        "color-contrast"
+      ]
+    }
+  ],
+  "errors": [],
+  "failure": null,
+  "scope": "Real local Supabase Auth/PostgREST + Edge Chromium; temporary users removed"
+}

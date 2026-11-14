@@ -1,0 +1,1467 @@
+{
+  "date": "2026-11-13T23:25:23.233Z",
+  "passed": 13,
+  "checks": [
+    "Landing page at 375, 768, 1024 and 1440 px: no horizontal overflow, access fields at least 44 px tall, no WCAG A/AA violations",
+    "Landing keyboard path: skip link is the first stop and moves focus to the content; header actions switch the access form and focus its first field; language switch works signed out",
+    "Sign in from the landing page opens the application",
+    "Twelve authenticated screens at 375, 768, 1024 and 1440 px: no horizontal overflow or clipped content; no WCAG A/AA violations at 375, 768 and 1024 px",
+    "Dark theme following the system preference: twelve authenticated screens at 375 and 1440 px keep the dark surface, do not overflow and report no WCAG A/AA violations (contrast included)",
+    "Phone (375 px): no navigation on screen until asked for and content at full width; the drawer opens over the page without moving or scrolling it, traps focus, hides the page from assistive technology, has 44 px targets and no WCAG A/AA violations; Escape, a tap outside and choosing a destination close it; focus returns to the menu button; reduced motion removes the animation",
+    "Workspace switching on the phone: the drawer lists exactly the account's workspaces, marks the active one, keeps the current module on the target, updates the header, the list, the counter and a live announcement, and the list equals what the API returns for that workspace; activity requests carry the workspace filter",
+    "Phone task flow: the header action opens the form as a bottom sheet with Save in reach, an empty required field is reported on the field, the task is created with its priority, edited, checked in and listed under Priorities",
+    "Themes on the phone: Dark applies at once without changing the address, the filter or the list; after a reload the choice is on <html> before <body> is parsed; it follows through navigation and into a new browser context; System stores no override and follows the device live",
+    "Tablet (768 px): icon rail instead of the drawer, indicators in three columns, the workspace panel opens over the content and closes with Escape or navigation, forms open as a centred dialog, the header switches workspace and the account menu switches theme",
+    "Desktop (1440 px): the workspace panel sits beside the content and collapses; tasks are a six-column table; the workspace switcher and the account menu work by keyboard alone; Light, Dark and System apply from Settings, Light overrides a dark device and survives a reload, System follows it",
+    "Isolation: another account's workspace is not listed or offered, its address answers 'unavailable' and no response carries its data; reads, updates and inserts against it are refused by the database; each workspace lists only its own tasks",
+    "No browser runtime or console errors throughout the responsive suite"
+  ],
+  "screens": [
+    {
+      "name": "landing",
+      "width": 375,
+      "height": 812,
+      "scroll": 375,
+      "viewport": 375,
+      "wide": [],
+      "screenshot": "test-results/responsive/landing-375.png"
+    },
+    {
+      "name": "landing",
+      "width": 768,
+      "height": 1024,
+      "scroll": 768,
+      "viewport": 768,
+      "wide": [],
+      "screenshot": "test-results/responsive/landing-768.png"
+    },
+    {
+      "name": "landing",
+      "width": 1024,
+      "height": 768,
+      "scroll": 1024,
+      "viewport": 1024,
+      "wide": [],
+      "screenshot": "test-results/responsive/landing-1024.png"
+    },
+    {
+      "name": "landing",
+      "width": 1440,
+      "height": 900,
+      "scroll": 1440,
+      "viewport": 1440,
+      "wide": [],
+      "screenshot": "test-results/responsive/landing-1440.png"
+    },
+    {
+      "name": "home",
+      "width": 375,
+      "height": 812,
+      "scroll": 375,
+      "viewport": 375,
+      "wide": [],
+      "screenshot": "test-results/responsive/home-375.png"
+    },
+    {
+      "name": "workspaces",
+      "width": 375,
+      "height": 812,
+      "scroll": 375,
+      "viewport": 375,
+      "wide": [],
+      "screenshot": "test-results/responsive/workspaces-375.png"
+    },
+    {
+      "name": "workspace",
+      "width": 375,
+      "height": 812,
+      "scroll": 375,
+      "viewport": 375,
+      "wide": [],
+      "screenshot": "test-results/responsive/workspace-375.png"
+    },
+    {
+      "name": "tasks",
+      "width": 375,
+      "height": 812,
+      "scroll": 375,
+      "viewport": 375,
+      "wide": [],
+      "screenshot": "test-results/responsive/tasks-375.png"
+    },
+    {
+      "name": "task",
+      "width": 375,
+      "height": 812,
+      "scroll": 375,
+      "viewport": 375,
+      "wide": [],
+      "screenshot": "test-results/responsive/task-375.png"
+    },
+    {
+      "name": "matrix",
+      "width": 375,
+      "height": 812,
+      "scroll": 375,
+      "viewport": 375,
+      "wide": [],
+      "screenshot": "test-results/responsive/matrix-375.png"
+    },
+    {
+      "name": "notes",
+      "width": 375,
+      "height": 812,
+      "scroll": 375,
+      "viewport": 375,
+      "wide": [],
+      "screenshot": "test-results/responsive/notes-375.png"
+    },
+    {
+      "name": "observations",
+      "width": 375,
+      "height": 812,
+      "scroll": 375,
+      "viewport": 375,
+      "wide": [],
+      "screenshot": "test-results/responsive/observations-375.png"
+    },
+    {
+      "name": "history",
+      "width": 375,
+      "height": 812,
+      "scroll": 375,
+      "viewport": 375,
+      "wide": [],
+      "screenshot": "test-results/responsive/history-375.png"
+    },
+    {
+      "name": "search",
+      "width": 375,
+      "height": 812,
+      "scroll": 375,
+      "viewport": 375,
+      "wide": [],
+      "screenshot": "test-results/responsive/search-375.png"
+    },
+    {
+      "name": "settings",
+      "width": 375,
+      "height": 812,
+      "scroll": 375,
+      "viewport": 375,
+      "wide": [],
+      "screenshot": "test-results/responsive/settings-375.png"
+    },
+    {
+      "name": "profile",
+      "width": 375,
+      "height": 812,
+      "scroll": 375,
+      "viewport": 375,
+      "wide": [],
+      "screenshot": "test-results/responsive/profile-375.png"
+    },
+    {
+      "name": "home",
+      "width": 768,
+      "height": 1024,
+      "scroll": 768,
+      "viewport": 768,
+      "wide": [],
+      "screenshot": "test-results/responsive/home-768.png"
+    },
+    {
+      "name": "workspaces",
+      "width": 768,
+      "height": 1024,
+      "scroll": 768,
+      "viewport": 768,
+      "wide": [],
+      "screenshot": "test-results/responsive/workspaces-768.png"
+    },
+    {
+      "name": "workspace",
+      "width": 768,
+      "height": 1024,
+      "scroll": 768,
+      "viewport": 768,
+      "wide": [],
+      "screenshot": "test-results/responsive/workspace-768.png"
+    },
+    {
+      "name": "tasks",
+      "width": 768,
+      "height": 1024,
+      "scroll": 768,
+      "viewport": 768,
+      "wide": [],
+      "screenshot": "test-results/responsive/tasks-768.png"
+    },
+    {
+      "name": "task",
+      "width": 768,
+      "height": 1024,
+      "scroll": 768,
+      "viewport": 768,
+      "wide": [],
+      "screenshot": "test-results/responsive/task-768.png"
+    },
+    {
+      "name": "matrix",
+      "width": 768,
+      "height": 1024,
+      "scroll": 768,
+      "viewport": 768,
+      "wide": [],
+      "screenshot": "test-results/responsive/matrix-768.png"
+    },
+    {
+      "name": "notes",
+      "width": 768,
+      "height": 1024,
+      "scroll": 768,
+      "viewport": 768,
+      "wide": [],
+      "screenshot": "test-results/responsive/notes-768.png"
+    },
+    {
+      "name": "observations",
+      "width": 768,
+      "height": 1024,
+      "scroll": 768,
+      "viewport": 768,
+      "wide": [],
+      "screenshot": "test-results/responsive/observations-768.png"
+    },
+    {
+      "name": "history",
+      "width": 768,
+      "height": 1024,
+      "scroll": 768,
+      "viewport": 768,
+      "wide": [],
+      "screenshot": "test-results/responsive/history-768.png"
+    },
+    {
+      "name": "search",
+      "width": 768,
+      "height": 1024,
+      "scroll": 768,
+      "viewport": 768,
+      "wide": [],
+      "screenshot": "test-results/responsive/search-768.png"
+    },
+    {
+      "name": "settings",
+      "width": 768,
+      "height": 1024,
+      "scroll": 768,
+      "viewport": 768,
+      "wide": [],
+      "screenshot": "test-results/responsive/settings-768.png"
+    },
+    {
+      "name": "profile",
+      "width": 768,
+      "height": 1024,
+      "scroll": 768,
+      "viewport": 768,
+      "wide": [],
+      "screenshot": "test-results/responsive/profile-768.png"
+    },
+    {
+      "name": "home",
+      "width": 1024,
+      "height": 768,
+      "scroll": 1024,
+      "viewport": 1024,
+      "wide": [],
+      "screenshot": "test-results/responsive/home-1024.png"
+    },
+    {
+      "name": "workspaces",
+      "width": 1024,
+      "height": 768,
+      "scroll": 1024,
+      "viewport": 1024,
+      "wide": [],
+      "screenshot": "test-results/responsive/workspaces-1024.png"
+    },
+    {
+      "name": "workspace",
+      "width": 1024,
+      "height": 768,
+      "scroll": 1024,
+      "viewport": 1024,
+      "wide": [],
+      "screenshot": "test-results/responsive/workspace-1024.png"
+    },
+    {
+      "name": "tasks",
+      "width": 1024,
+      "height": 768,
+      "scroll": 1024,
+      "viewport": 1024,
+      "wide": [],
+      "screenshot": "test-results/responsive/tasks-1024.png"
+    },
+    {
+      "name": "task",
+      "width": 1024,
+      "height": 768,
+      "scroll": 1024,
+      "viewport": 1024,
+      "wide": [],
+      "screenshot": "test-results/responsive/task-1024.png"
+    },
+    {
+      "name": "matrix",
+      "width": 1024,
+      "height": 768,
+      "scroll": 1024,
+      "viewport": 1024,
+      "wide": [],
+      "screenshot": "test-results/responsive/matrix-1024.png"
+    },
+    {
+      "name": "notes",
+      "width": 1024,
+      "height": 768,
+      "scroll": 1024,
+      "viewport": 1024,
+      "wide": [],
+      "screenshot": "test-results/responsive/notes-1024.png"
+    },
+    {
+      "name": "observations",
+      "width": 1024,
+      "height": 768,
+      "scroll": 1024,
+      "viewport": 1024,
+      "wide": [],
+      "screenshot": "test-results/responsive/observations-1024.png"
+    },
+    {
+      "name": "history",
+      "width": 1024,
+      "height": 768,
+      "scroll": 1024,
+      "viewport": 1024,
+      "wide": [],
+      "screenshot": "test-results/responsive/history-1024.png"
+    },
+    {
+      "name": "search",
+      "width": 1024,
+      "height": 768,
+      "scroll": 1024,
+      "viewport": 1024,
+      "wide": [],
+      "screenshot": "test-results/responsive/search-1024.png"
+    },
+    {
+      "name": "settings",
+      "width": 1024,
+      "height": 768,
+      "scroll": 1024,
+      "viewport": 1024,
+      "wide": [],
+      "screenshot": "test-results/responsive/settings-1024.png"
+    },
+    {
+      "name": "profile",
+      "width": 1024,
+      "height": 768,
+      "scroll": 1024,
+      "viewport": 1024,
+      "wide": [],
+      "screenshot": "test-results/responsive/profile-1024.png"
+    },
+    {
+      "name": "home",
+      "width": 1440,
+      "height": 900,
+      "scroll": 1440,
+      "viewport": 1440,
+      "wide": [],
+      "screenshot": "test-results/responsive/home-1440.png"
+    },
+    {
+      "name": "workspaces",
+      "width": 1440,
+      "height": 900,
+      "scroll": 1440,
+      "viewport": 1440,
+      "wide": [],
+      "screenshot": "test-results/responsive/workspaces-1440.png"
+    },
+    {
+      "name": "workspace",
+      "width": 1440,
+      "height": 900,
+      "scroll": 1440,
+      "viewport": 1440,
+      "wide": [],
+      "screenshot": "test-results/responsive/workspace-1440.png"
+    },
+    {
+      "name": "tasks",
+      "width": 1440,
+      "height": 900,
+      "scroll": 1440,
+      "viewport": 1440,
+      "wide": [],
+      "screenshot": "test-results/responsive/tasks-1440.png"
+    },
+    {
+      "name": "task",
+      "width": 1440,
+      "height": 900,
+      "scroll": 1440,
+      "viewport": 1440,
+      "wide": [],
+      "screenshot": "test-results/responsive/task-1440.png"
+    },
+    {
+      "name": "matrix",
+      "width": 1440,
+      "height": 900,
+      "scroll": 1440,
+      "viewport": 1440,
+      "wide": [],
+      "screenshot": "test-results/responsive/matrix-1440.png"
+    },
+    {
+      "name": "notes",
+      "width": 1440,
+      "height": 900,
+      "scroll": 1440,
+      "viewport": 1440,
+      "wide": [],
+      "screenshot": "test-results/responsive/notes-1440.png"
+    },
+    {
+      "name": "observations",
+      "width": 1440,
+      "height": 900,
+      "scroll": 1440,
+      "viewport": 1440,
+      "wide": [],
+      "screenshot": "test-results/responsive/observations-1440.png"
+    },
+    {
+      "name": "history",
+      "width": 1440,
+      "height": 900,
+      "scroll": 1440,
+      "viewport": 1440,
+      "wide": [],
+      "screenshot": "test-results/responsive/history-1440.png"
+    },
+    {
+      "name": "search",
+      "width": 1440,
+      "height": 900,
+      "scroll": 1440,
+      "viewport": 1440,
+      "wide": [],
+      "screenshot": "test-results/responsive/search-1440.png"
+    },
+    {
+      "name": "settings",
+      "width": 1440,
+      "height": 900,
+      "scroll": 1440,
+      "viewport": 1440,
+      "wide": [],
+      "screenshot": "test-results/responsive/settings-1440.png"
+    },
+    {
+      "name": "profile",
+      "width": 1440,
+      "height": 900,
+      "scroll": 1440,
+      "viewport": 1440,
+      "wide": [],
+      "screenshot": "test-results/responsive/profile-1440.png"
+    },
+    {
+      "name": "dark-home",
+      "width": 375,
+      "height": 812,
+      "scroll": 375,
+      "viewport": 375,
+      "wide": [],
+      "screenshot": "test-results/responsive/dark-home-375.png"
+    },
+    {
+      "name": "dark-workspaces",
+      "width": 375,
+      "height": 812,
+      "scroll": 375,
+      "viewport": 375,
+      "wide": [],
+      "screenshot": "test-results/responsive/dark-workspaces-375.png"
+    },
+    {
+      "name": "dark-workspace",
+      "width": 375,
+      "height": 812,
+      "scroll": 375,
+      "viewport": 375,
+      "wide": [],
+      "screenshot": "test-results/responsive/dark-workspace-375.png"
+    },
+    {
+      "name": "dark-tasks",
+      "width": 375,
+      "height": 812,
+      "scroll": 375,
+      "viewport": 375,
+      "wide": [],
+      "screenshot": "test-results/responsive/dark-tasks-375.png"
+    },
+    {
+      "name": "dark-task",
+      "width": 375,
+      "height": 812,
+      "scroll": 375,
+      "viewport": 375,
+      "wide": [],
+      "screenshot": "test-results/responsive/dark-task-375.png"
+    },
+    {
+      "name": "dark-matrix",
+      "width": 375,
+      "height": 812,
+      "scroll": 375,
+      "viewport": 375,
+      "wide": [],
+      "screenshot": "test-results/responsive/dark-matrix-375.png"
+    },
+    {
+      "name": "dark-notes",
+      "width": 375,
+      "height": 812,
+      "scroll": 375,
+      "viewport": 375,
+      "wide": [],
+      "screenshot": "test-results/responsive/dark-notes-375.png"
+    },
+    {
+      "name": "dark-observations",
+      "width": 375,
+      "height": 812,
+      "scroll": 375,
+      "viewport": 375,
+      "wide": [],
+      "screenshot": "test-results/responsive/dark-observations-375.png"
+    },
+    {
+      "name": "dark-history",
+      "width": 375,
+      "height": 812,
+      "scroll": 375,
+      "viewport": 375,
+      "wide": [],
+      "screenshot": "test-results/responsive/dark-history-375.png"
+    },
+    {
+      "name": "dark-search",
+      "width": 375,
+      "height": 812,
+      "scroll": 375,
+      "viewport": 375,
+      "wide": [],
+      "screenshot": "test-results/responsive/dark-search-375.png"
+    },
+    {
+      "name": "dark-settings",
+      "width": 375,
+      "height": 812,
+      "scroll": 375,
+      "viewport": 375,
+      "wide": [],
+      "screenshot": "test-results/responsive/dark-settings-375.png"
+    },
+    {
+      "name": "dark-profile",
+      "width": 375,
+      "height": 812,
+      "scroll": 375,
+      "viewport": 375,
+      "wide": [],
+      "screenshot": "test-results/responsive/dark-profile-375.png"
+    },
+    {
+      "name": "dark-home",
+      "width": 1440,
+      "height": 900,
+      "scroll": 1440,
+      "viewport": 1440,
+      "wide": [],
+      "screenshot": "test-results/responsive/dark-home-1440.png"
+    },
+    {
+      "name": "dark-workspaces",
+      "width": 1440,
+      "height": 900,
+      "scroll": 1440,
+      "viewport": 1440,
+      "wide": [],
+      "screenshot": "test-results/responsive/dark-workspaces-1440.png"
+    },
+    {
+      "name": "dark-workspace",
+      "width": 1440,
+      "height": 900,
+      "scroll": 1440,
+      "viewport": 1440,
+      "wide": [],
+      "screenshot": "test-results/responsive/dark-workspace-1440.png"
+    },
+    {
+      "name": "dark-tasks",
+      "width": 1440,
+      "height": 900,
+      "scroll": 1440,
+      "viewport": 1440,
+      "wide": [],
+      "screenshot": "test-results/responsive/dark-tasks-1440.png"
+    },
+    {
+      "name": "dark-task",
+      "width": 1440,
+      "height": 900,
+      "scroll": 1440,
+      "viewport": 1440,
+      "wide": [],
+      "screenshot": "test-results/responsive/dark-task-1440.png"
+    },
+    {
+      "name": "dark-matrix",
+      "width": 1440,
+      "height": 900,
+      "scroll": 1440,
+      "viewport": 1440,
+      "wide": [],
+      "screenshot": "test-results/responsive/dark-matrix-1440.png"
+    },
+    {
+      "name": "dark-notes",
+      "width": 1440,
+      "height": 900,
+      "scroll": 1440,
+      "viewport": 1440,
+      "wide": [],
+      "screenshot": "test-results/responsive/dark-notes-1440.png"
+    },
+    {
+      "name": "dark-observations",
+      "width": 1440,
+      "height": 900,
+      "scroll": 1440,
+      "viewport": 1440,
+      "wide": [],
+      "screenshot": "test-results/responsive/dark-observations-1440.png"
+    },
+    {
+      "name": "dark-history",
+      "width": 1440,
+      "height": 900,
+      "scroll": 1440,
+      "viewport": 1440,
+      "wide": [],
+      "screenshot": "test-results/responsive/dark-history-1440.png"
+    },
+    {
+      "name": "dark-search",
+      "width": 1440,
+      "height": 900,
+      "scroll": 1440,
+      "viewport": 1440,
+      "wide": [],
+      "screenshot": "test-results/responsive/dark-search-1440.png"
+    },
+    {
+      "name": "dark-settings",
+      "width": 1440,
+      "height": 900,
+      "scroll": 1440,
+      "viewport": 1440,
+      "wide": [],
+      "screenshot": "test-results/responsive/dark-settings-1440.png"
+    },
+    {
+      "name": "dark-profile",
+      "width": 1440,
+      "height": 900,
+      "scroll": 1440,
+      "viewport": 1440,
+      "wide": [],
+      "screenshot": "test-results/responsive/dark-profile-1440.png"
+    }
+  ],
+  "accessibility": [
+    {
+      "label": "landing@375",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 20
+        }
+      ],
+      "passedRules": 28
+    },
+    {
+      "label": "landing@768",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 21
+        }
+      ],
+      "passedRules": 29
+    },
+    {
+      "label": "landing@1024",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 21
+        }
+      ],
+      "passedRules": 29
+    },
+    {
+      "label": "landing@1440",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 21
+        }
+      ],
+      "passedRules": 29
+    },
+    {
+      "label": "home@375",
+      "violations": [],
+      "manualReview": [],
+      "passedRules": 21
+    },
+    {
+      "label": "workspaces@375",
+      "violations": [],
+      "manualReview": [],
+      "passedRules": 22
+    },
+    {
+      "label": "workspace@375",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 4
+        }
+      ],
+      "passedRules": 22
+    },
+    {
+      "label": "tasks@375",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 7
+        }
+      ],
+      "passedRules": 25
+    },
+    {
+      "label": "task@375",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 8
+        }
+      ],
+      "passedRules": 27
+    },
+    {
+      "label": "matrix@375",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 12
+        }
+      ],
+      "passedRules": 23
+    },
+    {
+      "label": "notes@375",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 5
+        }
+      ],
+      "passedRules": 25
+    },
+    {
+      "label": "observations@375",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 5
+        }
+      ],
+      "passedRules": 24
+    },
+    {
+      "label": "history@375",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 4
+        }
+      ],
+      "passedRules": 21
+    },
+    {
+      "label": "search@375",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 4
+        }
+      ],
+      "passedRules": 25
+    },
+    {
+      "label": "settings@375",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 1
+        }
+      ],
+      "passedRules": 25
+    },
+    {
+      "label": "profile@375",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 1
+        }
+      ],
+      "passedRules": 25
+    },
+    {
+      "label": "home@768",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 1
+        }
+      ],
+      "passedRules": 25
+    },
+    {
+      "label": "workspaces@768",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 1
+        }
+      ],
+      "passedRules": 24
+    },
+    {
+      "label": "workspace@768",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 3
+        }
+      ],
+      "passedRules": 26
+    },
+    {
+      "label": "tasks@768",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 5
+        }
+      ],
+      "passedRules": 26
+    },
+    {
+      "label": "task@768",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 7
+        }
+      ],
+      "passedRules": 28
+    },
+    {
+      "label": "matrix@768",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 11
+        }
+      ],
+      "passedRules": 25
+    },
+    {
+      "label": "notes@768",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 4
+        }
+      ],
+      "passedRules": 26
+    },
+    {
+      "label": "observations@768",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 4
+        }
+      ],
+      "passedRules": 25
+    },
+    {
+      "label": "history@768",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 3
+        }
+      ],
+      "passedRules": 25
+    },
+    {
+      "label": "search@768",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 5
+        }
+      ],
+      "passedRules": 26
+    },
+    {
+      "label": "settings@768",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 2
+        }
+      ],
+      "passedRules": 26
+    },
+    {
+      "label": "profile@768",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 2
+        }
+      ],
+      "passedRules": 26
+    },
+    {
+      "label": "home@1024",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 1
+        }
+      ],
+      "passedRules": 25
+    },
+    {
+      "label": "workspaces@1024",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 1
+        }
+      ],
+      "passedRules": 25
+    },
+    {
+      "label": "workspace@1024",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 3
+        }
+      ],
+      "passedRules": 26
+    },
+    {
+      "label": "tasks@1024",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 5
+        }
+      ],
+      "passedRules": 26
+    },
+    {
+      "label": "task@1024",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 7
+        }
+      ],
+      "passedRules": 29
+    },
+    {
+      "label": "matrix@1024",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 11
+        }
+      ],
+      "passedRules": 26
+    },
+    {
+      "label": "notes@1024",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 4
+        }
+      ],
+      "passedRules": 27
+    },
+    {
+      "label": "observations@1024",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 4
+        }
+      ],
+      "passedRules": 26
+    },
+    {
+      "label": "history@1024",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 3
+        }
+      ],
+      "passedRules": 26
+    },
+    {
+      "label": "search@1024",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 5
+        }
+      ],
+      "passedRules": 26
+    },
+    {
+      "label": "settings@1024",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 2
+        }
+      ],
+      "passedRules": 26
+    },
+    {
+      "label": "profile@1024",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 2
+        }
+      ],
+      "passedRules": 26
+    },
+    {
+      "label": "dark-home@375",
+      "violations": [],
+      "manualReview": [],
+      "passedRules": 21
+    },
+    {
+      "label": "dark-workspaces@375",
+      "violations": [],
+      "manualReview": [],
+      "passedRules": 22
+    },
+    {
+      "label": "dark-workspace@375",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 4
+        }
+      ],
+      "passedRules": 22
+    },
+    {
+      "label": "dark-tasks@375",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 7
+        }
+      ],
+      "passedRules": 25
+    },
+    {
+      "label": "dark-task@375",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 8
+        }
+      ],
+      "passedRules": 27
+    },
+    {
+      "label": "dark-matrix@375",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 12
+        }
+      ],
+      "passedRules": 23
+    },
+    {
+      "label": "dark-notes@375",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 5
+        }
+      ],
+      "passedRules": 25
+    },
+    {
+      "label": "dark-observations@375",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 5
+        }
+      ],
+      "passedRules": 24
+    },
+    {
+      "label": "dark-history@375",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 4
+        }
+      ],
+      "passedRules": 21
+    },
+    {
+      "label": "dark-search@375",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 4
+        }
+      ],
+      "passedRules": 25
+    },
+    {
+      "label": "dark-settings@375",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 1
+        }
+      ],
+      "passedRules": 25
+    },
+    {
+      "label": "dark-profile@375",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 1
+        }
+      ],
+      "passedRules": 25
+    },
+    {
+      "label": "dark-home@1440",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 1
+        }
+      ],
+      "passedRules": 25
+    },
+    {
+      "label": "dark-workspaces@1440",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 1
+        }
+      ],
+      "passedRules": 25
+    },
+    {
+      "label": "dark-workspace@1440",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 1
+        }
+      ],
+      "passedRules": 25
+    },
+    {
+      "label": "dark-tasks@1440",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 3
+        }
+      ],
+      "passedRules": 25
+    },
+    {
+      "label": "dark-task@1440",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 5
+        }
+      ],
+      "passedRules": 28
+    },
+    {
+      "label": "dark-matrix@1440",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 9
+        }
+      ],
+      "passedRules": 25
+    },
+    {
+      "label": "dark-notes@1440",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 2
+        }
+      ],
+      "passedRules": 26
+    },
+    {
+      "label": "dark-observations@1440",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 2
+        }
+      ],
+      "passedRules": 25
+    },
+    {
+      "label": "dark-history@1440",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 1
+        }
+      ],
+      "passedRules": 25
+    },
+    {
+      "label": "dark-search@1440",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 5
+        }
+      ],
+      "passedRules": 26
+    },
+    {
+      "label": "dark-settings@1440",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 2
+        }
+      ],
+      "passedRules": 26
+    },
+    {
+      "label": "dark-profile@1440",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "color-contrast",
+          "nodes": 2
+        }
+      ],
+      "passedRules": 26
+    },
+    {
+      "label": "drawer@375",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "aria-hidden-focus",
+          "nodes": 5
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 1
+        }
+      ],
+      "passedRules": 26
+    },
+    {
+      "label": "sheet@375",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "aria-hidden-focus",
+          "nodes": 5
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 5
+        }
+      ],
+      "passedRules": 24
+    },
+    {
+      "label": "drawer-dark@375",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "aria-hidden-focus",
+          "nodes": 5
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 1
+        }
+      ],
+      "passedRules": 26
+    },
+    {
+      "label": "account-menu-dark@768",
+      "violations": [],
+      "manualReview": [
+        {
+          "id": "aria-valid-attr-value",
+          "nodes": 1
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 5
+        }
+      ],
+      "passedRules": 27
+    }
+  ],
+  "vitals": [
+    {
+      "page": "landing",
+      "lcpMs": 148,
+      "cls": 0,
+      "note": "Local machine, no throttling; not a Lighthouse score."
+    },
+    {
+      "page": "phone drawer open (375 px)",
+      "interactionMs": 64,
+      "note": "Longest event duration reported by the Event Timing API for this one tap; below 16 ms is reported as 0. Local machine, not a field INP."
+    }
+  ],
+  "errors": [],
+  "failure": null,
+  "scope": "Real local Supabase + Microsoft Edge Chromium, temporary account with demonstration content"
+}

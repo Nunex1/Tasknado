@@ -11,6 +11,8 @@
     "test:integration": "node scripts/test-live.mjs",
     "local:setup": "node scripts/local-setup.mjs",
     "test:database": "node scripts/test-database.mjs",
+    "test:professional:database": "node scripts/test-professional-database.mjs",
+    "test:professional:live": "node scripts/test-professional-live.mjs",
     "test:desktop": "node scripts/test-desktop.mjs",
     "test:notes": "node scripts/test-notes-deletion.mjs",
     "format": "prettier --write src scripts",

@@ -1,4 +1,37 @@
 export type Status = "not_started" | "in_progress" | "paused" | "completed";
+export interface ProfessionalRecord {
+  id: string;
+  owner_id: string;
+  workspace_id: string;
+  created_at: string;
+  updated_at: string;
+  revision: number;
+}
+export interface DevelopmentItem extends ProfessionalRecord {
+  development_area: string;
+  action_plan: string;
+  start_date: string | null;
+  due_date: string | null;
+  priority: 1 | 2 | 3;
+  status: "not_started" | "in_progress" | "completed";
+  success_criteria: string;
+  evidence: string;
+  notes: string;
+  career_target_id: string | null;
+}
+export interface CareerTarget extends ProfessionalRecord {
+  company: string;
+  region: "brazil" | "abroad";
+  country: string;
+  position: string;
+  location: string;
+  work_mode: "" | "onsite" | "hybrid" | "remote";
+  priority: 1 | 2 | 3;
+  opportunity_url: string;
+  market_requirements: string;
+  notes: string;
+  sort_order: number;
+}
 export type EventType =
   "check_in" | "pause" | "resume" | "observation" | "check_out";
 export const statuses: Record<Status, string> = {

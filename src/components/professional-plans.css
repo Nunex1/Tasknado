@@ -1,0 +1,217 @@
+.professional-plans {
+  min-width: 0;
+}
+.plan-modal small,
+.plan-modal .hint,
+.professional-plans small,
+.plan-dates time {
+  color: var(--text-subtle);
+}
+.professional-plans .page-heading {
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+.professional-plans .page-heading h2 {
+  margin: 0 0 var(--space-2);
+}
+.plan-filters {
+  display: grid;
+  grid-template-columns: minmax(180px, 2fr) repeat(3, minmax(130px, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+}
+.plan-card {
+  padding: var(--space-5);
+  margin: var(--space-4) 0;
+  overflow-wrap: anywhere;
+}
+.plan-pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-5);
+}
+.plan-pair > * {
+  min-width: 0;
+}
+.plan-card h3 {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-base);
+}
+.plan-pair p {
+  color: var(--text);
+  margin: 0;
+}
+.plan-meta,
+.plan-actions,
+.plan-card-heading,
+.plan-footer,
+.plan-pagination {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  flex-wrap: wrap;
+}
+.plan-card-heading,
+.plan-footer {
+  justify-content: space-between;
+}
+.plan-card-heading > div {
+  min-width: 0;
+}
+.plan-meta {
+  padding: var(--space-4) 0;
+  font-size: var(--text-sm);
+}
+.plan-meta label {
+  flex-direction: row;
+  align-items: center;
+}
+.plan-meta select {
+  width: auto;
+}
+.plan-card details {
+  border-top: 1px solid var(--border);
+  padding-top: var(--space-3);
+}
+.plan-card summary {
+  cursor: pointer;
+  padding: var(--space-2) 0;
+  font-size: var(--text-sm);
+  color: var(--text-subtle);
+}
+.plan-details {
+  display: grid;
+  gap: var(--space-4);
+  margin: var(--space-4) 0;
+}
+.plan-details dt {
+  color: var(--text-subtle);
+  font-size: var(--text-xs);
+}
+.plan-details dd {
+  margin: var(--space-1) 0 0;
+}
+.plan-footer {
+  padding-top: var(--space-4);
+  margin-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+.plan-dates {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.plan-empty {
+  padding: var(--space-6);
+  color: var(--text-subtle);
+}
+.career-group {
+  margin: var(--space-6) 0;
+}
+.career-group > h3 {
+  font-size: var(--text-md);
+}
+.plan-priority {
+  color: var(--primary);
+  font-size: var(--text-xs);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--blue-surface);
+}
+.plan-requirements {
+  color: var(--text);
+  padding: var(--space-4);
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  min-height: 120px;
+}
+.plan-card > small + h3 {
+  margin-top: var(--space-6);
+}
+.plan-external {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.plan-pagination {
+  justify-content: center;
+  padding: var(--space-4) 0;
+  font-size: var(--text-sm);
+}
+.plan-modal {
+  width: min(860px, calc(100vw - 32px));
+  max-width: 860px;
+}
+.plan-modal fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+  display: grid;
+  gap: var(--space-4);
+}
+.plan-modal textarea {
+  resize: vertical;
+  white-space: pre-wrap;
+}
+.plan-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+.plan-unsaved {
+  margin-right: auto;
+  font-size: var(--text-xs);
+  color: var(--text-subtle);
+}
+.career-picker {
+  border-top: 1px solid var(--border);
+  padding-top: var(--space-4);
+}
+.career-picker h3 {
+  font-size: var(--text-base);
+}
+.career-picker label {
+  margin-top: var(--space-3);
+}
+.career-choice {
+  display: flex;
+  width: 100%;
+  white-space: normal;
+  justify-content: flex-start;
+  text-align: left;
+  margin-top: var(--space-2);
+}
+@media (max-width: 1100px) {
+  .plan-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 767px) {
+  .plan-pair,
+  .plan-fields,
+  .plan-filters {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .professional-plans .button,
+  .plan-modal .button,
+  .plan-card summary {
+    min-height: 44px;
+    white-space: normal;
+  }
+  .plan-card {
+    padding: var(--space-4);
+  }
+  .plan-pair {
+    gap: var(--space-4);
+  }
+  .plan-modal {
+    width: calc(100vw - 16px);
+  }
+  .plan-modal .modal-actions {
+    flex-wrap: wrap;
+  }
+  .plan-unsaved {
+    width: 100%;
+  }
+}

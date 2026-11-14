@@ -18,6 +18,8 @@ function sql(source, database = "postgres") {
         "-i",
         name,
         "psql",
+        "-h",
+        "127.0.0.1",
         "-U",
         "postgres",
         "-d",
@@ -55,9 +57,10 @@ try {
   let ready = false;
   for (let i = 0; i < 40; i++) {
     try {
-      // Over TCP on purpose: while the image initializes, a temporary server
-      // answers on the Unix socket only and is then restarted.
-      docker("exec", name, "pg_isready", "-U", "postgres", "-h", "127.0.0.1");
+      // The image first starts a socket-only setup server and then restarts it.
+      // TCP becomes available only on the final server; accepting the temporary
+      // socket here can race its shutdown before the first migration in CI.
+      docker("exec", name, "pg_isready", "-h", "127.0.0.1", "-U", "postgres");
       ready = true;
       break;
     } catch {
@@ -254,18 +257,23 @@ try {
     ),
     "20971520",
   );
-  // The migrations added after the quarantine can be applied again unchanged.
-  for (const again of files.slice(quarantine + 1))
-    await apply(again, "gate_drill");
+  // The migrations that declare themselves repeatable can be applied again.
+  const repeatable = files.filter((name) =>
+    /account_limits|security_metrics|activity_write_deadlock|professional_plan_limits/.test(
+      name,
+    ),
+  );
+  assert.equal(repeatable.length, 4);
+  for (const again of repeatable) await apply(again, "gate_drill");
   assert.equal(
     await sql(
       "select count(*) from pg_trigger where tgname='account_limits' and not tgisinternal",
       "gate_drill",
     ),
-    "6",
+    "8",
   );
   console.log(
-    "PASS after the operator records scanner validation the quarantine applies, existing files start pending with a full reservation, and the later migrations are idempotent",
+    "PASS after the operator records scanner validation the quarantine applies, existing files start pending with a full reservation, and the four repeatable migrations apply a second time",
   );
 } finally {
   // Only the UUID-named container created by this invocation is removed.

@@ -5,6 +5,8 @@ export type View =
   | "observations"
   | "history"
   | "matrix"
+  | "development"
+  | "career"
   | "notes"
   | "search"
   | "settings";
@@ -13,6 +15,8 @@ const views = new Set<View>([
   "observations",
   "history",
   "matrix",
+  "development",
+  "career",
   "notes",
   "search",
   "settings",
@@ -32,6 +36,7 @@ export function routeState(path: string) {
     view,
     activityId: workspaceId && view === "activities" ? parts[3] || null : null,
     noteId: workspaceId && view === "notes" ? parts[3] || null : null,
+    careerId: workspaceId && view === "career" ? parts[3] || null : null,
   };
 }
 export function workspacePath(
@@ -55,7 +60,10 @@ export function switchWorkspacePath(
     return view === "activities" || view === "notes" ? `/${view}` : "/";
   const keep: View[] = ["activities", "notes", "observations", "history"];
   if (keep.includes(view)) return workspacePath(target.id, view);
-  if (view === "matrix" && target.category === "work")
-    return workspacePath(target.id, "matrix");
+  if (
+    ["matrix", "development", "career"].includes(view) &&
+    target.category === "work"
+  )
+    return workspacePath(target.id, view);
   return workspacePath(target.id);
 }
