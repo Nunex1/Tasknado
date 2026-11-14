@@ -1,5 +1,7 @@
 "use client";
 import { useI18n } from "@/i18n/provider";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { fetchPages } from "@/lib/pagination";
 import { useEffect, useState } from "react";
 import {
   Paperclip,
@@ -31,26 +33,17 @@ export function Files({
 }) {
   const { t, date, bytes, number } = useI18n();
   const [eventId, setEventId] = useState("");
-  const [files, setFiles] = useState<Attachment[]>([]),
-    [busy, setBusy] = useState(false),
+  const [busy, setBusy] = useState(false),
     [preview, setPreview] = useState<{ file: Attachment; url: string } | null>(
       null,
     );
-  async function load() {
-    setFiles(
-      check(
-        await client()
-          .from("attachments")
-          .select("*")
-          .eq(kind + "_id", id)
-          .order("created_at"),
-      ).map((x) => x as Attachment),
-    );
-  }
-  useEffect(() => {
-    void load().catch((e) => report(errorMessage(e)));
-    setPreview(null);
-  }, [id, kind]);
+  const cache = useQueryClient();
+  const list = useQuery({queryKey:["files",kind,id],queryFn: ({signal}) => fetchPages((from,to) => client().from("attachments")
+    .select("id,activity_id,note_id,name,path,mime,size,created_at,scan_status").eq(kind+"_id",id).order("created_at").order("id").range(from,to).abortSignal(signal))});
+  const files = list.data ?? [];
+  async function load() { await cache.invalidateQueries({queryKey:["files",kind,id]}); }
+  useEffect(() => {setPreview(null);},[id,kind]);
+  useEffect(() => {if(list.error) report(errorMessage(list.error));},[list.error,report]);
   async function upload(file: File) {
     const invalid = validateFile(file);
     if (invalid) {

@@ -37,7 +37,8 @@
   aspect-ratio: 3;
   flex-shrink: 1;
   background: var(--text);
-  mask: url("/brand/wordmark-mask.png") center / contain no-repeat;
+  -webkit-mask: url("../assets/brand/wordmark-mask.webp") center / contain no-repeat;
+  mask: url("../assets/brand/wordmark-mask.webp") center / contain no-repeat;
 }
 .brand-wordmark--sm {
   width: 120px;

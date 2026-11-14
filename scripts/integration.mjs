@@ -581,6 +581,10 @@ try {
       .from("attachments")
       .upload(path, file, { contentType: "text/plain" }),
   );
+  assert.ok((await a.storage.from("attachments").download(path)).error);
+  assert.ok((await a.from("attachments").update({scan_status:"clean"}).eq("id",fid)).error);
+  // Synthetic scanner verdict in the loopback fixture only; this does not validate ClamAV.
+  ok(await admin.from("attachments").update({scan_status:"clean",scanned_at:new Date().toISOString()}).eq("id",fid));
   const downloaded = ok(await a.storage.from("attachments").download(path));
   assert.equal(await downloaded.text(), "Evidência do rateio");
   assert.ok((await b.storage.from("attachments").download(path)).error);

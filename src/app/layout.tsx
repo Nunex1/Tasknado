@@ -42,6 +42,8 @@ export const viewport: Viewport = {
   interactiveWidget: "resizes-content",
 };
 export default async function Layout({ children }: { children: React.ReactNode }) {
+  // Every current document shares a per-request CSP nonce. Static HTML would reuse
+  // that nonce; keep dynamic rendering while hashed assets use the CDN cache.
   await connection();
   const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (

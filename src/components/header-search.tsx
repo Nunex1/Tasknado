@@ -1,4 +1,5 @@
 "use client";
+import { useSearch } from "@/hooks/use-search";
 import { useEffect, useRef, useState } from "react";
 import { Search, X } from "lucide-react";
 import { useI18n } from "@/i18n/provider";
@@ -43,11 +44,9 @@ export function HeaderSearch({
     returnFocus = useRef<HTMLElement | null>(null);
   const [open, setOpen] = useState(false),
     [query, setQuery] = useState(""),
-    [results, setResults] = useState<SearchResult[]>([]),
-    [loading, setLoading] = useState(false),
-    [error, setError] = useState(""),
-    [active, setActive] = useState(-1),
-    [retry, setRetry] = useState(0);
+    [active, setActive] = useState(-1);
+  const list = useSearch(query, {}, open);
+  const results = query.trim() ? list.data ?? [] : [], loading = list.isFetching, error = list.error ? errorMessage(list.error) : "";
   const rows = Object.keys(searchKinds).flatMap((kind) =>
     results.filter((r) => r.kind === kind),
   );
@@ -82,30 +81,7 @@ export function HeaderSearch({
       document.removeEventListener("pointerdown", outside);
     };
   }, []);
-  useEffect(() => {
-    let live = true;
-    setActive(-1);
-    setError("");
-    setResults([]);
-    setLoading(!!query.trim());
-    if (!query.trim()) return;
-    const timer = setTimeout(async () => {
-      try {
-        const data = check(
-          await client().rpc("search_all", { p_query: query }),
-        );
-        if (live) setResults(data);
-      } catch (e) {
-        if (live) setError(errorMessage(e));
-      } finally {
-        if (live) setLoading(false);
-      }
-    }, 200);
-    return () => {
-      live = false;
-      clearTimeout(timer);
-    };
-  }, [query, retry]);
+  useEffect(() => setActive(-1), [query]);
   useEffect(() => {
     if (active >= 0)
       document
@@ -197,7 +173,7 @@ export function HeaderSearch({
             {error && (
               <button
                 className="text-button"
-                onClick={() => setRetry((n) => n + 1)}
+                onClick={() => void list.refetch()}
               >
                 {t("Tentar novamente")}
               </button>

@@ -1,4 +1,5 @@
 "use client";
+import { WindowedList } from "./windowed-list";
 import { useEffect, useState } from "react";
 import { useI18n } from "@/i18n/provider";
 import { client, check, errorMessage } from "@/lib/supabase";
@@ -12,7 +13,10 @@ import {
   Status,
 } from "@/lib/domain";
 import { Button } from "./ui/button";
-import { fetchPages } from "@/lib/pagination";
+import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
+import { observationPages } from "@/lib/record-queries";
+import { columns, refreshWorkspace } from "@/lib/data-queries";
+import { useDebounced } from "@/hooks/use-app-data";
 
 export function WorkspaceObservations({
   workspaceId,
@@ -24,65 +28,23 @@ export function WorkspaceObservations({
   report: (s: string) => void;
 }) {
   const { t, date } = useI18n();
-  const [rows, setRows] = useState<WorkspaceObservation[]>([]),
-    [query, setQuery] = useState(""),
+  const [query, setQuery] = useState(""),
     [newest, setNewest] = useState(true),
     [content, setContent] = useState(""),
     [editing, setEditing] = useState<WorkspaceObservation | null>(null),
-    [busy, setBusy] = useState(false),
-    [loading, setLoading] = useState(true),
-    [error, setError] = useState(""),
-    [limit, setLimit] = useState(50),
-    [more, setMore] = useState(false),
-    [revision, setRevision] = useState(0);
-  useEffect(() => {
-    let live = true;
-    setLoading(true);
-    setError("");
-    const timer = setTimeout(async () => {
-      try {
-        const data = await fetchPages((from, to) => {
-          let q = client()
-            .from("workspace_observations")
-            .select("*")
-            .eq("workspace_id", workspaceId)
-            .order("created_at", { ascending: !newest })
-            .order("id", { ascending: !newest })
-            .range(from, to);
-          if (query.trim())
-            q = q.ilike(
-              "content",
-              `%${query.trim().replace(/[\\%_]/g, "\\$&")}%`,
-            );
-          return q;
-        }, limit);
-        const full = data.length === limit;
-        if (focusId && !data.some((r) => r.id === focusId)) {
-          const found = check(
-            await client()
-              .from("workspace_observations")
-              .select("*")
-              .eq("workspace_id", workspaceId)
-              .eq("id", focusId)
-              .maybeSingle(),
-          );
-          if (found) data.unshift(found);
-        }
-        if (live) {
-          setRows(data);
-          setMore(full);
-        }
-      } catch (e) {
-        if (live) setError(errorMessage(e));
-      } finally {
-        if (live) setLoading(false);
-      }
-    }, 150);
-    return () => {
-      live = false;
-      clearTimeout(timer);
-    };
-  }, [workspaceId, query, newest, limit, revision, focusId]);
+    [busy, setBusy] = useState(false);
+  const cache = useQueryClient();
+  const list = useInfiniteQuery(observationPages(workspaceId, useDebounced(query), newest));
+  const focused = useQuery({ queryKey: ["observation", workspaceId, focusId], enabled: !!focusId,
+    queryFn: async ({signal}) => check(await client().from("workspace_observations").select(columns.observations).eq("workspace_id",workspaceId).eq("id",focusId!).abortSignal(signal).maybeSingle()) });
+  const loaded = list.data?.pages.flatMap(p => p.rows) ?? [];
+  const rows = focused.data && !loaded.some(r => r.id === focused.data.id) ? [focused.data,...loaded] : loaded;
+  const loading = list.isLoading, error = list.error ? errorMessage(list.error) : "", more = list.hasNextPage;
+  async function refresh() {
+    await cache.cancelQueries({queryKey: ["observations", workspaceId]});
+    cache.setQueriesData<{pages: unknown[]; pageParams: unknown[]}>({queryKey: ["observations", workspaceId]}, old => old && ({pages: old.pages.slice(0,1),pageParams: old.pageParams.slice(0,1)}));
+    await Promise.all([cache.invalidateQueries({queryKey: ["observations",workspaceId]}),cache.invalidateQueries({queryKey: ["observation",workspaceId]}),cache.invalidateQueries({queryKey: ["recent-observations"]}),cache.invalidateQueries({queryKey: ["history",workspaceId]}),cache.invalidateQueries({queryKey: ["search"]}),refreshWorkspace(cache,workspaceId)]);
+  }
   useEffect(() => {
     if (focusId && !loading)
       document
@@ -113,7 +75,7 @@ export function WorkspaceObservations({
         );
       setContent("");
       setEditing(null);
-      setRevision((n) => n + 1);
+      await refresh();
       report("Salvo com sucesso.");
     } catch (e) {
       report(errorMessage(e));
@@ -140,7 +102,7 @@ export function WorkspaceObservations({
         throw Error(
           "Conflito ao salvar. Recarregue o registro e tente novamente.",
         );
-      setRevision((n) => n + 1);
+      await refresh();
       report("Observação excluída.");
     } catch (e) {
       report(errorMessage(e));
@@ -208,7 +170,6 @@ export function WorkspaceObservations({
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
-              setLimit(50);
             }}
             type="search"
           />
@@ -227,7 +188,7 @@ export function WorkspaceObservations({
       {error && (
         <p role="alert" className="error">
           {t(error)}{" "}
-          <button onClick={() => setRevision((n) => n + 1)}>
+          <button onClick={() => void list.refetch()}>
             {t("Tentar novamente")}
           </button>
         </p>
@@ -238,7 +199,7 @@ export function WorkspaceObservations({
         <p className="empty">{t("Nenhuma observação encontrada.")}</p>
       ) : (
         <div className="document-timeline">
-          {rows.map((row) => (
+          <WindowedList rows={rows} label={t("Histórico")} estimate={160} render={(row) => (
             <article
               key={row.id}
               id={`observation-${row.id}`}
@@ -276,11 +237,11 @@ export function WorkspaceObservations({
                 </small>
               )}
             </article>
-          ))}
+          )} />
         </div>
       )}
       {more && (
-        <Button variant="ghost" onClick={() => setLimit((n) => n + 50)}>
+        <Button variant="ghost" disabled={list.isFetchingNextPage} onClick={() => void list.fetchNextPage()}>
           {t("Carregar mais")}
         </Button>
       )}
@@ -308,34 +269,10 @@ export function WorkspaceHistory({
   onOpen: (id: string) => void;
 }) {
   const { t, date } = useI18n();
-  const [rows, setRows] = useState<WorkspaceEvent[]>([]),
-    [offset, setOffset] = useState(0),
-    [loading, setLoading] = useState(false),
-    [error, setError] = useState(""),
-    [more, setMore] = useState(false),
-    [retry, setRetry] = useState(0);
-  useEffect(() => {
-    let live = true;
-    setLoading(true);
-    setError("");
-    client()
-      .rpc("workspace_timeline", { p_workspace: workspaceId, p_offset: offset })
-      .then((result) => {
-        if (!live) return;
-        try {
-          const data = check(result);
-          setRows((prev) => (offset ? [...prev, ...data] : data));
-          setMore(data.length === 50);
-        } catch (e) {
-          setError(errorMessage(e));
-        } finally {
-          setLoading(false);
-        }
-      });
-    return () => {
-      live = false;
-    };
-  }, [workspaceId, offset, retry]);
+  const list = useInfiniteQuery({queryKey:["history",workspaceId],initialPageParam:0,
+    queryFn:async ({signal,pageParam}) => check(await client().rpc("workspace_timeline",{p_workspace:workspaceId,p_offset:pageParam}).abortSignal(signal)),
+    getNextPageParam:(last,pages)=>last.length===50?pages.length*50:undefined});
+  const rows=list.data?.pages.flat()??[], loading=list.isFetching, more=list.hasNextPage, error=list.error?errorMessage(list.error):"";
   function value(value: WorkspaceEvent["current"], action: string): string {
     if (value == null) return t("Não definida");
     if (typeof value === "string") return t(statuses[value as Status] || value);
@@ -358,13 +295,13 @@ export function WorkspaceHistory({
       {error && (
         <p role="alert" className="error">
           {t(error)}{" "}
-          <button onClick={() => setRetry((n) => n + 1)}>
+          <button onClick={() => void list.refetch()}>
             {t("Tentar novamente")}
           </button>
         </p>
       )}
       <div className="document-timeline">
-        {rows.map((row) => (
+        <WindowedList rows={rows} label={t("Histórico")} estimate={160} render={(row) => (
           <article className="record" key={row.action + row.id}>
             <time dateTime={row.created_at}>{date(row.created_at)}</time>
             <h3>{t(actionNames[row.action] || row.action)}</h3>
@@ -389,14 +326,14 @@ export function WorkspaceHistory({
               )
             )}
           </article>
-        ))}
+        )} />
       </div>
       {loading && <p role="status">{t("Carregando…")}</p>}
       {!loading && !rows.length && !error && (
         <p className="empty">{t("Nenhum evento registrado.")}</p>
       )}
       {more && !loading && (
-        <Button variant="ghost" onClick={() => setOffset((n) => n + 50)}>
+        <Button variant="ghost" onClick={() => void list.fetchNextPage()}>
           {t("Carregar mais")}
         </Button>
       )}

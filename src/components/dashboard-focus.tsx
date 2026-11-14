@@ -1,4 +1,8 @@
 "use client";
+import { useMemo, useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { client, check } from "@/lib/supabase";
+import { localMinute } from "@/hooks/use-app-data";
 import { CircleAlert, Flag, Pause, Play, Timer } from "lucide-react";
 import { useI18n } from "@/i18n/provider";
 import {
@@ -20,45 +24,34 @@ const limit = 5;
  * has loaded; nothing is fetched or stored here.
  */
 export function DashboardFocus({
-  activities,
+  workspaceId,
   workspaces,
   workspace,
   onOpen,
   onSeeStarted,
 }: {
-  activities: Activity[];
+  workspaceId: string | null;
   workspaces: Workspace[];
   workspace?: Workspace;
-  onOpen: (id: string) => void;
+  onOpen: (id: string, workspaceId?: string) => void;
   onSeeStarted: () => void;
 }) {
   const { t, number } = useI18n();
-  const byId = new Map(workspaces.map((w) => [w.id, w]));
-  // Priority attributes only apply while the workspace is in the Work category.
+  const byId = useMemo(() => new Map(workspaces.map(w => [w.id, w])), [workspaces]);
   const isWork = (a: Activity) => byId.get(a.workspace_id)?.category === "work";
-  const hasWork = workspace
-    ? workspace.category === "work"
-    : workspaces.some((w) => w.category === "work" && !w.archived);
-  const open = activities.filter((a) => !a.archived);
-  const schedule = (a: Activity) =>
-    (a.category_attributes.work?.scheduledDate || "9999") +
-    (a.category_attributes.work?.scheduledTime || "23:59");
-  const priorities = open
-    .filter(
-      (a) =>
-        isWork(a) &&
-        a.status !== "completed" &&
-        (isOverdue(a) || quadrant(a.category_attributes.work) === "q1"),
-    )
-    .sort(
-      (a, b) =>
-        Number(isOverdue(b)) - Number(isOverdue(a)) ||
-        schedule(a).localeCompare(schedule(b)),
-    );
-  const started = open
-    .filter((a) => isStarted(a.status))
-    .sort((a, b) => b.updated_at.localeCompare(a.updated_at));
-
+  const hasWork = workspace ? workspace.category === "work" : workspaces.some(w => w.category === "work" && !w.archived);
+  const [now, setNow] = useState(localMinute);
+  useEffect(() => { const timer = setInterval(() => setNow(localMinute()), 60_000); return () => clearInterval(timer); }, []);
+  const priorityFilters = {focus: "priority", localNow: now};
+  const prioritiesQuery = useQuery({queryKey: ["focus", workspaceId, priorityFilters], enabled: hasWork,
+    queryFn: async ({signal}) => check(await client().rpc("activity_page", {p_workspace: workspaceId, p_filters: priorityFilters, p_sort: "scheduled", p_size: limit}).abortSignal(signal)).slice(0, limit)});
+  const priorityTotal = useQuery({queryKey: ["activity-total", workspaceId, priorityFilters], enabled: hasWork,
+    queryFn: async ({signal}) => check(await client().rpc("activity_total", {p_workspace: workspaceId, p_filters: priorityFilters}).abortSignal(signal))});
+  const startedQuery = useQuery({queryKey: ["focus", workspaceId, "started"],
+    queryFn: async ({signal}) => check(await client().rpc("activity_page", {p_workspace: workspaceId, p_filters: {status: "started"}, p_size: limit}).abortSignal(signal)).slice(0, limit)});
+  const startedTotal = useQuery({queryKey: ["activity-total", workspaceId, {status: "started"}],
+    queryFn: async ({signal}) => check(await client().rpc("activity_total", {p_workspace: workspaceId, p_filters: {status: "started"}}).abortSignal(signal))});
+  const priorities = prioritiesQuery.data ?? [], started = startedQuery.data ?? [];
   const row = (a: Activity, tags: React.ReactNode) => {
     const Icon = a.status === "paused" ? Pause : Play;
     const work = isWork(a) ? a.category_attributes.work : undefined;
@@ -67,7 +60,7 @@ export function DashboardFocus({
       <button
         key={a.id}
         className={`focus-row ${a.status}`}
-        onClick={() => onOpen(a.id)}
+        onClick={() => onOpen(a.id, a.workspace_id)}
       >
         {isStarted(a.status) ? (
           <Icon size={16} aria-hidden="true" />
@@ -98,7 +91,7 @@ export function DashboardFocus({
               <h2 id="focus-priority">
                 <Flag size={18} aria-hidden="true" />
                 {t("Prioridades")}
-                <span className="count">{number(priorities.length)}</span>
+                <span className="count">{number(priorityTotal.data ?? 0)}</span>
               </h2>
               <p>{t("Atrasadas ou importantes e urgentes.")}</p>
             </div>
@@ -129,11 +122,11 @@ export function DashboardFocus({
             <h2 id="focus-started">
               <Timer size={18} aria-hidden="true" />
               {t("Em andamento")}
-              <span className="count">{number(started.length)}</span>
+              <span className="count">{number(startedTotal.data ?? 0)}</span>
             </h2>
             <p>{t("Iniciadas e ainda não concluídas.")}</p>
           </div>
-          {started.length > limit && (
+          {(startedTotal.data ?? 0) > limit && (
             <button className="text-button" onClick={onSeeStarted}>
               {t("Ver todas")}
             </button>

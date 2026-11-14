@@ -591,5 +591,10 @@
   "Nenhuma oportunidade encontrada.": "Nenhuma oportunidade encontrada.",
   "Prioridade": "Prioridade",
   "Todos os status": "Todos os status",
-  "Ordenar por": "Ordenar por"
+  "Ordenar por": "Ordenar por",
+  "Usar rolagem virtual": "Usar rolagem virtual",
+  "Usar páginas acessíveis": "Usar páginas acessíveis",
+  "Página {{page}} de {{total}}": "Página {{page}} de {{total}}",
+  "Os dados mudaram durante a exportação. Tente novamente.": "Os dados mudaram durante a exportação. Tente novamente.",
+  "Próxima": "Próxima"
 }

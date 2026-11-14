@@ -10,7 +10,10 @@ import {
   removeNote,
 } from "./notes";
 import { errorMessage } from "./supabase";
-import { createI18n } from "../i18n/core";
+import { createI18n as createBaseI18n } from "../i18n/core";
+import ptBR from "../i18n/pt-BR.json";
+import enUS from "../i18n/en-US.json";
+const createI18n = (locale: "pt-BR"|"en-US" = "pt-BR") => createBaseI18n(locale,{"pt-BR":{translation:ptBR},"en-US":{translation:enUS}});
 
 function fakeDb(
   options: {

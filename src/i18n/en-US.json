@@ -591,5 +591,10 @@
   "Nenhuma oportunidade encontrada.": "No opportunities found.",
   "Prioridade": "Priority",
   "Todos os status": "All statuses",
-  "Ordenar por": "Sort by"
+  "Ordenar por": "Sort by",
+  "Usar rolagem virtual": "Use virtual scrolling",
+  "Usar páginas acessíveis": "Use accessible pages",
+  "Página {{page}} de {{total}}": "Page {{page}} of {{total}}",
+  "Os dados mudaram durante a exportação. Tente novamente.": "The data changed during export. Please try again.",
+  "Próxima": "Next"
 }

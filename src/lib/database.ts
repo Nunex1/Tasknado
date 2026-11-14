@@ -117,6 +117,17 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      export_revision: { Args: Record<string,never>; Returns: string };
+      export_professional_page: { Args: {p_table: "career_targets" | "professional_development_items"; p_after?: string|null}; Returns: (CareerTarget | DevelopmentItem)[] };
+
+      activity_page: {
+        Args: { p_workspace?: string | null; p_filters?: import('./data-queries').ActivityFilters; p_sort?: string; p_after?: import('./data-queries').Cursor | null; p_size?: number };
+        Returns: import('./data-queries').ActivityPageRow[];
+      };
+      activity_total: { Args: { p_workspace?: string | null; p_filters?: import('./data-queries').ActivityFilters }; Returns: number };
+      activity_summary: { Args: { p_workspace?: string | null }; Returns: {not_started: number; started: number; completed: number}[] };
+      observation_counts_for: { Args: {p_activities: string[]}; Returns: {activity_id: string; total: number}[] };
+
       export_professional_plans: {
         Args: {
           p_table: "career_targets" | "professional_development_items";

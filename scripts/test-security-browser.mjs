@@ -10,7 +10,8 @@ const { chromium } = require(
       ".cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright",
     ),
 );
-const root = "http://127.0.0.1:3400";
+const root = process.env.TASKNADO_TEST_URL || "http://127.0.0.1:3400";
+assert.match(root, /^http:\/\/(127\.0\.0\.1|localhost):\d+$/);
 const browser = await chromium.launch({ headless: true, channel: "msedge" });
 try {
   const page = await browser.newPage();
