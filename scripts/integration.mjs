@@ -10,11 +10,12 @@ const env = Object.fromEntries(
       return [x.slice(0, i), x.slice(i + 1).replace(/^"|"$/g, "")];
     }),
 );
-const url = env.NEXT_PUBLIC_SUPABASE_URL,
-  key = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+// test-live.mjs sets these only for the isolated security stack.
+const url = process.env.TASKNADO_TEST_API_URL || env.NEXT_PUBLIC_SUPABASE_URL,
+  key = process.env.TASKNADO_TEST_ANON_KEY || env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 assert.match(
   url,
-  /^http:\/\/(127\.0\.0\.1|localhost):55431$/,
+  /^http:\/\/(127\.0\.0\.1|localhost):5[56]431$/,
   "Integration tests must use isolated local Tasknado",
 );
 const adminKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -581,6 +582,22 @@ try {
       .from("attachments")
       .upload(path, file, { contentType: "text/plain" }),
   );
+  // On a database with the upload quarantine, the owner cannot read the bytes
+  // until a trusted verdict exists. The update below stands in for the scanner
+  // on the local stack only; the real engine has its own suite.
+  const stored = ok(
+    await a.from("attachments").select("*").eq("id", fid).single(),
+  );
+  if ("scan_status" in stored) {
+    assert.equal(stored.scan_status, "pending");
+    assert.ok((await a.storage.from("attachments").download(path)).error);
+    ok(
+      await admin
+        .from("attachments")
+        .update({ scan_status: "clean" })
+        .eq("id", fid),
+    );
+  }
   const downloaded = ok(await a.storage.from("attachments").download(path));
   assert.equal(await downloaded.text(), "Evidência do rateio");
   assert.ok((await b.storage.from("attachments").download(path)).error);

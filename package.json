@@ -17,7 +17,14 @@
     "test:responsive": "node scripts/test-responsive.mjs",
     "capture:landing": "node scripts/capture-landing.mjs",
     "scan:uploads": "node scripts/scan-uploads.mjs",
-    "test:security:postgres": "node scripts/test-security-postgres.mjs"
+    "test:security:postgres": "node scripts/test-security-postgres.mjs",
+    "security:stack": "node scripts/security-stack.mjs",
+    "test:security:http": "node scripts/test-security-http.mjs",
+    "test:security:backup": "node scripts/test-security-backup.mjs",
+    "test:security:clamav": "node scripts/test-security-clamav.mjs",
+    "security:health": "node scripts/security-health.mjs",
+    "security:probe": "node scripts/probe-deployment.mjs",
+    "backup:storage": "node scripts/backup-storage.mjs"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.0",

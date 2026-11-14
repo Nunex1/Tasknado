@@ -124,6 +124,147 @@ try {
   console.log(
     "PASS synthetic pg_dump restore preserves event data and owner RLS in a second isolated database (Storage bytes not included)",
   );
+
+  // Writers of one account take row locks in different orders (RPC: activity
+  // then workspace; direct update: workspace only; insert: parent share lock).
+  // The lock-free account limits must not turn that into deadlocks.
+  const busy = "33333333-3333-4333-8333-333333333333";
+  const space = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+    task = "ffffffff-ffff-4fff-8fff-ffffffffffff";
+  await sql(`insert into auth.users values('${busy}');
+    insert into workspaces(id,owner_id,name) values('${space}','${busy}','busy');
+    insert into activities(id,owner_id,workspace_id,title) values('${task}','${busy}','${space}','busy');`);
+  const as = (statement) =>
+    sql(
+      `begin; set local role authenticated; set local request.jwt.claim.sub='${busy}'; ${statement}; commit;`,
+    );
+  const mixed = await Promise.allSettled(
+    Array.from({ length: 40 }, (_, i) =>
+      as(
+        [
+          `select public.add_event('${task}','observation','mixed ${i}','${crypto.randomUUID()}')`,
+          `update activities set title='busy ${i}' where id='${task}'`,
+          `insert into activities(workspace_id,title) values('${space}','new ${i}')`,
+          `update workspaces set description='busy ${i}' where id='${space}'`,
+          `insert into workspace_observations(workspace_id,content) values('${space}','note ${i}')`,
+        ][i % 5],
+      ),
+    ),
+  );
+  assert.deepEqual(
+    mixed.filter((r) => r.status === "rejected").map((r) => r.reason.message),
+    [],
+  );
+  assert.equal(
+    await sql(
+      `select count(*) from activities where owner_id='${busy}' and title like 'new %'`,
+    ),
+    "8",
+  );
+  console.log(
+    "PASS 40 concurrent mixed writes of one account (RPC, updates, inserts) complete without deadlock or lost rows under the account limits",
+  );
+  // The row ceiling is exact under concurrency.
+  await sql(
+    `insert into workspaces(owner_id,name) select '${busy}','fill '||g from generate_series(1,195) g`,
+  );
+  const race = await Promise.allSettled(
+    Array.from({ length: 12 }, (_, i) =>
+      as(`insert into workspaces(name) values('race ${i}')`),
+    ),
+  );
+  for (const result of race.filter((r) => r.status === "rejected"))
+    assert.match(result.reason.message, /Account limit reached/);
+  const total = Number(
+    await sql(`select count(*) from workspaces where owner_id='${busy}'`),
+  );
+  assert.equal(total, 200);
+  assert.equal(race.filter((r) => r.status === "fulfilled").length, 4);
+  assert.match(
+    await as("insert into workspaces(name) values('late')").then(
+      () => "",
+      (error) => error.message,
+    ),
+    /Account limit reached/,
+  );
+  console.log(
+    "PASS 12 concurrent inserts at the 200-workspace ceiling admit exactly the 4 remaining rows and every later insert is refused",
+  );
+
+  // Deployment gate of the quarantine migration, on a database that already
+  // stores attachments (the production shape before this change).
+  const files = readdirSync("supabase/migrations").sort();
+  const quarantine = files.findIndex((file) =>
+    file.includes("upload_quarantine"),
+  );
+  assert.ok(quarantine > 0);
+  const apply = (file, database) =>
+    sql(readFileSync(`supabase/migrations/${file}`, "utf8"), database);
+  await sql("create database gate_drill");
+  await sql(harness.replace(/create role [^;]+;/g, ""), "gate_drill");
+  for (const file of files.slice(0, quarantine))
+    await apply(file, "gate_drill");
+  const legacy = "44444444-4444-4444-8444-444444444444",
+    file = "99999999-9999-4999-8999-999999999999";
+  await sql(
+    `insert into auth.users values('${legacy}');
+     insert into workspaces(id,owner_id,name) values('${space}','${legacy}','legacy');
+     insert into notes(id,owner_id,workspace_id,title) values('${task}','${legacy}','${space}','legacy');
+     insert into attachments(id,owner_id,note_id,name,path,mime,size) values('${file}','${legacy}','${task}','old.txt','${legacy}/${file}','text/plain',5);`,
+    "gate_drill",
+  );
+  const columns = () =>
+    sql(
+      "select count(*) from information_schema.columns where table_schema='public' and table_name='attachments' and column_name='scan_status'",
+      "gate_drill",
+    );
+  await assert.rejects(
+    apply(files[quarantine], "gate_drill"),
+    /Deployment gate/,
+  );
+  assert.equal(await columns(), "0");
+  assert.equal(
+    await sql(
+      "select count(*) from pg_policies where policyname='file_delete'",
+      "gate_drill",
+    ),
+    "1",
+  );
+  console.log(
+    "PASS quarantine migration refuses to run on a database with existing attachments and leaves schema and policies untouched",
+  );
+  await sql(
+    "comment on table public.attachments is 'tasknado:scanner-validated'",
+    "gate_drill",
+  );
+  for (const next of files.slice(quarantine)) await apply(next, "gate_drill");
+  assert.equal(
+    await sql(
+      `select scan_status from attachments where id='${file}'`,
+      "gate_drill",
+    ),
+    "pending",
+  );
+  assert.equal(
+    await sql(
+      `select reserved_bytes from attachment_paths where path='${legacy}/${file}'`,
+      "gate_drill",
+    ),
+    "20971520",
+  );
+  // The migrations added after the quarantine can be applied again unchanged.
+  for (const again of files.slice(quarantine + 1))
+    await apply(again, "gate_drill");
+  assert.equal(
+    await sql(
+      "select count(*) from pg_trigger where tgname='account_limits' and not tgisinternal",
+      "gate_drill",
+    ),
+    "6",
+  );
+  console.log(
+    "PASS after the operator records scanner validation the quarantine applies, existing files start pending with a full reservation, and the later migrations are idempotent",
+  );
 } finally {
   // Only the UUID-named container created by this invocation is removed.
   try {
