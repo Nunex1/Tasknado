@@ -6,7 +6,6 @@ import * as Dialog from "@radix-ui/react-dialog";
 import type { User } from "@supabase/supabase-js";
 import {
   ChevronDown,
-  Folder,
   Layers,
   LogOut,
   Settings,
@@ -14,20 +13,32 @@ import {
   X,
 } from "lucide-react";
 import { useI18n } from "@/i18n/provider";
-import { Activity, Workspace, workspaceCategories } from "@/lib/domain";
-import { workspacePath, View } from "@/lib/navigation";
+import type { Locale } from "@/i18n/core";
+import { Activity, Workspace } from "@/lib/domain";
+import type { View } from "@/lib/navigation";
 import { avatarForeground, userProfile } from "@/lib/user-profile";
 import { BrandLogo } from "./brand";
-import { primaryNav, tabIcons, tabsFor } from "./nav-items";
+import { isCurrentSection, primaryNav } from "./nav-items";
 import { ThemeControl } from "./theme";
 import { WorkspaceIcon } from "./workspace-icon";
+import { RecentActivities, WorkspaceModules } from "./workspace-nav";
 import { WorkspaceOptions } from "./workspace-switcher";
 
+// Each language is named in its own language, whatever the interface shows.
+const languages: { locale: Locale; label: string }[] = [
+  { locale: "pt-BR", label: "Português" },
+  { locale: "en-US", label: "English" },
+];
+
 /**
- * Navigation for phones. Hidden until the menu button asks for it, then laid
- * over the content as a modal dialog: Radix traps focus inside, closes on
- * Escape or a tap outside, locks page scrolling, hides the rest of the page
- * from assistive technology and returns focus to the control that opened it.
+ * Navigation for phones. Hidden until the menu button in the top right corner
+ * asks for it, then slid in from the right edge over the content as a modal
+ * dialog: Radix traps focus inside, closes on Escape or a tap outside, locks
+ * page scrolling, hides the rest of the page from assistive technology and
+ * returns focus to the control that opened it.
+ *
+ * Three groups, in this order: the places that span every workspace, the
+ * active workspace with its modules, and the account with its preferences.
  */
 export function NavDrawer({
   open,
@@ -57,7 +68,7 @@ export function NavDrawer({
   onCreate: () => void;
   onSignOut: () => void;
 }) {
-  const { t } = useI18n();
+  const { t, locale, setLocale } = useI18n();
   const path = usePathname();
   const [choosing, setChoosing] = useState(false);
   const listId = useId();
@@ -104,7 +115,25 @@ export function NavDrawer({
             </Dialog.Close>
           </div>
           <div className="nav-drawer-body">
-            <section aria-label={t("Workspace ativo")}>
+            <nav aria-label={t("Navegação principal")}>
+              {primaryNav.map(({ href, label, icon: Icon }) => {
+                // Inside a workspace its own group marks the place.
+                const active = workspace ? false : isCurrentSection(href, path);
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    onNavigate={follow(href)}
+                    className={`context-link ${active ? "active" : ""}`}
+                    aria-current={active ? "page" : undefined}
+                  >
+                    <Icon size={18} aria-hidden="true" />
+                    {t(label)}
+                  </Link>
+                );
+              })}
+            </nav>
+            <section className="drawer-group" aria-label={t("Workspace ativo")}>
               <button
                 type="button"
                 className="drawer-workspace"
@@ -141,122 +170,105 @@ export function NavDrawer({
                   />
                 </div>
               )}
+              {workspace && (
+                <>
+                  <WorkspaceModules
+                    workspace={workspace}
+                    view={view}
+                    follow={follow}
+                    iconSize={18}
+                  />
+                  <RecentActivities
+                    workspace={workspace}
+                    activities={activities}
+                    headingId={`${listId}-recent`}
+                    onOpen={(target) => {
+                      close();
+                      go(target);
+                    }}
+                  />
+                </>
+              )}
             </section>
-            {workspace && (
-              <>
-                <nav aria-label={t("Navegação do Workspace")}>
-                  <h2 className="context-category">
-                    {t(workspaceCategories[workspace.category])}
-                  </h2>
-                  {tabsFor(workspace.category).map((tab) => {
-                    const Icon = tabIcons[tab.view] ?? Folder;
-                    const href = workspacePath(workspace.id, tab.view);
-                    const active = view === tab.view;
-                    return (
-                      <Link
-                        key={tab.view}
-                        href={href}
-                        onNavigate={follow(href)}
-                        className={`context-link ${active ? "active" : ""}`}
-                        aria-current={active ? "page" : undefined}
-                      >
-                        <Icon size={18} aria-hidden="true" />
-                        {t(tab.label)}
-                      </Link>
-                    );
-                  })}
-                </nav>
-                {activities.length > 0 && (
-                  <section aria-labelledby={`${listId}-recent`}>
-                    <h2 className="context-category" id={`${listId}-recent`}>
-                      {t("Conteúdos recentes")}
-                    </h2>
-                    {activities
-                      .slice()
-                      .sort((a, b) => b.updated_at.localeCompare(a.updated_at))
-                      .slice(0, 3)
-                      .map((a) => (
-                        <button
-                          key={a.id}
-                          className="context-recent"
-                          onClick={() => {
-                            close();
-                            go(workspacePath(workspace.id, "activities", a.id));
-                          }}
-                        >
-                          {a.title}
-                        </button>
-                      ))}
-                  </section>
-                )}
-              </>
-            )}
-            <nav aria-label={t("Navegação principal")}>
-              <h2 className="context-category">{t("Geral")}</h2>
-              {primaryNav.map(({ href, label, icon: Icon }) => {
-                const active = path === href;
-                return (
-                  <Link
-                    key={href}
-                    href={href}
-                    onNavigate={follow(href)}
-                    className={`context-link ${active ? "active" : ""}`}
-                    aria-current={active ? "page" : undefined}
-                  >
-                    <Icon size={18} aria-hidden="true" />
-                    {t(label)}
-                  </Link>
-                );
-              })}
-            </nav>
-          </div>
-          <div className="nav-drawer-foot">
-            <div className="drawer-appearance">
-              <span className="context-category" aria-hidden="true">
-                {t("Aparência")}
-              </span>
-              <ThemeControl name="theme-drawer" />
-            </div>
-            <Link
-              href="/perfil"
-              onNavigate={follow("/perfil")}
-              className={`drawer-account ${path === "/perfil" ? "active" : ""}`}
-              aria-current={path === "/perfil" ? "page" : undefined}
+            <section
+              className="drawer-group"
+              aria-labelledby={`${listId}-account`}
             >
-              <span
-                className="avatar small-avatar"
-                style={{ background: color, color: avatarForeground(color) }}
-                aria-hidden="true"
+              <h2 className="context-category" id={`${listId}-account`}>
+                {t("Conta e preferências")}
+              </h2>
+              <Link
+                href="/perfil"
+                onNavigate={follow("/perfil")}
+                className={`drawer-account ${path === "/perfil" ? "active" : ""}`}
+                aria-current={path === "/perfil" ? "page" : undefined}
               >
-                {initial || <UserRound size={15} />}
-              </span>
-              <span className="drawer-account-text">
-                <strong>{displayName || t("Perfil")}</strong>
-                <small>
-                  {email && email !== displayName ? email : t("Editar perfil")}
-                </small>
-              </span>
-            </Link>
-            <Link
-              href="/settings"
-              onNavigate={follow("/settings")}
-              className={`context-link ${path === "/settings" ? "active" : ""}`}
-              aria-current={path === "/settings" ? "page" : undefined}
-            >
-              <Settings size={18} aria-hidden="true" />
-              {t("Configurações")}
-            </Link>
-            <button
-              type="button"
-              className="context-link"
-              onClick={() => {
-                close();
-                onSignOut();
-              }}
-            >
-              <LogOut size={18} aria-hidden="true" />
-              {t("Sair")}
-            </button>
+                <span
+                  className="avatar small-avatar"
+                  style={{ background: color, color: avatarForeground(color) }}
+                  aria-hidden="true"
+                >
+                  {initial || <UserRound size={15} />}
+                </span>
+                <span className="drawer-account-text">
+                  <strong>{displayName || t("Perfil")}</strong>
+                  <small>
+                    {email && email !== displayName
+                      ? email
+                      : t("Editar perfil")}
+                  </small>
+                </span>
+              </Link>
+              <div className="drawer-preference">
+                <span className="context-category" aria-hidden="true">
+                  {t("Idioma da interface")}
+                </span>
+                <div
+                  className="segmented"
+                  role="radiogroup"
+                  aria-label={t("Idioma da interface")}
+                >
+                  {languages.map((language) => (
+                    <label key={language.locale} className="segmented-option">
+                      <input
+                        type="radio"
+                        name="language-drawer"
+                        value={language.locale}
+                        checked={locale === language.locale}
+                        onChange={() => setLocale(language.locale)}
+                      />
+                      <span lang={language.locale}>{language.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div className="drawer-preference">
+                <span className="context-category" aria-hidden="true">
+                  {t("Aparência")}
+                </span>
+                <ThemeControl name="theme-drawer" />
+              </div>
+              <Link
+                href="/settings"
+                onNavigate={follow("/settings")}
+                className={`context-link ${path === "/settings" ? "active" : ""}`}
+                aria-current={path === "/settings" ? "page" : undefined}
+              >
+                <Settings size={18} aria-hidden="true" />
+                {t("Configurações")}
+              </Link>
+              <button
+                type="button"
+                className="context-link"
+                onClick={() => {
+                  close();
+                  onSignOut();
+                }}
+              >
+                <LogOut size={18} aria-hidden="true" />
+                {t("Sair")}
+              </button>
+            </section>
           </div>
         </Dialog.Content>
       </Dialog.Portal>
