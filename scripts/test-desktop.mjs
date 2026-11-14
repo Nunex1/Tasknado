@@ -812,7 +812,9 @@ try {
   await page
     .getByRole("combobox", { name: "Agendamento", exact: true })
     .selectOption("overdue");
-  await eventually(async () => (await page.locator(".activity-row").count()) === 1);
+  await eventually(
+    async () => (await page.locator(".activity-row").count()) === 1,
+  );
   await page.getByLabel("Data inicial", { exact: true }).fill("2030-01-01");
   await eventually(
     async () => (await page.locator(".activity-row").count()) === 0,

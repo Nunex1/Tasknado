@@ -45,7 +45,9 @@ export function Auth({
         );
       }}
     >
-      <fieldset disabled={pending} className="auth-pending"><AuthCard mode={mode} onMode={setMode} onRecovered={onRecovered} /></fieldset>
+      <fieldset disabled={pending} className="auth-pending">
+        <AuthCard mode={mode} onMode={setMode} onRecovered={onRecovered} />
+      </fieldset>
     </Landing>
   );
 }

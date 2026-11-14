@@ -46,7 +46,9 @@ export function HeaderSearch({
     [query, setQuery] = useState(""),
     [active, setActive] = useState(-1);
   const list = useSearch(query, {}, open);
-  const results = query.trim() ? list.data ?? [] : [], loading = list.isFetching, error = list.error ? errorMessage(list.error) : "";
+  const results = query.trim() ? (list.data ?? []) : [],
+    loading = list.isFetching,
+    error = list.error ? errorMessage(list.error) : "";
   const rows = Object.keys(searchKinds).flatMap((kind) =>
     results.filter((r) => r.kind === kind),
   );

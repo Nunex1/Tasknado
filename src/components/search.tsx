@@ -25,13 +25,34 @@ export function GlobalSearch({
     [from, setFrom] = useState(""),
     [to, setTo] = useState(""),
     [mime, setMime] = useState("");
-  const scope = JSON.stringify([query, workspace, kind, status, from, to, mime]);
-  const [page, setPage] = useState({scope, offset:0});
+  const scope = JSON.stringify([
+    query,
+    workspace,
+    kind,
+    status,
+    from,
+    to,
+    mime,
+  ]);
+  const [page, setPage] = useState({ scope, offset: 0 });
   const offset = page.scope === scope ? page.offset : 0;
-  const setOffset = (update: (old: number) => number) => setPage({scope, offset:update(offset)});
-  const list = useSearch(query, {workspace,kind,status,from,to,mime,offset});
-  const results = list.data ?? [], loading = list.isFetching, more = results.length === 50;
-  useEffect(() => {if(list.error) report(errorMessage(list.error));},[list.error,report]);
+  const setOffset = (update: (old: number) => number) =>
+    setPage({ scope, offset: update(offset) });
+  const list = useSearch(query, {
+    workspace,
+    kind,
+    status,
+    from,
+    to,
+    mime,
+    offset,
+  });
+  const results = list.data ?? [],
+    loading = list.isFetching,
+    more = results.length === 50;
+  useEffect(() => {
+    if (list.error) report(errorMessage(list.error));
+  }, [list.error, report]);
   const kinds: Record<string, string> = {
     workspace: t("Workspace"),
     activity: t("Atividade"),

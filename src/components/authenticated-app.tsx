@@ -50,11 +50,15 @@ import {
 } from "@/lib/domain";
 import { Button } from "./ui/button";
 import { Modal } from "./ui/dialog";
-const ActivityDetail = dynamic(() => import("./activity-detail").then(m => m.ActivityDetail));
-const Notes = dynamic(() => import("./notes").then(m => m.Notes));
-const GlobalSearch = dynamic(() => import("./search").then(m => m.GlobalSearch));
+// The primary detail screen belongs to the authenticated bundle: a separate
+// Suspense/chunk boundary added measurable delay to every first detail open.
+import { ActivityDetail } from "./activity-detail";
+const Notes = dynamic(() => import("./notes").then((m) => m.Notes));
+const GlobalSearch = dynamic(() =>
+  import("./search").then((m) => m.GlobalSearch),
+);
 import { BrandLogo } from "./brand";
-const Profile = dynamic(() => import("./profile").then(m => m.Profile));
+const Profile = dynamic(() => import("./profile").then((m) => m.Profile));
 import { LanguageSettings } from "./language-settings";
 import { ThemeSettings } from "./theme";
 import {
@@ -62,7 +66,9 @@ import {
   attributesFromForm,
   Schedule,
 } from "./category-fields";
-const PriorityMatrix = dynamic(() => import("./priority-matrix").then(m => m.PriorityMatrix));
+const PriorityMatrix = dynamic(() =>
+  import("./priority-matrix").then((m) => m.PriorityMatrix),
+);
 import { routeState, workspacePath, View } from "@/lib/navigation";
 import { DesktopShell } from "./desktop-shell";
 import { WorkspaceObservations, WorkspaceHistory } from "./workspace-records";
@@ -78,10 +84,23 @@ type Editor =
   | { kind: "workspace"; item?: Workspace }
   | { kind: "activity"; item?: Activity }
   | { kind: "note"; item?: Note };
-export function AuthenticatedApp(props: {user: User; setUser: (user: User | null) => void}) {
-  return <SessionData><AuthenticatedContent {...props} /></SessionData>;
+export function AuthenticatedApp(props: {
+  user: User;
+  setUser: (user: User | null) => void;
+}) {
+  return (
+    <SessionData>
+      <AuthenticatedContent {...props} />
+    </SessionData>
+  );
 }
-function AuthenticatedContent({user, setUser}: {user: User; setUser: (user: User | null) => void}) {
+function AuthenticatedContent({
+  user,
+  setUser,
+}: {
+  user: User;
+  setUser: (user: User | null) => void;
+}) {
   const { t, date, number, locale, shortDate } = useI18n();
   const pathname = usePathname();
   const router = useRouter();
@@ -138,15 +157,55 @@ function AuthenticatedContent({user, setUser}: {user: User; setUser: (user: User
   const [noteSearch, setNoteSearch] = useState("");
   const [noteSort, setNoteSort] = useState("updated_at");
   const [now, setNow] = useState(localMinute);
-  useEffect(() => { const timer = setInterval(() => setNow(localMinute()), 60_000); return () => clearInterval(timer); }, []);
-  const search = useDebounced(query);
-  const data = useAppData({ workspaceId, activityId, noteId: noteId && uuid.test(noteId) ? noteId : null, view: isProfile ? "settings" : view,
-    filters: {status: filter, archived, query: search, canvas: canvasFilter, schedule: scheduleFilter, from: dateFrom, to: dateTo, ...(scheduleFilter === "overdue" ? {localNow: now} : {})}, sort,
-    noteSearch: useDebounced(noteSearch), noteSort });
-  const { cache, workspaces, activities, notes, workspace, selected, workspaceMap, activityMap, observationCounts, loading, loadError, hasMore, noteMore } = data;
-  const loadWorkspaces = data.refreshWorkspaces;
   useEffect(() => {
-    if (data.noteMissing || (view === "notes" && noteId && !uuid.test(noteId))) {
+    const timer = setInterval(() => setNow(localMinute()), 60_000);
+    return () => clearInterval(timer);
+  }, []);
+  const search = useDebounced(query);
+  const data = useAppData({
+    workspaceId,
+    activityId,
+    noteId: noteId && uuid.test(noteId) ? noteId : null,
+    view: isProfile ? "settings" : view,
+    filters: {
+      status: filter,
+      archived,
+      query: search,
+      canvas: canvasFilter,
+      schedule: scheduleFilter,
+      from: dateFrom,
+      to: dateTo,
+      ...(scheduleFilter === "overdue" ? { localNow: now } : {}),
+    },
+    sort,
+    noteSearch: useDebounced(noteSearch),
+    noteSort,
+  });
+  const {
+    cache,
+    workspaces,
+    activities,
+    notes,
+    workspace,
+    selected,
+    workspaceMap,
+    activityMap,
+    observationCounts,
+    loading,
+    loadError,
+    hasMore,
+    noteMore,
+  } = data;
+  const loadWorkspaces = data.refreshWorkspaces;
+  const removingNote = useRef<string | null>(null);
+  useEffect(() => {
+    if (removingNote.current && noteId !== removingNote.current)
+      removingNote.current = null;
+    if (removingNote.current === noteId && noteId) return;
+    if (
+      data.noteMissing ||
+      (view === "notes" && noteId && !uuid.test(noteId))
+    ) {
       report("Esta nota não está mais disponível.");
       router.replace(workspacePath(workspaceId!, "notes"));
     }
@@ -184,7 +243,11 @@ function AuthenticatedContent({user, setUser}: {user: User; setUser: (user: User
   function setActivityId(id: string | null, sourceWorkspace?: string) {
     const a = activityMap.get(id || "");
     const path = id
-      ? workspacePath(sourceWorkspace || a?.workspace_id || workspaceId!, "activities", id)
+      ? workspacePath(
+          sourceWorkspace || a?.workspace_id || workspaceId!,
+          "activities",
+          id,
+        )
       : workspaceId
         ? workspacePath(workspaceId, "activities")
         : "/activities";
@@ -350,11 +413,15 @@ function AuthenticatedContent({user, setUser}: {user: User; setUser: (user: User
   }
   async function deleteNote(note: Note, nextId: string | null) {
     let gone = false;
+    removingNote.current = note.id;
     try {
       await removeNote(client(), note.id);
     } catch (e) {
       // Already deleted elsewhere: the screen still has to let go of it.
-      if (!isGone(e)) throw e;
+      if (!isGone(e)) {
+        removingNote.current = null;
+        throw e;
+      }
       gone = true;
     }
     await data.refreshNotes(note.id);
@@ -427,9 +494,12 @@ function AuthenticatedContent({user, setUser}: {user: User; setUser: (user: User
     go(path);
   }
   const shown = activities;
-  const counts = (["not_started", "in_progress", "completed"] as const).map(status => ({ status,
-    count: data.counts?.[status === "in_progress" ? "started" : status] ?? 0,
-  }));
+  const counts = (["not_started", "in_progress", "completed"] as const).map(
+    (status) => ({
+      status,
+      count: data.counts?.[status === "in_progress" ? "started" : status] ?? 0,
+    }),
+  );
   const advancedFilters = [
     canvasFilter,
     scheduleFilter,
@@ -557,12 +627,7 @@ function AuthenticatedContent({user, setUser}: {user: User; setUser: (user: User
         {loadError && (
           <p role="alert" className="error">
             {t(loadError)}{" "}
-            <Button
-              variant="ghost"
-              onClick={() =>
-                void data.retry()
-              }
-            >
+            <Button variant="ghost" onClick={() => void data.retry()}>
               {t("Tentar novamente")}
             </Button>
           </p>
@@ -769,13 +834,19 @@ function AuthenticatedContent({user, setUser}: {user: User; setUser: (user: User
               report={report}
             />
             {noteMore && (
-              <Button variant="ghost" disabled={data.loadingMoreNotes} onClick={() => void data.loadMoreNotes()}>
+              <Button
+                variant="ghost"
+                disabled={data.loadingMoreNotes}
+                onClick={() => void data.loadMoreNotes()}
+              >
                 {t("Carregar mais notas")}
               </Button>
             )}
           </>
         ) : activityId && view === "activities" && !selected ? (
-          <p role="status">{t(loading ? "Carregando…" : "Atividade indisponível.")}</p>
+          <p role="status">
+            {t(loading ? "Carregando…" : "Atividade indisponível.")}
+          </p>
         ) : selected && view === "activities" ? (
           <ActivityDetail
             key={selected.id}
@@ -846,10 +917,7 @@ function AuthenticatedContent({user, setUser}: {user: User; setUser: (user: User
                             <Icon size={15} />
                           </span>
                         </div>
-                        <strong>
-                          {number(count)}
-
-                        </strong>
+                        <strong>{number(count)}</strong>
                         <small>
                           {t("Ver atividades")} <ArrowUpRight size={13} />
                         </small>
@@ -878,7 +946,9 @@ function AuthenticatedContent({user, setUser}: {user: User; setUser: (user: User
                       : t("Todas as atividades")}
                   </h2>
                   {view !== "dashboard" && (
-                    <span className="count">{number(data.total ?? shown.length)}</span>
+                    <span className="count">
+                      {number(data.total ?? shown.length)}
+                    </span>
                   )}
                 </div>
                 <button
@@ -1049,7 +1119,10 @@ function AuthenticatedContent({user, setUser}: {user: User; setUser: (user: User
                     <span className="visually-hidden">{t("Observações")}</span>
                   </span>
                 </div>
-                <WindowedList rows={shown.slice(0, view === "dashboard" ? 6 : undefined)} label={t("Atividades")} render={(a) => {
+                <WindowedList
+                  rows={shown.slice(0, view === "dashboard" ? 6 : undefined)}
+                  label={t("Atividades")}
+                  render={(a) => {
                     const Icon = statusIcons[a.status];
                     return (
                       <button
@@ -1088,18 +1161,14 @@ function AuthenticatedContent({user, setUser}: {user: User; setUser: (user: User
                           {t(statuses[a.status])}
                         </span>
                         <span className="classification">
-                          {(
-                            workspace ||
-                            workspaceMap.get(a.workspace_id)
-                          )?.category === "work"
+                          {(workspace || workspaceMap.get(a.workspace_id))
+                            ?.category === "work"
                             ? t(quadrants[quadrant(a.category_attributes.work)])
                                 .split(" · ")
                                 .slice(0, 2)
                                 .join(" · ")
-                            : (
-                                  workspace ||
-                                  workspaceMap.get(a.workspace_id)
-                                )?.category === "university"
+                            : (workspace || workspaceMap.get(a.workspace_id))
+                                  ?.category === "university"
                               ? "Canvas: " +
                                 t(
                                   a.category_attributes.university
@@ -1129,7 +1198,8 @@ function AuthenticatedContent({user, setUser}: {user: User; setUser: (user: User
                         </span>
                       </button>
                     );
-                  }} />
+                  }}
+                />
               </div>
               {!shown.length && (
                 <div className="empty">

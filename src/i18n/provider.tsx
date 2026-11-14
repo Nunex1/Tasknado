@@ -38,13 +38,19 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const account = useRef<string | null>(null);
   const pathname = usePathname();
   const languageRequest = useRef(0);
-  const applyLocale = useCallback(async (locale: Locale) => {
-    const request = ++languageRequest.current;
-    try {
-      await ensureLocale(instance, locale);
-      if (request === languageRequest.current) await instance.changeLanguage(locale);
-    } catch { if (request === languageRequest.current) setStorageError(true); }
-  }, [instance]);
+  const applyLocale = useCallback(
+    async (locale: Locale) => {
+      const request = ++languageRequest.current;
+      try {
+        await ensureLocale(instance, locale);
+        if (request === languageRequest.current)
+          await instance.changeLanguage(locale);
+      } catch {
+        if (request === languageRequest.current) setStorageError(true);
+      }
+    },
+    [instance],
+  );
   const saving = useRef(0);
   const queue = useRef(Promise.resolve());
 

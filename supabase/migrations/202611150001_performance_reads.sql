@@ -99,3 +99,17 @@ $$;
 revoke all on function public.activity_page(uuid,jsonb,text,jsonb,integer),public.activity_total(uuid,jsonb),public.activity_summary(uuid),public.observation_counts_for(uuid[]) from public;
 grant execute on function public.activity_page(uuid,jsonb,text,jsonb,integer),public.activity_total(uuid,jsonb),public.activity_summary(uuid),public.observation_counts_for(uuid[]) to authenticated;
 
+
+-- Preserve the legacy timeline API; new readers use a stable timestamp/id cursor.
+create function public.workspace_timeline_page(p_workspace uuid,p_after timestamptz default null,p_id uuid default null)
+returns table(id uuid,activity_id uuid,action text,title text,previous jsonb,current jsonb,created_at timestamptz)
+language sql stable security invoker set search_path=pg_catalog,public,pg_temp as $$
+ with history as (
+  select e.id,e.activity_id,e.action,e.title,e.previous,e.current,e.created_at from workspace_events e where e.workspace_id=p_workspace
+  union all select a.id,a.id,'activity_created',a.title,null,null,a.created_at from activities a where a.workspace_id=p_workspace and not exists(select 1 from workspace_events e where e.source_id=a.id and e.action='activity_created')
+  union all select e.id,a.id,case when e.type='observation' then 'observation_created' else e.type::text end,a.title,null,jsonb_build_object('content',e.content),e.created_at from activity_events e join activities a on a.id=e.activity_id where a.workspace_id=p_workspace and not exists(select 1 from workspace_events h where h.source_id=e.id and h.action='observation_created')
+  union all select h.id,a.id,'priority_changed',a.title,h.previous,h.current,h.created_at from priority_history h join activities a on a.id=h.activity_id where a.workspace_id=p_workspace
+ ) select * from history where p_after is null or (created_at,id)<(p_after,p_id) order by created_at desc,id desc limit 51;
+$$;
+revoke all on function public.workspace_timeline_page(uuid,timestamptz,uuid) from public;
+grant execute on function public.workspace_timeline_page(uuid,timestamptz,uuid) to authenticated;

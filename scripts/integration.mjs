@@ -583,9 +583,17 @@ try {
       .upload(path, file, { contentType: "text/plain" }),
   );
   assert.ok((await a.storage.from("attachments").download(path)).error);
-  assert.ok((await a.from("attachments").update({scan_status:"clean"}).eq("id",fid)).error);
+  assert.ok(
+    (await a.from("attachments").update({ scan_status: "clean" }).eq("id", fid))
+      .error,
+  );
   // Synthetic scanner verdict in the loopback fixture only; this does not validate ClamAV.
-  ok(await admin.from("attachments").update({scan_status:"clean",scanned_at:new Date().toISOString()}).eq("id",fid));
+  ok(
+    await admin
+      .from("attachments")
+      .update({ scan_status: "clean", scanned_at: new Date().toISOString() })
+      .eq("id", fid),
+  );
 
   const downloaded = ok(await a.storage.from("attachments").download(path));
   assert.equal(await downloaded.text(), "Evidência do rateio");
@@ -746,14 +754,12 @@ try {
   );
   assert.ok(
     (
-      await a
-        .from("workspace_events")
-        .insert({
-          workspace_id: workspace.id,
-          owner_id: ua.id,
-          source_id: observation.id,
-          action: "forged",
-        })
+      await a.from("workspace_events").insert({
+        workspace_id: workspace.id,
+        owner_id: ua.id,
+        source_id: observation.id,
+        action: "forged",
+      })
     ).error,
   );
   assert.ok(

@@ -548,7 +548,18 @@ try {
   const activityRequests = [];
   const recordRequest = (request) => {
     const url = decodeURIComponent(request.url());
-    if (url.includes("/rest/v1/activities?")) activityRequests.push(url);
+    if (url.includes("/rest/v1/activities?"))
+      activityRequests.push({
+        url,
+        workspace: new URL(request.url()).searchParams
+          .get("workspace_id")
+          ?.replace(/^eq\./, ""),
+      });
+    if (url.includes("/rest/v1/rpc/activity_page"))
+      activityRequests.push({
+        url,
+        workspace: request.postDataJSON()?.p_workspace,
+      });
   };
   page.on("request", recordRequest);
   drawer = await openDrawer();
@@ -596,12 +607,11 @@ try {
     "Workspace ativo: Faculdade",
   );
   // The scope is applied by the query, not by hiding rows afterwards.
-  const scoped = activityRequests.filter((url) => !/[?&]id=eq./.test(url));
+  const scoped = activityRequests.filter(({ url }) => !/[?&]id=eq./.test(url));
   assert.ok(scoped.length > 0);
-  for (const url of scoped)
+  for (const { url, workspace } of scoped)
     assert.ok(
-      url.includes(`workspace_id=eq.${university.id}`) ||
-        url.includes(`workspace_id=eq.${work}`),
+      workspace === university.id || workspace === work,
       `Unscoped activities request inside a workspace: ${url}`,
     );
   page.off("request", recordRequest);

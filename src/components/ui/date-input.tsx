@@ -171,9 +171,7 @@ export function DateInput({
                     weekday: "long",
                   }).format(day)}
                 >
-                  {dateFormatter(locale, { weekday: "short" }).format(
-                    day,
-                  )}
+                  {dateFormatter(locale, { weekday: "short" }).format(day)}
                 </span>
               ))}
             </div>

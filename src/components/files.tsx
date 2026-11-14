@@ -49,12 +49,34 @@ export function Files({
     [preview, setPreview] = useState<{ file: Attachment; url: string } | null>(
       null,
     );
-  const list = useQuery({queryKey:["files",kind,id],queryFn: ({signal}) => fetchPages((from,to) => client().from("attachments")
-    .select("id,activity_id,note_id,name,path,mime,size,event_id,created_at,scan_status").eq(kind+"_id",id).order("created_at").order("id").range(from,to).abortSignal(signal))});
+  const list = useQuery({
+    queryKey: ["files", kind, id],
+    queryFn: ({ signal }) =>
+      fetchPages((from, to) =>
+        client()
+          .from("attachments")
+          .select(
+            "id,activity_id,note_id,name,path,mime,size,created_at,scan_status",
+          )
+          .eq(kind + "_id", id)
+          .order("created_at")
+          .order("id")
+          .range(from, to)
+          .abortSignal(signal),
+      ),
+  });
   const files = list.data ?? [];
-  async function load() { const result = await list.refetch(); if(result.error) throw result.error; return result.data ?? []; }
-  useEffect(() => {setPreview(null);},[id,kind]);
-  useEffect(() => {if(list.error) report(errorMessage(list.error));},[list.error,report]);
+  async function load() {
+    const result = await list.refetch();
+    if (result.error) throw result.error;
+    return result.data ?? [];
+  }
+  useEffect(() => {
+    setPreview(null);
+  }, [id, kind]);
+  useEffect(() => {
+    if (list.error) report(errorMessage(list.error));
+  }, [list.error, report]);
 
   async function upload(file: File) {
     const invalid = validateFile(file);

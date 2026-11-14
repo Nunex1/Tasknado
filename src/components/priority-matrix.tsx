@@ -82,7 +82,14 @@ export function PriorityMatrix({
                 void move(e.dataTransfer.getData("text/plain"), q);
               }}
             >
-              <MatrixColumn workspaceId={workspaceId} q={q} busy={busy} move={move} onOpen={onOpen} onDragEnd={() => setOver(null)} />
+              <MatrixColumn
+                workspaceId={workspaceId}
+                q={q}
+                busy={busy}
+                move={move}
+                onOpen={onOpen}
+                onDragEnd={() => setOver(null)}
+              />
             </section>
           );
         })}
@@ -91,64 +98,98 @@ export function PriorityMatrix({
   );
 }
 
-function MatrixColumn({workspaceId, q, busy, move, onOpen, onDragEnd}: {
-  workspaceId: string; q: Quadrant; busy: boolean; move: (id: string, q: Quadrant) => Promise<void>;
-  onOpen: (id: string) => void; onDragEnd: () => void;
+function MatrixColumn({
+  workspaceId,
+  q,
+  busy,
+  move,
+  onOpen,
+  onDragEnd,
+}: {
+  workspaceId: string;
+  q: Quadrant;
+  busy: boolean;
+  move: (id: string, q: Quadrant) => Promise<void>;
+  onOpen: (id: string) => void;
+  onDragEnd: () => void;
 }) {
-  const {t, number} = useI18n();
-  const [code, name, action] = q === "unclassified" ? ["", t(quadrants[q]), ""] : t(quadrants[q]).split(" · ");
-  const filters = {quadrant: q};
+  const { t, number } = useI18n();
+  const [code, name, action] =
+    q === "unclassified"
+      ? ["", t(quadrants[q]), ""]
+      : t(quadrants[q]).split(" · ");
+  const filters = { quadrant: q };
   const list = useInfiniteQuery(activityPages(workspaceId, filters));
-  const total = useQuery({queryKey: ["activity-total", workspaceId, filters], queryFn: async ({signal}) => check(await client().rpc("activity_total", {p_workspace: workspaceId, p_filters: filters}).abortSignal(signal))});
-  const rows = list.data?.pages.flatMap(p => p.rows) ?? [];
-  return <>
-              <h3>
-                {code && <span className="matrix-code">{code}</span>}
-                <span>{name}</span>
-                <span className="count">{number(total.data ?? rows.length)}</span>
-              </h3>
-              {action && <p className="matrix-action">{action}</p>}
-              <WindowedList rows={rows} label={name} estimate={180} render={(a) => (
-                <article
-                  className="matrix-card"
-                  key={a.id}
-                  draggable={!busy}
-                  onDragStart={(e) =>
-                    e.dataTransfer.setData("text/plain", a.id)
-                  }
-                  onDragEnd={onDragEnd}
-                >
-                  <button className="text-button" onClick={() => onOpen(a.id)}>
-                    {a.title}
-                  </button>
-                  <span className={`badge ${a.status}`}>
-                    {t(statuses[a.status])}
-                  </span>
-                  <p className={isOverdue(a) ? "overdue" : "hint"}>
-                    <Schedule work={a.category_attributes.work} />
-                    {isOverdue(a) && ` · ${t("Atrasada")}`}
-                  </p>
-                  <select
-                    aria-label={t("Quadrante de {{title}}", { title: a.title })}
-                    value={q}
-                    disabled={busy}
-                    onChange={(e) =>
-                      void move(a.id, e.target.value as Quadrant)
-                    }
-                  >
-                    {(Object.keys(quadrants) as Quadrant[]).map((k) => (
-                      <option key={k} value={k}>
-                        {t(quadrants[k])}
-                      </option>
-                    ))}
-                  </select>
-                </article>
-              )} />
-              {!rows.length && (
-                <p className="hint">{t("Nenhuma atividade neste quadrante")}</p>
-              )}
+  const total = useQuery({
+    queryKey: ["activity-total", workspaceId, filters],
+    queryFn: async ({ signal }) =>
+      check(
+        await client()
+          .rpc("activity_total", {
+            p_workspace: workspaceId,
+            p_filters: filters,
+          })
+          .abortSignal(signal),
+      ),
+  });
+  const rows = list.data?.pages.flatMap((p) => p.rows) ?? [];
+  return (
+    <>
+      <h3>
+        {code && <span className="matrix-code">{code}</span>}
+        <span>{name}</span>
+        <span className="count">{number(total.data ?? rows.length)}</span>
+      </h3>
+      {action && <p className="matrix-action">{action}</p>}
+      <WindowedList
+        rows={rows}
+        label={name}
+        estimate={180}
+        render={(a) => (
+          <article
+            className="matrix-card"
+            key={a.id}
+            draggable={!busy}
+            onDragStart={(e) => e.dataTransfer.setData("text/plain", a.id)}
+            onDragEnd={onDragEnd}
+          >
+            <button className="text-button" onClick={() => onOpen(a.id)}>
+              {a.title}
+            </button>
+            <span className={`badge ${a.status}`}>{t(statuses[a.status])}</span>
+            <p className={isOverdue(a) ? "overdue" : "hint"}>
+              <Schedule work={a.category_attributes.work} />
+              {isOverdue(a) && ` · ${t("Atrasada")}`}
+            </p>
+            <select
+              aria-label={t("Quadrante de {{title}}", { title: a.title })}
+              value={q}
+              disabled={busy}
+              onChange={(e) => void move(a.id, e.target.value as Quadrant)}
+            >
+              {(Object.keys(quadrants) as Quadrant[]).map((k) => (
+                <option key={k} value={k}>
+                  {t(quadrants[k])}
+                </option>
+              ))}
+            </select>
+          </article>
+        )}
+      />
+      {!rows.length && (
+        <p className="hint">{t("Nenhuma atividade neste quadrante")}</p>
+      )}
 
-    {list.hasNextPage && <Button variant="ghost" disabled={list.isFetchingNextPage} onClick={() => void list.fetchNextPage()}>{t("Carregar mais")}</Button>}
-    {list.error && <p role="alert">{t(errorMessage(list.error))}</p>}
-  </>;
+      {list.hasNextPage && (
+        <Button
+          variant="ghost"
+          disabled={list.isFetchingNextPage}
+          onClick={() => void list.fetchNextPage()}
+        >
+          {t("Carregar mais")}
+        </Button>
+      )}
+      {list.error && <p role="alert">{t(errorMessage(list.error))}</p>}
+    </>
+  );
 }

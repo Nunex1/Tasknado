@@ -286,7 +286,10 @@ function NoteMenu({
 type DeleteTarget =
   { kind: "entry"; entry: Entry } | { kind: "note"; note: Note };
 export function Notes({
-  query, onQuery, order, onOrder,
+  query,
+  onQuery,
+  order,
+  onOrder,
   notes,
   selectedId,
   onSelect,
@@ -296,7 +299,10 @@ export function Notes({
   onDirty,
   report,
 }: {
-  query: string; onQuery: (value: string) => void; order: string; onOrder: (value: string) => void;
+  query: string;
+  onQuery: (value: string) => void;
+  order: string;
+  onOrder: (value: string) => void;
   notes: Note[];
   selectedId: string | null;
   onSelect: (id: string) => void;
@@ -337,31 +343,44 @@ export function Notes({
       return;
     }
     controller.current?.abort();
-    const request = new AbortController(); controller.current = request;
+    const request = new AbortController();
+    controller.current = request;
     const seq = ++sequence.current;
     const cursor = offset ? pageCursor.current : undefined;
     setLoadingEntries(true);
     try {
-    const result = await cache.fetchQuery({queryKey: ["entries", selectedId, cursor?.id ?? null], queryFn: async () => {
-      let q = client().from("note_entries").select(columns.entries).eq("note_id",selectedId)
-        .order("created_at").order("id").limit(51);
-      if(cursor) q=q.or(timeCursor(cursor,false));
-      return check(await q.abortSignal(request.signal));
-    }});
-    if (request.signal.aborted || seq !== sequence.current) return;
-    if (activeId.current !== selectedId) return;
-    setEntries((prev) =>
-      mergeEntries(prev, result.slice(0,50), offset > 0, removed.current),
-    );
-    setLoadedCount(offset + Math.min(result.length,50));
-    setMore(result.length > 50);
-    pageCursor.current = result.slice(0, 50).at(-1);
+      const result = await cache.fetchQuery({
+        queryKey: ["entries", selectedId, cursor?.id ?? null],
+        queryFn: async () => {
+          let q = client()
+            .from("note_entries")
+            .select(columns.entries)
+            .eq("note_id", selectedId)
+            .order("created_at")
+            .order("id")
+            .limit(51);
+          if (cursor) q = q.or(timeCursor(cursor, false));
+          return check(await q.abortSignal(request.signal));
+        },
+      });
+      if (request.signal.aborted || seq !== sequence.current) return;
+      if (activeId.current !== selectedId) return;
+      setEntries((prev) =>
+        mergeEntries(prev, result.slice(0, 50), offset > 0, removed.current),
+      );
+      setLoadedCount(offset + Math.min(result.length, 50));
+      setMore(result.length > 50);
+      pageCursor.current = result.slice(0, 50).at(-1);
     } catch (error) {
       if (!request.signal.aborted && seq === sequence.current) throw error;
-    } finally { if (seq === sequence.current) setLoadingEntries(false); }
+    } finally {
+      if (seq === sequence.current) setLoadingEntries(false);
+    }
   }
   function startLoad(offset = 0) {
-    pending.current = load(offset).catch((e) => { if(!controller.current?.signal.aborted) report(errorMessage(e)); });
+    pending.current = load(offset).catch((e) => {
+      if (!controller.current?.signal.aborted) report(errorMessage(e));
+    });
   }
   useEffect(() => {
     setEntries([]);
@@ -371,11 +390,17 @@ export function Notes({
     // A confirmation left open belongs to the note that was on screen.
     if (!deleteLock.current) setTarget(null);
     startLoad();
-    return () => { controller.current?.abort(); sequence.current++; };
+    return () => {
+      controller.current?.abort();
+      sequence.current++;
+    };
   }, [selectedId]);
   async function add() {
     if (!selectedId) return;
-    if (dirtyEntries.current.size) { report("Há alterações não salvas. Salve ou cancele antes de sair."); return; }
+    if (dirtyEntries.current.size) {
+      report("Há alterações não salvas. Salve ou cancele antes de sair.");
+      return;
+    }
     setBusy(true);
     try {
       const entry = check(
@@ -385,7 +410,10 @@ export function Notes({
           .select()
           .single(),
       ) as Entry;
-      await cache.invalidateQueries({queryKey: ["entries", selectedId], refetchType: "none"});
+      await cache.invalidateQueries({
+        queryKey: ["entries", selectedId],
+        refetchType: "none",
+      });
       if (activeId.current === selectedId) {
         setEntries((prev) => [...prev, entry]);
         setRevealId(entry.id);
@@ -415,7 +443,10 @@ export function Notes({
           gone = true;
         }
         removed.current.add(entry.id);
-        await cache.invalidateQueries({queryKey: ["entries", entry.note_id],refetchType:"none"});
+        await cache.invalidateQueries({
+          queryKey: ["entries", entry.note_id],
+          refetchType: "none",
+        });
         dirtyEntries.current.delete(entry.id);
         onDirty(entry.id, false);
         if (activeId.current === entry.note_id) {
@@ -429,8 +460,8 @@ export function Notes({
       } else {
         const { note } = target;
         await onDelete(note, nextNoteId(filtered, note.id));
-        await cache.cancelQueries({queryKey: ["entries", note.id]});
-        cache.removeQueries({queryKey: ["entries", note.id]});
+        await cache.cancelQueries({ queryKey: ["entries", note.id] });
+        cache.removeQueries({ queryKey: ["entries", note.id] });
         for (const entry of shown.current) {
           removed.current.add(entry.id);
           dirtyEntries.current.delete(entry.id);
@@ -480,21 +511,25 @@ export function Notes({
             <option value="created_at">{t("Criação")}</option>
             <option value="title">{t("Nome")}</option>
           </select>
-          <WindowedList rows={filtered} label={t("Notas")} render={(note) => (
-            <button
-              key={note.id}
-              onClick={() => onSelect(note.id)}
-              className={
-                "note-list-item " + (selectedId === note.id ? "active" : "")
-              }
-            >
-              <NotebookPen size={18} />
-              <span>
-                <strong>{note.title}</strong>
-                <small>{date(note.updated_at)}</small>
-              </span>
-            </button>
-          )} />
+          <WindowedList
+            rows={filtered}
+            label={t("Notas")}
+            render={(note) => (
+              <button
+                key={note.id}
+                onClick={() => onSelect(note.id)}
+                className={
+                  "note-list-item " + (selectedId === note.id ? "active" : "")
+                }
+              >
+                <NotebookPen size={18} />
+                <span>
+                  <strong>{note.title}</strong>
+                  <small>{date(note.updated_at)}</small>
+                </span>
+              </button>
+            )}
+          />
           {!filtered.length && (
             <p className="empty-inline">{t("Nenhuma nota encontrada.")}</p>
           )}
@@ -525,28 +560,57 @@ export function Notes({
                 </div>
               </div>
               <div className="note-entries">
-                <WindowedList key={selectedId} rows={entries} mode="pages" revealId={revealId} label={t("Notas")} canChange={() => { if(dirtyEntries.current.size) { report("Há alterações não salvas. Salve ou cancele antes de sair."); return false; } return true; }} render={(entry) => (
-                  <NoteEntry
-                    key={entry.id}
-                    entry={entry}
-                    deleting={
-                      deleting &&
-                      !!target &&
-                      (target.kind === "note" || target.entry.id === entry.id)
+                <WindowedList
+                  key={selectedId}
+                  rows={entries}
+                  mode="pages"
+                  revealId={revealId}
+                  label={t("Notas")}
+                  canChange={() => {
+                    if (dirtyEntries.current.size) {
+                      report(
+                        "Há alterações não salvas. Salve ou cancele antes de sair.",
+                      );
+                      return false;
                     }
-                    onDelete={(item, element) => {
-                      opener.current = element;
-                      setTarget({ kind: "entry", entry: item });
-                    }}
-                    onSaved={(saved) => {
-                      setEntries(old => old.map(e => e.id === saved.id ? saved : e));
-                      cache.setQueriesData<Entry[]>({queryKey:["entries",saved.note_id]}, old => old?.map(e => e.id === saved.id ? saved : e));
-                      void cache.invalidateQueries({queryKey:["notes"],refetchType:"none"});
-                    }}
-                    onDirty={(id, value) => { if(value) dirtyEntries.current.add(id); else dirtyEntries.current.delete(id); onDirty(id,value); }}
-                    report={report}
-                  />
-                )} />
+                    return true;
+                  }}
+                  render={(entry) => (
+                    <NoteEntry
+                      key={entry.id}
+                      entry={entry}
+                      deleting={
+                        deleting &&
+                        !!target &&
+                        (target.kind === "note" || target.entry.id === entry.id)
+                      }
+                      onDelete={(item, element) => {
+                        opener.current = element;
+                        setTarget({ kind: "entry", entry: item });
+                      }}
+                      onSaved={(saved) => {
+                        setEntries((old) =>
+                          old.map((e) => (e.id === saved.id ? saved : e)),
+                        );
+                        cache.setQueriesData<Entry[]>(
+                          { queryKey: ["entries", saved.note_id] },
+                          (old) =>
+                            old?.map((e) => (e.id === saved.id ? saved : e)),
+                        );
+                        void cache.invalidateQueries({
+                          queryKey: ["notes"],
+                          refetchType: "none",
+                        });
+                      }}
+                      onDirty={(id, value) => {
+                        if (value) dirtyEntries.current.add(id);
+                        else dirtyEntries.current.delete(id);
+                        onDirty(id, value);
+                      }}
+                      report={report}
+                    />
+                  )}
+                />
                 {!entries.length && (
                   <div className="empty">
                     <NotebookPen />

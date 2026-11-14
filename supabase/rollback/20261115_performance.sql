@@ -77,7 +77,7 @@ language sql stable security invoker set search_path=pg_catalog,public,pg_temp a
  order by r.created_at desc,r.id limit 50 offset greatest(p_offset,0);
 $$;
 do $$ declare t text; begin
- foreach t in array array['workspaces','activities','activity_events','notes','note_entries','attachments'] loop
+ foreach t in array array['workspaces','activities','activity_events','notes','note_entries','attachments','workspace_observations'] loop
  execute format('drop trigger audit on public.%I',t);execute format('drop trigger audit_update on public.%I',t);
  execute format('create trigger audit after insert or update or delete on public.%I for each row execute function public.audit()',t);
  end loop;

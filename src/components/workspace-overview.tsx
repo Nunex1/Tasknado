@@ -84,12 +84,21 @@ export function RecentObservations({
   onOpen: (r: SearchResult) => void;
 }) {
   const { t, date } = useI18n();
-  const list = useQuery({queryKey: ["recent-observations",workspaceId], queryFn: async ({signal}) => {
-    let q = client().from("workspace_observations").select(columns.observations).order("created_at",{ascending:false}).order("id").limit(3);
-    if(workspaceId) q=q.eq("workspace_id",workspaceId);
-    return check(await q.abortSignal(signal));
-  }});
-  const rows = list.data ?? [], error = list.error ? errorMessage(list.error) : "";
+  const list = useQuery({
+    queryKey: ["recent-observations", workspaceId],
+    queryFn: async ({ signal }) => {
+      let q = client()
+        .from("workspace_observations")
+        .select(columns.observations)
+        .order("created_at", { ascending: false })
+        .order("id")
+        .limit(3);
+      if (workspaceId) q = q.eq("workspace_id", workspaceId);
+      return check(await q.abortSignal(signal));
+    },
+  });
+  const rows = list.data ?? [],
+    error = list.error ? errorMessage(list.error) : "";
   return (
     <section className="recent-observations">
       <h2>{t("Últimas observações gerais")}</h2>

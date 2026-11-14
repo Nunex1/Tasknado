@@ -37,21 +37,75 @@ export function DashboardFocus({
   onSeeStarted: () => void;
 }) {
   const { t, number } = useI18n();
-  const byId = useMemo(() => new Map(workspaces.map(w => [w.id, w])), [workspaces]);
+  const byId = useMemo(
+    () => new Map(workspaces.map((w) => [w.id, w])),
+    [workspaces],
+  );
   const isWork = (a: Activity) => byId.get(a.workspace_id)?.category === "work";
-  const hasWork = workspace ? workspace.category === "work" : workspaces.some(w => w.category === "work" && !w.archived);
+  const hasWork = workspace
+    ? workspace.category === "work"
+    : workspaces.some((w) => w.category === "work" && !w.archived);
   const [now, setNow] = useState(localMinute);
-  useEffect(() => { const timer = setInterval(() => setNow(localMinute()), 60_000); return () => clearInterval(timer); }, []);
-  const priorityFilters = {focus: "priority", localNow: now};
-  const prioritiesQuery = useQuery({queryKey: ["focus", workspaceId, priorityFilters], enabled: hasWork,
-    queryFn: async ({signal}) => check(await client().rpc("activity_page", {p_workspace: workspaceId, p_filters: priorityFilters, p_sort: "scheduled", p_size: limit}).abortSignal(signal)).slice(0, limit)});
-  const priorityTotal = useQuery({queryKey: ["activity-total", workspaceId, priorityFilters], enabled: hasWork,
-    queryFn: async ({signal}) => check(await client().rpc("activity_total", {p_workspace: workspaceId, p_filters: priorityFilters}).abortSignal(signal))});
-  const startedQuery = useQuery({queryKey: ["focus", workspaceId, "started"],
-    queryFn: async ({signal}) => check(await client().rpc("activity_page", {p_workspace: workspaceId, p_filters: {status: "started"}, p_size: limit}).abortSignal(signal)).slice(0, limit)});
-  const startedTotal = useQuery({queryKey: ["activity-total", workspaceId, {status: "started"}],
-    queryFn: async ({signal}) => check(await client().rpc("activity_total", {p_workspace: workspaceId, p_filters: {status: "started"}}).abortSignal(signal))});
-  const priorities = prioritiesQuery.data ?? [], started = startedQuery.data ?? [];
+  useEffect(() => {
+    const timer = setInterval(() => setNow(localMinute()), 60_000);
+    return () => clearInterval(timer);
+  }, []);
+  const priorityFilters = { focus: "priority", localNow: now };
+  const prioritiesQuery = useQuery({
+    queryKey: ["focus", workspaceId, priorityFilters],
+    enabled: hasWork,
+    queryFn: async ({ signal }) =>
+      check(
+        await client()
+          .rpc("activity_page", {
+            p_workspace: workspaceId,
+            p_filters: priorityFilters,
+            p_sort: "scheduled",
+            p_size: limit,
+          })
+          .abortSignal(signal),
+      ).slice(0, limit),
+  });
+  const priorityTotal = useQuery({
+    queryKey: ["activity-total", workspaceId, priorityFilters],
+    enabled: hasWork,
+    queryFn: async ({ signal }) =>
+      check(
+        await client()
+          .rpc("activity_total", {
+            p_workspace: workspaceId,
+            p_filters: priorityFilters,
+          })
+          .abortSignal(signal),
+      ),
+  });
+  const startedQuery = useQuery({
+    queryKey: ["focus", workspaceId, "started"],
+    queryFn: async ({ signal }) =>
+      check(
+        await client()
+          .rpc("activity_page", {
+            p_workspace: workspaceId,
+            p_filters: { status: "started" },
+            p_size: limit,
+          })
+          .abortSignal(signal),
+      ).slice(0, limit),
+  });
+  const startedTotal = useQuery({
+    queryKey: ["activity-total", workspaceId, { status: "started" }],
+    queryFn: async ({ signal }) =>
+      check(
+        await client()
+          .rpc("activity_total", {
+            p_workspace: workspaceId,
+            p_filters: { status: "started" },
+          })
+          .abortSignal(signal),
+      ),
+  });
+  const priorities = prioritiesQuery.data ?? [],
+    started = startedQuery.data ?? [];
   const row = (a: Activity, tags: React.ReactNode) => {
     const Icon = a.status === "paused" ? Pause : Play;
     const work = isWork(a) ? a.category_attributes.work : undefined;
