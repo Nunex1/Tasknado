@@ -13,13 +13,14 @@ import {
   rmSync,
   writeFileSync,
 } from "node:fs";
-import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export const SECURITY_API_URL = "http://127.0.0.1:56431";
 const cli = createRequire(import.meta.url).resolve("supabase/dist/supabase.js");
-const workdir = join(tmpdir(), "tasknado-security-stack");
+// Inside the checkout (ignored by Git), not in the shared temp directory, so
+// no other local user can prepare or replace the configuration the CLI reads.
+const workdir = join("node_modules", ".cache", "tasknado-security-stack");
 
 // The CLI reads everything from <workdir>/supabase. Rebuilt on every call so
 // it always holds the migrations of the current checkout.

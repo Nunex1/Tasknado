@@ -55,7 +55,9 @@ try {
   let ready = false;
   for (let i = 0; i < 40; i++) {
     try {
-      docker("exec", name, "pg_isready", "-U", "postgres");
+      // Over TCP on purpose: while the image initializes, a temporary server
+      // answers on the Unix socket only and is then restarted.
+      docker("exec", name, "pg_isready", "-U", "postgres", "-h", "127.0.0.1");
       ready = true;
       break;
     } catch {

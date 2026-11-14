@@ -25,13 +25,7 @@ import {
   createHmac,
   randomBytes,
 } from "node:crypto";
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  readdirSync,
-  writeFileSync,
-} from "node:fs";
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { isAbsolute, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -238,11 +232,17 @@ async function restore() {
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const [command, input, output] = process.argv.slice(2);
   if (command === "keygen") {
-    if (!input || existsSync(input)) throw Error("Choose a new key file path");
-    writeFileSync(input, randomBytes(32).toString("hex") + "\n", {
-      mode: 0o600,
-      flag: "wx",
-    });
+    if (!input) throw Error("Choose a new key file path");
+    // "wx" creates the file or fails, in one step: an existing key is never
+    // replaced and there is no gap between checking and writing.
+    try {
+      writeFileSync(input, randomBytes(32).toString("hex") + "\n", {
+        mode: 0o600,
+        flag: "wx",
+      });
+    } catch {
+      throw Error("Choose a new key file path");
+    }
     report({ event: "backup_key_created" });
   } else if (command === "export") await exportObjects();
   else if (command === "verify") verify();

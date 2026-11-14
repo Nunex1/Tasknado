@@ -81,8 +81,16 @@ Todos os resultados abaixo foram observados nesta máquina em 13/11/2026.
 | Semgrep 1.145.0, regras do repositório | 97 arquivos, 0 achados | Quatro regras locais |
 | Semgrep 1.145.0, regras públicas (`p/default`, `p/owasp-top-ten`, `p/javascript`, `p/typescript`, `p/react`, `p/nextjs`, `p/secrets`, `p/github-actions`, `p/dockerfile`) | 163 arquivos; 1 achado em código novo (tag GCM sem tamanho fixo no backup), corrigido; 2 avisos de espera do Dependabot, atendidos; 2 ocorrências em `.env.local` não versionado com a chave pública do stack local | Execução única; não está na CI |
 | Sonda externa contra a produção | Problemas: `opener_policy` e `static_nosniff` — as duas lacunas de A8, que este PR corrige. Demais verificações aprovadas | Estado anterior ao deploy desta entrega |
+| Gitleaks 8.30.0, histórico completo | 47 commits, nenhum segredo | Execução local; o job `secrets` repete na CI |
+| Deploy Preview do PR no Netlify (sonda, só leitura) | nenhum problema: `nosniff` e demais cabeçalhos nos arquivos estáticos, COOP nas páginas, sem valores duplicados | Mesmo build que será publicado; sem a chave pública, as verificações de Auth não rodam |
+| CI no primeiro envio do PR #15 | `isolation` (1 min 30 s), `antivirus` com ClamAV real (2 min), `static-analysis`, `secrets` e CodeQL `analyze` aprovados | Ver abaixo as duas falhas |
 
-Gitleaks e os jobs de CI (incluindo `isolation`, `antivirus` e CodeQL, novos) rodam no pull request; consulte os checks do PR para o resultado remoto.
+Duas falhas no primeiro envio, ambas tratadas em commit posterior da mesma branch:
+
+- `regression` falhou em uma de duas execuções por uma corrida que já existia em `test-security-postgres.mjs`: o `pg_isready` respondia durante o servidor temporário de inicialização da imagem. O teste passou a aguardar o servidor definitivo.
+- O CodeQL, novo nesta entrega, apontou dois alertas altos em scripts novos: configuração do stack isolado gravada em caminho previsível do diretório temporário do sistema (movida para dentro do checkout) e verificação seguida de gravação no `keygen` do backup (substituída pela criação atômica que já era usada).
+
+O resultado da CI após essas correções deve ser lido nos checks do PR.
 
 ## 6. Não executado
 
