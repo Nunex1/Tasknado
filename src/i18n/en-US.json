@@ -593,5 +593,7 @@
   "Todos os status": "All statuses",
   "Ordenar por": "Sort by",
   "Limite de armazenamento atingido. Exclua arquivos para liberar espaço.": "Storage limit reached. Delete files to free up space.",
-  "Limite de registros da conta atingido. Exclua itens antigos para continuar.": "Account record limit reached. Delete older items to continue."
+  "Limite de registros da conta atingido. Exclua itens antigos para continuar.": "Account record limit reached. Delete older items to continue.",
+  "Pesquisa avançada": "Advanced search",
+  "Conta e preferências": "Account and preferences"
 }

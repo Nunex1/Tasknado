@@ -125,14 +125,10 @@
 
   /* Layout */
   --header-height: 64px;
-  --rail-width: 92px;
-  --context-width: 240px;
   --drawer-width: 320px;
   --content-width: 1200px;
   --public-width: 1160px;
   --layer-content: 1;
-  --layer-panel: 20;
-  --layer-rail: 30;
   --layer-header: 40;
   --layer-menu: 45;
   --layer-drawer: 50;

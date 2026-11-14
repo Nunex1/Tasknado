@@ -2,11 +2,12 @@
 import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Check, ChevronsUpDown, Layers, Plus } from "lucide-react";
+import { Check, ChevronDown, Layers, Plus } from "lucide-react";
 import { useI18n } from "@/i18n/provider";
-import { Workspace } from "@/lib/domain";
+import { Activity, Workspace } from "@/lib/domain";
 import { switchWorkspacePath, View } from "@/lib/navigation";
 import { WorkspaceIcon } from "./workspace-icon";
+import { RecentActivities, WorkspaceModules } from "./workspace-nav";
 
 type Guard = (event: { preventDefault: () => void }) => void;
 
@@ -84,16 +85,27 @@ export function WorkspaceOptions({
   );
 }
 
-/** Header control: shows the active workspace and opens the list. */
-export function WorkspaceSwitcher(props: {
+/**
+ * Top bar control: shows the active workspace and opens the workspace menu, a
+ * sheet under the bar that replaces the old side panel. It lists the
+ * workspaces and, inside one, its modules, its settings and what changed
+ * last. The sheet lies over the page; nothing underneath moves.
+ */
+export function WorkspaceSwitcher({
+  activities,
+  go,
+  ...props
+}: {
   workspaces: Workspace[];
   workspace?: Workspace;
+  activities: Activity[];
   view: View;
   guard: Guard;
+  go: (path: string) => void;
   onCreate: () => void;
 }) {
   const { t } = useI18n();
-  const { workspace } = props;
+  const { workspace, view, guard } = props;
   const [open, setOpen] = useState(false);
   const container = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -106,7 +118,7 @@ export function WorkspaceSwitcher(props: {
 
   const items = () =>
     Array.from(
-      popover.current?.querySelectorAll<HTMLElement>(".workspace-option") ?? [],
+      popover.current?.querySelectorAll<HTMLElement>("a[href], button") ?? [],
     );
 
   useEffect(() => {
@@ -137,6 +149,19 @@ export function WorkspaceSwitcher(props: {
     };
   }, [open]);
 
+  // A link to the page already open changes no route, so the menu closes
+  // here; a refused navigation (unsaved changes) keeps it open.
+  const follow = () => (event: { preventDefault: () => void }) => {
+    let refused = false;
+    guard({
+      preventDefault() {
+        refused = true;
+        event.preventDefault();
+      },
+    });
+    if (!refused) setOpen(false);
+  };
+
   return (
     <div
       className="workspace-switcher"
@@ -166,35 +191,71 @@ export function WorkspaceSwitcher(props: {
           <Layers size={16} aria-hidden="true" />
         )}
         <span>{name}</span>
-        <ChevronsUpDown size={14} aria-hidden="true" />
+        <ChevronDown size={14} aria-hidden="true" />
       </button>
       {open && (
-        <div
-          ref={popover}
-          id={popoverId}
-          className="workspace-popover"
-          role="group"
-          aria-label={t("Workspaces")}
-          onKeyDown={(event) => {
-            const all = items();
-            const current = all.indexOf(document.activeElement as HTMLElement);
-            const next =
-              event.key === "ArrowDown"
-                ? current + 1
-                : event.key === "ArrowUp"
-                  ? current - 1
-                  : event.key === "Home"
-                    ? 0
-                    : event.key === "End"
-                      ? all.length - 1
-                      : null;
-            if (next === null) return;
-            event.preventDefault();
-            all[(next + all.length) % all.length]?.focus();
-          }}
-        >
-          <WorkspaceOptions {...props} onPick={() => setOpen(false)} />
-        </div>
+        <>
+          <div
+            ref={popover}
+            id={popoverId}
+            className="workspace-popover"
+            role="group"
+            aria-label={t("Contexto do Workspace")}
+            onKeyDown={(event) => {
+              const all = items();
+              const current = all.indexOf(
+                document.activeElement as HTMLElement,
+              );
+              const next =
+                event.key === "ArrowDown"
+                  ? current + 1
+                  : event.key === "ArrowUp"
+                    ? current - 1
+                    : event.key === "Home"
+                      ? 0
+                      : event.key === "End"
+                        ? all.length - 1
+                        : null;
+              if (next === null) return;
+              event.preventDefault();
+              all[(next + all.length) % all.length]?.focus();
+            }}
+          >
+            <div className="workspace-menu">
+              <section aria-labelledby={`${popoverId}-list`}>
+                <h2 className="context-category" id={`${popoverId}-list`}>
+                  {t("Workspaces")}
+                </h2>
+                <WorkspaceOptions {...props} onPick={() => setOpen(false)} />
+              </section>
+              {workspace && (
+                <WorkspaceModules
+                  workspace={workspace}
+                  view={view}
+                  follow={follow}
+                  settings
+                />
+              )}
+              {workspace && (
+                <RecentActivities
+                  workspace={workspace}
+                  activities={activities}
+                  headingId={`${popoverId}-recent`}
+                  onOpen={(path) => {
+                    setOpen(false);
+                    go(path);
+                  }}
+                />
+              )}
+            </div>
+          </div>
+          {/* Dims the page under the sheet; a press on it closes the menu. */}
+          <div
+            className="workspace-scrim"
+            aria-hidden="true"
+            onPointerDown={() => setOpen(false)}
+          />
+        </>
       )}
     </div>
   );

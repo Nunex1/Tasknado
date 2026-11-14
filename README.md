@@ -45,7 +45,7 @@ pnpm test:notes
 pnpm test:responsive
 ```
 
-`test:responsive` percorre a landing e doze telas autenticadas em 375, 768, 1024 e 1440 px: rolagem horizontal, axe-core (WCAG A/AA) nos temas claro e escuro, drawer de navegação e troca de workspace no celular, criação e edição de tarefa em tela pequena, os três modos de aparência com persistência, navegação por teclado no desktop e isolamento entre contas. `pnpm capture:landing` refaz as capturas reais usadas na landing (`src/assets/landing/`), em dois idiomas e dois temas, com uma conta temporária e o conteúdo de `scripts/demo-data.mjs`.
+`test:responsive` percorre a landing e doze telas autenticadas em 375, 768, 1024 e 1440 px (e, só para layout, em 320, 390 e 1280 px): rolagem horizontal, axe-core (WCAG A/AA) nos temas claro e escuro, a barra superior em todas as larguras, drawer de navegação pela direita e troca de workspace no celular, menu de workspace e busca no tablet, telefone deitado e zoom de 200%, criação e edição de tarefa em tela pequena, os três modos de aparência com persistência, navegação por teclado no desktop e isolamento entre contas. `pnpm capture:landing` refaz as capturas reais usadas na landing (`src/assets/landing/`), em dois idiomas e dois temas, com uma conta temporária e o conteúdo de `scripts/demo-data.mjs`.
 
 `test:notes` percorre no navegador a exclusão de blocos e notas (confirmação, autosave pendente, falha de rede, rotas e estados vazios), com conta temporária na instância local e a aplicação em execução.
 
@@ -105,7 +105,7 @@ Escolha a retenção e, se necessário, PITR no projeto Supabase. Faça backup s
 - [Fluxo local oficial do Supabase](https://supabase.com/docs/guides/local-development/cli-workflows)
 - [Autenticação no Next.js](https://nextjs.org/docs/app/guides/authentication)
 
-O design system atual está documentado em [docs/DESIGN-SYSTEM.md](docs/DESIGN-SYSTEM.md): tokens em `src/styles/tokens.css` e camadas de estilo em `src/styles/`, importadas por `src/app/globals.css`. Branco predomina no tema claro; o azul Primary indica ação e estado e o azul Royal reforça a identidade. A navegação do celular, o seletor de workspaces e os temas (Claro, Escuro, Sistema) estão em [docs/MOBILE-THEMES.md](docs/MOBILE-THEMES.md). A marca reutilizável permanece em `src/components/brand.tsx`. Os documentos de entrega Desktop e de identidade oceânica são registros históricos e citam arquivos de estilo que foram substituídos.
+O design system atual está documentado em [docs/DESIGN-SYSTEM.md](docs/DESIGN-SYSTEM.md): tokens em `src/styles/tokens.css` e camadas de estilo em `src/styles/`, importadas por `src/app/globals.css`. Branco predomina no tema claro; o azul Primary indica ação e estado e o azul Royal reforça a identidade. A navegação é uma barra superior única no computador e no tablet e um drawer que entra pela direita no celular: ver [docs/NAVIGATION.md](docs/NAVIGATION.md). O seletor de workspaces e os temas (Claro, Escuro, Sistema) estão em [docs/MOBILE-THEMES.md](docs/MOBILE-THEMES.md). A marca reutilizável permanece em `src/components/brand.tsx`. Os documentos de entrega Desktop e de identidade oceânica são registros históricos e citam arquivos de estilo que foram substituídos.
 
 Identidade oficial atual: [tubarão e logotipo gráfico TASKNADO](docs/BRAND_IDENTITY.md), com componentes compartilhados e variantes clara e escura.
 

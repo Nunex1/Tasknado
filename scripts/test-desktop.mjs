@@ -187,7 +187,7 @@ try {
       "1",
   );
   await page
-    .locator(".primary-rail")
+    .getByRole("navigation", { name: "Navegação principal" })
     .getByRole("link", { name: "Início", exact: true })
     .click();
   await page.waitForURL(root + "/");
@@ -431,10 +431,13 @@ try {
     "Workspace observations create/edit/search/order/reload and exact search navigation; operational history contains observations and priority changes",
   );
 
+  // Creating a workspace from the workspace menu of the top bar.
+  await page.locator(".workspace-switch").click();
   await page
-    .locator(".context-heading")
+    .locator(".workspace-popover")
     .getByRole("button", { name: "Criar workspace" })
     .click();
+  assert.equal(await page.locator(".workspace-popover").count(), 0);
   await page
     .getByRole("dialog")
     .getByLabel("Nome", { exact: true })
@@ -629,7 +632,8 @@ try {
   });
   const secondPage = await second.newPage();
   await login(secondPage);
-  await secondPage.getByRole("link", { name: "Profile", exact: true }).click();
+  await secondPage.getByRole("button", { name: "User menu" }).click();
+  await secondPage.getByRole("menuitem", { name: "Edit Profile" }).click();
   await secondPage
     .getByRole("heading", { name: "Edit Profile", exact: true })
     .waitFor();
@@ -732,43 +736,78 @@ try {
     await page.locator('.workspace-tabs a[aria-current="page"]').textContent(),
     "Notas",
   );
+  // The workspace menu marks the same module as the tabs.
+  await page.locator(".workspace-switch").click();
   assert.equal(
-    await page.locator('.context-link[aria-current="page"]').textContent(),
+    await page
+      .locator('.workspace-popover .context-link[aria-current="page"]')
+      .textContent(),
     "Notas",
   );
+  await page.keyboard.press("Escape");
+  assert.equal(await page.locator(".workspace-popover").count(), 0);
   await tab("Visão geral");
   await page.waitForURL(`${root}/workspaces/${work.id}`);
   await page.goBack();
   await page.waitForURL(noteUrl);
+  // Every global destination is one or two steps from the top bar: four
+  // links, the search panel, and the account menu.
+  const bar = page.getByRole("navigation", { name: "Navegação principal" });
+  assert.deepEqual(await bar.getByRole("link").allTextContents(), [
+    "Início",
+    "Workspaces",
+    "Tarefas",
+    "Notas",
+  ]);
   for (const [label, path] of [
     ["Início", "/"],
     ["Workspaces", "/workspaces"],
     ["Tarefas", "/activities"],
-    ["Pesquisar", "/search"],
     ["Notas", "/notes"],
-    ["Configurações", "/settings"],
-    ["Perfil", "/perfil"],
   ]) {
-    await page
-      .locator(".primary-rail")
-      .getByRole("link", { name: label, exact: true })
-      .click();
+    await bar.getByRole("link", { name: label, exact: true }).click();
     await page.waitForURL(root + path);
     assert.equal(
-      await page.locator('.primary-rail a[aria-current="page"]').textContent(),
+      await page.locator('.top-nav a[aria-current="page"]').textContent(),
       label,
     );
   }
+  await page.keyboard.press("Control+k");
+  await page.getByRole("link", { name: "Pesquisa avançada" }).click();
+  await page.waitForURL(root + "/search");
+  assert.equal(await page.locator(".search-popover").count(), 0);
   assert.equal(
-    await page
-      .locator(".primary-rail")
-      .getByRole("button", { name: "Sair", exact: true })
-      .count(),
+    await page.locator('.top-nav a[aria-current="page"]').count(),
+    0,
+  );
+  for (const [label, path] of [
+    ["Configurações", "/settings"],
+    ["Editar perfil", "/perfil"],
+  ]) {
+    await page.getByRole("button", { name: "Menu do usuário" }).click();
+    await page.getByRole("menuitem", { name: label, exact: true }).click();
+    await page.waitForURL(root + path);
+    assert.equal(await page.getByRole("menu").count(), 0);
+  }
+  await page.getByRole("button", { name: "Menu do usuário" }).click();
+  assert.equal(
+    await page.getByRole("menuitem", { name: "Sair", exact: true }).count(),
     1,
+  );
+  // What used to sit in the bar itself is now a line of the account menu.
+  await page
+    .locator(".profile-dropdown")
+    .getByText("Pessoal e privado", { exact: true })
+    .waitFor();
+  await page.keyboard.press("Escape");
+  // No side navigation of any kind.
+  assert.equal(
+    await page.locator(".primary-rail, .context-panel, aside").count(),
+    0,
   );
   assert.equal(await page.locator(".more-root").count(), 0);
   pass(
-    "Direct global navigation, synchronized Notes tabs, history and centered short/long titles at all desktop widths",
+    "Global navigation from the top bar (four links, search panel, account menu), no side navigation, synchronized Notes tabs and workspace menu, history and centered short/long titles at all desktop widths",
   );
 
   for (const target of [
@@ -797,8 +836,11 @@ try {
     await page.waitForURL(root + "/");
   }
   assert.equal(await page.locator(".stats-grid .stat").count(), 3);
-  assert.equal(await page.locator(".primary-rail").count(), 1);
-  assert.equal(await page.locator(".mobile-menu,.sidebar-overlay").count(), 0);
+  assert.equal(await page.locator(".top-nav").count(), 1);
+  assert.equal(
+    await page.locator(".mobile-menu,.sidebar-overlay,.nav-drawer").count(),
+    0,
+  );
   pass(
     "Both brand links return Home across all modules without full reload; browser Back restores routes; Home has exactly three indicators and no mobile navigation",
   );
@@ -906,31 +948,68 @@ try {
             .getBoundingClientRect(),
           header = document
             .querySelector(".global-header")
-            .getBoundingClientRect(),
-          panel = document
-            .querySelector(".context-panel")
-            ?.getBoundingClientRect();
+            .getBoundingClientRect();
         return {
           scroll: document.documentElement.scrollWidth,
           viewport: innerWidth,
+          client: document.documentElement.clientWidth,
           main: { x: main.x, width: main.width },
-          header: { height: header.height },
-          panelRight: panel?.right,
+          header: { y: header.y, width: header.width, height: header.height },
+          // Anything tall and narrow that stays in place is side navigation.
+          docked: [...document.querySelectorAll("body *")]
+            .filter((el) => {
+              const style = getComputedStyle(el);
+              const box = el.getBoundingClientRect();
+              return (
+                ["fixed", "sticky"].includes(style.position) &&
+                box.width > 1 &&
+                box.width < innerWidth / 2 &&
+                box.height > innerHeight / 2
+              );
+            })
+            .map((el) => el.className),
         };
       });
       assert.ok(
         geometry.scroll <= width,
         `Horizontal overflow at ${width} ${section}: ${JSON.stringify(geometry)}`,
       );
-      assert.ok(geometry.main.x >= geometry.panelRight);
-      assert.equal(geometry.header.height, 64);
-      const before = geometry.main.width;
-      await page.getByRole("button", { name: "Recolher painel" }).click();
-      const after = await page
-        .locator(".main-content")
-        .evaluate((e) => e.getBoundingClientRect().width);
-      assert.ok(after >= before);
-      await page.getByRole("button", { name: "Expandir painel" }).click();
+      assert.deepEqual(geometry.docked, [], `Side navigation at ${width}`);
+      assert.deepEqual(
+        [geometry.header.y, geometry.header.width, geometry.header.height],
+        [0, geometry.client, 64],
+      );
+      // The content keeps its centred column, with equal margins.
+      assert.equal(Math.round(geometry.main.width), 1200);
+      assert.ok(
+        Math.abs(
+          geometry.main.x -
+            (geometry.client - geometry.main.x - geometry.main.width),
+        ) <= 1,
+        `Content off centre at ${width}: ${JSON.stringify(geometry)}`,
+      );
+      // The workspace menu lies over the page; the content does not move.
+      await page.locator(".workspace-switch").click();
+      // Measured at rest, after the short entrance animation.
+      await page
+        .locator(".workspace-popover")
+        .evaluate((e) =>
+          Promise.all(e.getAnimations().map((animation) => animation.finished)),
+        );
+      const sheet = await page.locator(".workspace-popover").boundingBox();
+      assert.deepEqual(
+        [sheet.x, Math.round(sheet.y), sheet.width],
+        [0, 64, geometry.client],
+      );
+      assert.ok(sheet.y + sheet.height <= height);
+      assert.equal(
+        await page
+          .locator(".main-content")
+          .evaluate((e) => e.getBoundingClientRect().x),
+        geometry.main.x,
+      );
+      await page.keyboard.press("Escape");
+      assert.equal(await page.locator(".workspace-popover").count(), 0);
       await page.keyboard.press("Control+k");
       await page.locator("#global-search").fill("Revisar");
       await page
@@ -948,10 +1027,9 @@ try {
     }
   }
   pass(
-    "All five required desktop resolutions: activity tables, matrix, expanded/collapsed context and search fit without horizontal overflow or region overlap",
+    "All five required desktop resolutions: activity tables and matrix in a centred column with nothing docked beside it, the top bar across the window, the workspace menu over the page without moving the content, and search, all without horizontal overflow",
   );
   await page.setViewportSize({ width: 960, height: 540 });
-  await page.getByRole("button", { name: "Recolher painel" }).click();
   await page.goto(`${root}/workspaces/${work.id}/matrix`);
   await page.locator(".matrix-card").first().waitFor();
   assert.ok(
@@ -970,10 +1048,15 @@ try {
     path: "test-results/desktop/desktop-200-percent-effective-viewport.png",
     fullPage: true,
   });
+  // The compact bar at this width still carries every destination.
+  assert.equal(await page.locator(".top-nav a").count(), 4);
+  assert.equal(
+    await page.getByRole("button", { name: "Abrir menu" }).count(),
+    0,
+  );
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.getByRole("button", { name: "Expandir painel" }).click();
   pass(
-    "Desktop 200% effective viewport (960 CSS px from Full HD), with context collapsed, retains matrix and keyboard classification",
+    "Desktop 200% effective viewport (960 CSS px from Full HD) keeps the top bar, the matrix and keyboard classification",
   );
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto(`${root}/workspaces/${work.id}`);
@@ -1086,15 +1169,13 @@ try {
   pass(
     "Automated WCAG A/AA checks on eleven authenticated desktop screens report no violations; manual-review items recorded separately",
   );
-  await page
-    .locator(".primary-rail")
-    .getByRole("button", { name: "Sair", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Menu do usuário" }).click();
+  await page.getByRole("menuitem", { name: "Sair", exact: true }).click();
   await page
     .getByRole("button", { name: "Entrar na minha conta", exact: true })
     .waitFor();
-  assert.equal(await page.locator(".primary-rail").count(), 0);
-  pass("Direct Sign Out ends the authenticated UI session");
+  assert.equal(await page.locator(".global-header").count(), 0);
+  pass("Sign Out from the account menu ends the authenticated UI session");
 } catch (e) {
   failure = e.stack || String(e);
   console.error(failure);

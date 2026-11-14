@@ -34,14 +34,25 @@ export const tabIcons: Partial<Record<View, typeof Folder>> = {
   development: TrendingUp,
   career: BriefcaseBusiness,
 };
-/** Destinations that span every workspace. */
+/**
+ * Destinations that span every workspace, in the order every layout shows
+ * them. The phone drawer lists them all; the top bar leaves the search page
+ * to the search control beside it.
+ */
 export const primaryNav = [
   { href: "/", label: "Início", icon: Home },
   { href: "/workspaces", label: "Workspaces", icon: Folder },
   { href: "/activities", label: "Tarefas", icon: ListTodo },
-  { href: "/search", label: "Pesquisar", icon: Search },
   { href: "/notes", label: "Notas", icon: NotebookPen },
+  { href: "/search", label: "Pesquisar", icon: Search },
 ];
+export const barNav = primaryNav.filter((item) => item.href !== "/search");
+/** Whether a global destination is the current place. */
+export function isCurrentSection(href: string, path: string) {
+  return (
+    path === href || (href === "/workspaces" && path.startsWith("/workspaces/"))
+  );
+}
 export function tabsFor(category: string) {
   return workspaceTabs.filter(
     (tab) =>
