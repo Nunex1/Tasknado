@@ -20,3 +20,11 @@ rules:
     pattern-either:
       - pattern: exec(`...${$VALUE}...`, ...)
       - pattern: execSync(`...${$VALUE}...`, ...)
+  - id: no-privileged-key-in-application
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: The application runs in the browser; privileged credentials belong only to the backend scripts.
+    pattern-regex: 'SERVICE_ROLE|sb_secret_'
+    paths:
+      include:
+        - /src/
