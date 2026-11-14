@@ -71,8 +71,10 @@ export interface Entry {
   created_at: string;
   updated_at: string;
 }
+export type ScanStatus = "pending" | "clean" | "rejected";
 export interface Attachment {
-  scan_status: "pending" | "clean" | "rejected";
+  // Absent until the upload-quarantine migration exists in the database.
+  scan_status?: ScanStatus | null;
   id: string;
   activity_id: string | null;
   note_id: string | null;
@@ -81,6 +83,24 @@ export interface Attachment {
   mime: string;
   size: number;
   created_at: string;
+}
+export type AttachmentAccess = "legacy" | "available" | "pending" | "blocked";
+/**
+ * What the interface offers for a file. It is a presentation decision only:
+ * Storage policies decide who can read the bytes.
+ *
+ * "legacy" is a database that does not have the quarantine columns yet. There
+ * is no verdict to show and no quarantine to respect, so the file opens as it
+ * did before; nothing is presented as verified. Once the column exists, every
+ * value other than "clean" keeps the file closed, including null and unknown
+ * ones.
+ */
+export function attachmentAccess(
+  file: Pick<Attachment, "scan_status">,
+): AttachmentAccess {
+  if (file.scan_status === undefined) return "legacy";
+  if (file.scan_status === "clean") return "available";
+  return file.scan_status === "rejected" ? "blocked" : "pending";
 }
 export interface SearchResult {
   id: string;
