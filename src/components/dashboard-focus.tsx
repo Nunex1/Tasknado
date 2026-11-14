@@ -20,8 +20,8 @@ const limit = 5;
 
 /**
  * Two short lists above the activity table: what needs attention first and
- * what is already under way. Both are derived from the activities the page
- * has loaded; nothing is fetched or stored here.
+ * what is already under way. Each query fetches only five matching rows;
+ * independent totals avoid fetching the rest of the workspace.
  */
 export function DashboardFocus({
   workspaceId,

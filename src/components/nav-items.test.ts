@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
-import { resources } from "../i18n/core";
+import ptBR from "../i18n/pt-BR.json";
+import enUS from "../i18n/en-US.json";
+const resources = {
+  "pt-BR": { translation: ptBR },
+  "en-US": { translation: enUS },
+};
 import {
   barNav,
   isCurrentSection,
