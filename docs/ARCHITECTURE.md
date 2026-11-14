@@ -16,7 +16,7 @@ Aplicação individual Next.js/React/TypeScript, tokens Tailwind e componentes a
 - Eventos são imutáveis; correções devem ser novas observações. Exclusão de workspace exige confirmação e remove seus dados.
 - Notas e entradas (blocos) só são excluídas pelas funções `delete_note` e `delete_entry`, restritas ao proprietário; `DELETE` direto continua indisponível. Excluir a nota remove suas entradas e os registros de arquivos pela chave composta `(note_id, owner_id)` e enfileira a limpeza do Storage. `save_entry` apenas atualiza: uma gravação atrasada não recria o que foi excluído.
 - Até 20 MB por arquivo. PDF, imagens PNG/JPEG/WebP, vídeos MP4/WebM, TXT/CSV e documentos Office Open XML. SVG/HTML/executáveis não são aceitos.
-- Upload sem scanner antivírus externo: formatos restritos, download isolado e bucket privado reduzem superfície; inspeção antimalware de produção permanece pendente.
+- Uploads: formatos restritos, bucket privado e download por link temporário. Com a migração de quarentena, os bytes só ficam legíveis depois da inspeção de formato e de um daemon ClamAV que prova detecção a cada lote; a operação desse scanner em produção permanece pendente (ver SECURITY-OPERATIONS.md).
 - Timestamps timestamptz do servidor; apresentação no fuso do navegador.
 - Sem dados demonstrativos e sem persistência simulada.
 - Banco local para validação; nuvem e publicação dependem dos projetos do proprietário.

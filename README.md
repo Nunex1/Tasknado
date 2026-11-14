@@ -51,6 +51,16 @@ pnpm test:responsive
 
 `test-database.mjs` executa PostgreSQL real embarcado (PGlite), com esquemas mínimos de Auth/Storage somente no teste. Valida SQL, RLS, transições, idempotência, buscas, concorrência otimista e cascatas. Não substitui a integração HTTP do Supabase.
 
+Testes de segurança que precisam de serviços reais usam um segundo stack Supabase local, isolado do de desenvolvimento (projeto `tasknado_security`, portas 5643x):
+
+```powershell
+pnpm test:security:postgres   # PostgreSQL real descartável: concorrência, trava da quarentena, dump/restore
+pnpm security:stack start     # sobe o stack isolado (reset | migrate | stop)
+pnpm test:security:http       # isolamento entre contas, quarentena, limites e métricas por HTTP real
+pnpm test:security:backup     # backup cifrado do Storage, verificação e recuperação
+pnpm test:security:clamav     # quarentena de ponta a ponta com o motor ClamAV real (Docker e rede)
+```
+
 Para a integração completa, com a instância local em execução, execute `pnpm test:integration`. O runner obtém a chave privilegiada local da CLI e a passa somente ao processo de testes, sem gravá-la ou exibi-la. O script recusa URLs que não sejam loopback na porta 55431. Cria duas contas temporárias, testa os serviços reais e as remove no final. Evidências são gravadas em `test-results/` (ignorado pelo Git).
 
 ## Criar o projeto Supabase na nuvem
@@ -63,9 +73,9 @@ Para a integração completa, com a instância local em execução, execute `pnp
 6. Confira políticas e bucket privado `attachments`. As migrações criam as regras e o limite de 20 MB.
 7. Execute os testes de duas contas em um ambiente de homologação antes de uso real. O script local não deve ser apontado para produção.
 
-## Publicar na Vercel
+## Publicar
 
-Importe este repositório na conta Vercel, selecione Next.js e configure `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` com os valores públicos do projeto na nuvem. Publique e use o domínio final nos redirecionamentos de Auth. As variáveis públicas são incorporadas no build: qualquer mudança exige novo deploy.
+A aplicação publicada hoje está no Netlify (https://tasknado.netlify.app), que constrói `main` com o runtime Next.js. O arquivo `netlify.toml` apenas acrescenta cabeçalhos de segurança aos arquivos estáticos servidos pela CDN; as configurações de build ficam no projeto Netlify. Em qualquer provedor (Netlify ou Vercel), importe este repositório, selecione Next.js e configure `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` com os valores públicos do projeto na nuvem. Publique e use o domínio final nos redirecionamentos de Auth. As variáveis públicas são incorporadas no build: qualquer mudança exige novo deploy.
 
 Nenhum projeto na nuvem ou publicação é criado por estes arquivos. Há etapas de conta, região, plano e credenciais que precisam do proprietário.
 
@@ -79,14 +89,14 @@ Nenhum projeto na nuvem ou publicação é criado por estes arquivos. Há etapas
 - Exclusão de workspace exige digitar o nome. Remove registros em cascata e revoga imediatamente o acesso por RLS. Os objetos ficam em fila `storage_cleanup` para remoção física.
 - Agende `node scripts/cleanup-storage.mjs` em um backend confiável, com `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` e `TASKNADO_WORKER_TARGET` como configuração de destino explícita. O script remove até 100 objetos por execução e pode ser repetido. Não há agendamento de produção configurado neste repositório.
 - A exportação em Configurações gera JSON dos registros do proprietário; anexos devem ser baixados separadamente. A exclusão da conta exige digitar o e-mail e remove os registros em cascata; objetos entram na fila de limpeza.
-- Anexos permitidos: PDF, PNG/JPEG/WebP, MP4/WebM, TXT/CSV, DOCX/XLSX/PPTX. SVG, HTML e executáveis são recusados. Uploads ficam em quarentena até validação de conteúdo e aprovação pelo worker ClamAV. O scanner e seu agendamento precisam ser provisionados e homologados antes de produção.
-- Auth possui limites de requisição configurados no Supabase. A RPC de eventos limita a 60 registros por minuto por conta. Uploads reservam até 1 GiB por conta, com até dez pendentes. Retenção depende da política de produção.
+- Anexos permitidos: PDF, PNG/JPEG/WebP, MP4/WebM, TXT/CSV, DOCX/XLSX/PPTX. SVG, HTML e executáveis são recusados. Com a migração de quarentena aplicada, uploads ficam indisponíveis até a validação de conteúdo e a aprovação por um daemon ClamAV (`ops/clamav/docker-compose.yml`), que precisa provar detecção a cada execução do worker. Em um banco sem essa migração a interface abre os anexos como antes e não exibe selo de verificação. O scanner e seu agendamento precisam ser provisionados e homologados antes de aplicar a migração em produção; ela se recusa a rodar sobre anexos existentes sem esse registro.
+- Auth possui limites de requisição configurados no Supabase. A RPC de eventos limita a 60 registros por minuto por conta. Uploads reservam até 1 GiB por conta, com até dez pendentes. As demais escritas têm teto de 1.200 alterações auditadas por minuto e limites de linhas por conta (200 workspaces, 10.000 tarefas, 2.000 notas, 20.000 blocos, 20.000 observações). Retenção depende da política de produção.
 - Sem service role no cliente. Dados são protegidos por JWT, RLS e chaves estrangeiras compostas por proprietário. O shell da rota `/` é público, mas o conteúdo privado só é obtido após autenticação e autorização no Supabase.
 - Sessão gerenciada pelo SDK Supabase no navegador. Nenhum conteúdo HTML de nota é executado; links abrem com `noopener noreferrer`. CSP com nonce por resposta limita scripts; produção exige HTTPS e verificação dos headers no provedor.
 
 ## Backups e recuperação
 
-Escolha a retenção e, se necessário, PITR no projeto Supabase. Faça backup separado dos objetos de Storage; backup de banco não inclui seus bytes. Antes de produção, execute uma restauração em projeto isolado e verifique contas, threads, notas e downloads. Não há backup de produção configurado ou teste de restauração concluído.
+Escolha a retenção e, se necessário, PITR no projeto Supabase. Faça backup separado dos objetos de Storage; backup de banco não inclui seus bytes. `pnpm backup:storage` exporta, verifica e restaura esses bytes cifrados (AES-256-GCM) e cifra os dumps do banco; o procedimento completo está no [runbook](docs/SECURITY-OPERATIONS.md#5-backup-e-recuperação-de-desastres). Antes de produção, execute uma restauração em projeto isolado e verifique contas, tarefas, notas e downloads. Não há backup de produção configurado nem teste de restauração de produção concluído.
 
 ## Referências
 
@@ -101,4 +111,4 @@ Identidade oficial atual: [tubarão e logotipo gráfico TASKNADO](docs/BRAND_IDE
 
 ## Engenharia de segurança
 
-Consulte [achados, testes e gates de implantação](docs/SECURITY-DELIVERY.md) e o [runbook operacional](docs/SECURITY-OPERATIONS.md). As migrações de quarentena tornam anexos existentes pendentes até inspeção. Não publicar sem preparar e homologar o worker.
+Consulte a [auditoria de novembro/2026](docs/SECURITY-AUDIT-2026-11.md) (achados, evidências, riscos residuais), o [runbook operacional](docs/SECURITY-OPERATIONS.md) (implantação, scanner, backups, monitoramento) e a [entrega anterior](docs/SECURITY-DELIVERY.md). A migração de quarentena torna anexos existentes pendentes até a inspeção e só roda em um banco com anexos depois que a homologação do scanner é registrada nele.
