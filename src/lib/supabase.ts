@@ -49,6 +49,14 @@ export function errorMessage(e: unknown): string {
       "Esta ação não está disponível para o estado atual da atividade.",
     ],
     [
+      /storage quota exceeded/i,
+      "Limite de armazenamento atingido. Exclua arquivos para liberar espaço.",
+    ],
+    [
+      /account limit reached/i,
+      "Limite de registros da conta atingido. Exclua itens antigos para continuar.",
+    ],
+    [
       /too many|rate limit|security purposes/i,
       "Aguarde um momento antes de tentar novamente.",
     ],

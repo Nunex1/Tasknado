@@ -9,6 +9,7 @@
 // drawer, workspace switching, task creation and editing, Light/Dark/System
 // with persistence, tablet and desktop navigation, and data isolation.
 // Screenshots: test-results/responsive/.
+import { localStack } from "./security-stack.mjs";
 import assert from "node:assert/strict";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -27,13 +28,9 @@ const { chromium } = require(
     ),
 );
 const cli = require.resolve("supabase/dist/supabase.js");
-const state = JSON.parse(
-  execFileSync(process.execPath, [cli, "status", "-o", "json"], {
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "pipe"],
-  }),
-);
-assert.equal(state.API_URL, "http://127.0.0.1:55431");
+// Development stack by default; TASKNADO_TEST_STACK=security selects the
+// isolated stack that carries every migration. Loopback only, either way.
+const state = localStack();
 const root = process.env.TASKNADO_TEST_URL || "http://127.0.0.1:3000";
 const shots = "test-results/responsive";
 mkdirSync(shots, { recursive: true });

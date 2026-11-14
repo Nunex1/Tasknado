@@ -1,3 +1,21 @@
+-- DEPLOYMENT GATE. On a database that already stores attachments, this migration
+-- makes every one of them unreadable until a trusted worker inspects it. It
+-- therefore refuses to run until the operator records, in that same database,
+-- that the ClamAV worker was validated against it and can process the backlog:
+--
+--   comment on table public.attachments is 'tasknado:scanner-validated';
+--
+-- See docs/SECURITY-OPERATIONS.md. Empty databases (local, CI) are not gated.
+-- Never set the marker just to make a deployment pass: without a working
+-- scanner the files stay quarantined, and nothing in this repository approves
+-- a file that was not inspected.
+do $$ begin
+ if exists(select 1 from public.attachments)
+  and coalesce(obj_description('public.attachments'::regclass,'pg_class'),'')<>'tasknado:scanner-validated'
+ then raise exception 'Deployment gate: existing attachments would be quarantined. Validate the ClamAV worker first (docs/SECURITY-OPERATIONS.md), then run: comment on table public.attachments is ''tasknado:scanner-validated''';
+ end if;
+end $$;
+
 -- Same private bucket, but no object becomes readable until a trusted worker
 -- approves the immutable bytes. Existing files deliberately start pending too.
 alter table public.attachments add column scan_status text not null default 'pending'

@@ -1,18 +1,20 @@
-import { execFileSync, spawnSync } from "node:child_process";
-import { createRequire } from "node:module";
-const cli = createRequire(import.meta.url).resolve("supabase/dist/supabase.js");
+import { spawnSync } from "node:child_process";
+import { localStack } from "./security-stack.mjs";
 try {
-  const state = JSON.parse(
-    execFileSync(process.execPath, [cli, "status", "-o", "json"], {
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "pipe"],
-    }),
-  );
-  if (state.API_URL !== "http://127.0.0.1:55431" || !state.SERVICE_ROLE_KEY)
+  const state = localStack();
+  if (!state.SERVICE_ROLE_KEY)
     throw Error("The isolated local stack is unavailable.");
   const result = spawnSync(process.execPath, ["scripts/integration.mjs"], {
     stdio: "inherit",
-    env: { ...process.env, SUPABASE_SERVICE_ROLE_KEY: state.SERVICE_ROLE_KEY },
+    env: {
+      ...process.env,
+      SUPABASE_SERVICE_ROLE_KEY: state.SERVICE_ROLE_KEY,
+      // Only set for the isolated security stack; otherwise .env.local decides.
+      ...(process.env.TASKNADO_TEST_STACK === "security" && {
+        TASKNADO_TEST_API_URL: state.API_URL,
+        TASKNADO_TEST_ANON_KEY: state.ANON_KEY,
+      }),
+    },
   });
   process.exitCode = result.status ?? 1;
 } catch {

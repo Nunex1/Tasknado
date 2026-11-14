@@ -35,6 +35,7 @@ try {
     insert into activity_events(owner_id,activity_id,type,content,request_id) select '${owner}',id,'observation','needle_unique_xyz',gen_random_uuid() from activities order by id limit 1110;
     insert into notes(id,owner_id,workspace_id,title) values('dddddddd-dddd-4ddd-8ddd-dddddddddddd','${owner}','${workspace}','Note');
     insert into note_entries(id,owner_id,note_id,content) values('${entry}','${owner}','dddddddd-dddd-4ddd-8ddd-dddddddddddd','identical content');
+    update audit_logs set created_at=clock_timestamp()-interval '10 minutes';
     analyze;`);
   const oldPredicate="to_tsvector('portuguese',title || ' ' || description) @@ websearch_to_tsquery('portuguese','unique_x') or strpos(lower(title || ' ' || description),'unique_x')>0";
   await plan("substring-before",`select id from activities where ${oldPredicate}`);

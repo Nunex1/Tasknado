@@ -1,6 +1,6 @@
 "use client";
 import { useI18n } from "@/i18n/provider";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { fetchPages } from "@/lib/pagination";
 import { useEffect, useState } from "react";
 import {
@@ -16,10 +16,22 @@ import {
   Attachment,
   ActivityEvent,
   validateFile,
+  attachmentAccess,
   mimeTypes,
   eventNames,
 } from "@/lib/domain";
 import { Button } from "./ui/button";
+// No label without a verdict: an unscanned file is never shown as verified.
+function scanLabel(file: Attachment) {
+  return (
+    {
+      legacy: null,
+      available: "Verificado",
+      blocked: "Bloqueado",
+      pending: "Em verificação",
+    } as const
+  )[attachmentAccess(file)];
+}
 export function Files({
   id,
   kind,
@@ -37,13 +49,13 @@ export function Files({
     [preview, setPreview] = useState<{ file: Attachment; url: string } | null>(
       null,
     );
-  const cache = useQueryClient();
   const list = useQuery({queryKey:["files",kind,id],queryFn: ({signal}) => fetchPages((from,to) => client().from("attachments")
-    .select("id,activity_id,note_id,name,path,mime,size,created_at,scan_status").eq(kind+"_id",id).order("created_at").order("id").range(from,to).abortSignal(signal))});
+    .select("id,activity_id,note_id,name,path,mime,size,event_id,created_at,scan_status").eq(kind+"_id",id).order("created_at").order("id").range(from,to).abortSignal(signal))});
   const files = list.data ?? [];
-  async function load() { await cache.invalidateQueries({queryKey:["files",kind,id]}); }
+  async function load() { const result = await list.refetch(); if(result.error) throw result.error; return result.data ?? []; }
   useEffect(() => {setPreview(null);},[id,kind]);
   useEffect(() => {if(list.error) report(errorMessage(list.error));},[list.error,report]);
+
   async function upload(file: File) {
     const invalid = validateFile(file);
     if (invalid) {
@@ -78,8 +90,12 @@ export function Files({
           .upload(path, file, { contentType: file.type, upsert: false }),
       );
       uploaded = true;
-      await load();
-      report("Arquivo recebido. Aguardando verificação de segurança.");
+      const stored = await load();
+      report(
+        attachmentAccess(stored.find((x) => x.id === metaId) ?? {}) === "legacy"
+          ? "Arquivo salvo."
+          : "Arquivo recebido. Aguardando verificação de segurança.",
+      );
     } catch (e) {
       if (!uploaded && path)
         await client().storage.from("attachments").remove([path]);
@@ -91,9 +107,10 @@ export function Files({
     }
   }
   async function open(file: Attachment, download = false) {
-    if (file.scan_status !== "clean") {
+    const access = attachmentAccess(file);
+    if (access === "pending" || access === "blocked") {
       report(
-        file.scan_status === "rejected"
+        access === "blocked"
           ? "Arquivo bloqueado pela verificação de segurança."
           : "Arquivo em verificação. Tente novamente em instantes.",
       );
@@ -200,14 +217,8 @@ export function Files({
           <button className="file-name" onClick={() => void open(file)}>
             <strong>{file.name}</strong>
             <small>
-              {bytes(file.size)} · {date(file.created_at)} ·{" "}
-              {t(
-                file.scan_status === "clean"
-                  ? "Verificado"
-                  : file.scan_status === "rejected"
-                    ? "Bloqueado"
-                    : "Em verificação",
-              )}
+              {bytes(file.size)} · {date(file.created_at)}
+              {scanLabel(file) && <> · {t(scanLabel(file)!)}</>}
             </small>
           </button>
           <button

@@ -1,0 +1,13 @@
+# Build settings stay in the Netlify project; this file only adds headers.
+#
+# Files in public/ and _next/static/ are served by the CDN and never reach
+# Next.js, so the headers from next.config.ts do not apply to them. These rules
+# cover that gap. Pages keep receiving their headers (and the per-request CSP)
+# from Next.js; keep both lists consistent with src/lib/security-headers.ts.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Cross-Origin-Resource-Policy = "same-origin"
+    X-Permitted-Cross-Domain-Policies = "none"

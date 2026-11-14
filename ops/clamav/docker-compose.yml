@@ -1,0 +1,40 @@
+# ClamAV daemon for the Tasknado upload worker (scripts/scan-uploads.mjs).
+#
+#   docker compose -f ops/clamav/docker-compose.yml up -d
+#
+# The worker connects with CLAMD_HOST=127.0.0.1 and CLAMD_PORT=3310.
+# Read docs/SECURITY-OPERATIONS.md before using this with real files.
+services:
+  clamav:
+    # Official image, pinned by digest. Signatures are updated at run time by
+    # freshclam into the volume below; the engine changes only when this
+    # digest is changed in a reviewed commit.
+    image: clamav/clamav:stable@sha256:45fe5149fbee5a46509c9848ef20d0c354b7b2323c9369f285939a37cf33422a
+    restart: unless-stopped
+    # clamd has no authentication and accepts SHUTDOWN from any client that
+    # reaches it. Publish it on loopback only; never on a public interface.
+    ports:
+      - "127.0.0.1:${CLAMD_PORT:-3310}:3310"
+    environment:
+      # Uploads are limited to 20 MiB; anything the engine cannot fully
+      # inspect within these limits is reported instead of silently passed.
+      CLAMD_CONF_StreamMaxLength: 25M
+      CLAMD_CONF_MaxFileSize: 25M
+      CLAMD_CONF_MaxScanSize: 100M
+      CLAMD_CONF_MaxRecursion: "16"
+      CLAMD_CONF_MaxFiles: "5000"
+      CLAMD_CONF_AlertExceedsMax: "yes"
+      CLAMD_CONF_AlertEncrypted: "yes"
+      CLAMD_CONF_AlertOLE2Macros: "yes"
+      # Reload new signatures within ten minutes of freshclam writing them.
+      CLAMD_CONF_SelfCheck: "600"
+      # Check for signature updates every hour.
+      FRESHCLAM_CONF_Checks: "24"
+    volumes:
+      - signatures:/var/lib/clamav
+    # The signature database needs about 1.5 GB of memory while loading.
+    mem_limit: 3g
+    security_opt:
+      - no-new-privileges:true
+volumes:
+  signatures:
