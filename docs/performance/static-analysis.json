@@ -1,0 +1,13 @@
+{
+  "tool": "Semgrep",
+  "version": "1.145.0",
+  "configuration": ".semgrep.yml; four repository rules",
+  "findings": 0,
+  "errors": [],
+  "scannedFiles": 118,
+  "excluded": [".next", "node_modules", "test-results"],
+  "limitations": [
+    "Worktree Git pointer is Windows-only; explicit source scan used --no-git-ignore.",
+    "This scan is not an exhaustive semantic security audit."
+  ]
+}

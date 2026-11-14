@@ -1,0 +1,1537 @@
+{
+  "baseline": "f81edd6 (Next 16.4.1)",
+  "finalBase": "44633c6 (Next 16.4.6, security and navigation integrated)",
+  "notes": [
+    "One laboratory sample per scenario, not field percentiles.",
+    "Initial 10000-record run did not finish; no complete before metric.",
+    "Negative original CDP task deltas at document navigation are null; final harness accounts for counter reset."
+  ],
+  "before": {
+    "recordedAt": "2026-11-14T02:29:01.646Z",
+    "environment": "local production Next build, Edge headless, local Supabase; synthetic data only",
+    "public": {
+      "name": "public",
+      "visibleMs": 418,
+      "settledMs": 1027,
+      "requests": [],
+      "dom": 281,
+      "heapBytes": 6382128,
+      "taskMs": 346,
+      "browser": {
+        "lcp": 596,
+        "cls": 0,
+        "events": [],
+        "longTasks": [73],
+        "ttfb": 15.799999997019768,
+        "loadMs": 210.59999999776483,
+        "jsBytes": 328600
+      }
+    },
+    "scenarios": [
+      {
+        "size": 100,
+        "measurements": [
+          {
+            "name": "workspace-cold",
+            "visibleMs": 261,
+            "settledMs": 868,
+            "requests": [
+              {
+                "path": "/rest/v1/workspaces",
+                "ms": 7.784,
+                "bytes": 857
+              },
+              {
+                "path": "/rest/v1/notes",
+                "ms": 12.122,
+                "bytes": 1378
+              },
+              {
+                "path": "/rest/v1/activities",
+                "ms": 15.3,
+                "bytes": 77961
+              },
+              {
+                "path": "/rest/v1/workspaces",
+                "ms": 15.361,
+                "bytes": 857
+              },
+              {
+                "path": "/rest/v1/workspace_observations",
+                "ms": 7.062,
+                "bytes": 594
+              },
+              {
+                "path": "/rest/v1/rpc/observation_counts",
+                "ms": 58.09,
+                "bytes": 6798
+              }
+            ],
+            "dom": 477,
+            "heapBytes": 11799892,
+            "taskMs": null
+          },
+          {
+            "name": "activities",
+            "visibleMs": 281,
+            "settledMs": 894,
+            "requests": [
+              {
+                "path": "/rest/v1/notes",
+                "ms": 5.794,
+                "bytes": 1378
+              },
+              {
+                "path": "/rest/v1/workspaces",
+                "ms": 6.364,
+                "bytes": 857
+              },
+              {
+                "path": "/rest/v1/activities",
+                "ms": 7.886,
+                "bytes": 77961
+              },
+              {
+                "path": "/rest/v1/rpc/observation_counts",
+                "ms": 51.137,
+                "bytes": 6798
+              }
+            ],
+            "dom": 2514,
+            "heapBytes": 14849628,
+            "taskMs": 347
+          },
+          {
+            "name": "detail",
+            "visibleMs": 85,
+            "settledMs": 687,
+            "requests": [
+              {
+                "path": "/rest/v1/notes",
+                "ms": 8.365,
+                "bytes": 1378
+              },
+              {
+                "path": "/rest/v1/activities",
+                "ms": 12.205,
+                "bytes": 77961
+              },
+              {
+                "path": "/rest/v1/priority_history",
+                "ms": 11.694,
+                "bytes": 2
+              },
+              {
+                "path": "/rest/v1/attachments",
+                "ms": 13.033,
+                "bytes": 2
+              },
+              {
+                "path": "/rest/v1/activity_events",
+                "ms": 13.103,
+                "bytes": 2
+              },
+              {
+                "path": "/rest/v1/workspaces",
+                "ms": 14.637,
+                "bytes": 857
+              },
+              {
+                "path": "/rest/v1/rpc/observation_counts",
+                "ms": 16.376,
+                "bytes": 6798
+              }
+            ],
+            "dom": 314,
+            "heapBytes": 18902296,
+            "taskMs": 82
+          },
+          {
+            "name": "activities-return",
+            "visibleMs": 224,
+            "settledMs": 832,
+            "requests": [
+              {
+                "path": "/rest/v1/notes",
+                "ms": 5.891,
+                "bytes": 1378
+              },
+              {
+                "path": "/rest/v1/workspaces",
+                "ms": 5.347,
+                "bytes": 857
+              },
+              {
+                "path": "/rest/v1/activities",
+                "ms": 6.774,
+                "bytes": 77961
+              },
+              {
+                "path": "/rest/v1/rpc/observation_counts",
+                "ms": 48.781,
+                "bytes": 6798
+              }
+            ],
+            "dom": 2515,
+            "heapBytes": 21481700,
+            "taskMs": 257
+          },
+          {
+            "name": "notes",
+            "visibleMs": 72,
+            "settledMs": 685,
+            "requests": [
+              {
+                "path": "/rest/v1/notes",
+                "ms": 6.625,
+                "bytes": 1378
+              },
+              {
+                "path": "/rest/v1/workspaces",
+                "ms": 6.778,
+                "bytes": 857
+              },
+              {
+                "path": "/rest/v1/activities",
+                "ms": 8.351,
+                "bytes": 77961
+              },
+              {
+                "path": "/rest/v1/rpc/observation_counts",
+                "ms": 51.072,
+                "bytes": 6798
+              }
+            ],
+            "dom": 328,
+            "heapBytes": 24755756,
+            "taskMs": 61
+          },
+          {
+            "name": "note-open",
+            "visibleMs": 104,
+            "settledMs": 706,
+            "requests": [
+              {
+                "path": "/rest/v1/notes",
+                "ms": 6.732,
+                "bytes": 1378
+              },
+              {
+                "path": "/rest/v1/activities",
+                "ms": 10.025,
+                "bytes": 77961
+              },
+              {
+                "path": "/rest/v1/workspaces",
+                "ms": 8.877,
+                "bytes": 857
+              },
+              {
+                "path": "/rest/v1/attachments",
+                "ms": 10.362,
+                "bytes": 2
+              },
+              {
+                "path": "/rest/v1/note_entries",
+                "ms": 10.557,
+                "bytes": 21268
+              },
+              {
+                "path": "/rest/v1/rpc/observation_counts",
+                "ms": 48.653,
+                "bytes": 6798
+              }
+            ],
+            "dom": 358,
+            "heapBytes": 27622940,
+            "taskMs": 59
+          },
+          {
+            "name": "dashboard-return",
+            "visibleMs": 58,
+            "settledMs": 661,
+            "requests": [
+              {
+                "path": "/rest/v1/workspace_observations",
+                "ms": 6.239,
+                "bytes": 594
+              },
+              {
+                "path": "/rest/v1/notes",
+                "ms": 6.163,
+                "bytes": 1378
+              },
+              {
+                "path": "/rest/v1/activities",
+                "ms": 7.482,
+                "bytes": 77961
+              },
+              {
+                "path": "/rest/v1/workspaces",
+                "ms": 8.377,
+                "bytes": 857
+              },
+              {
+                "path": "/rest/v1/rpc/observation_counts",
+                "ms": 50.172,
+                "bytes": 6798
+              }
+            ],
+            "dom": 478,
+            "heapBytes": 12187240,
+            "taskMs": 113
+          }
+        ],
+        "browser": {
+          "lcp": 252,
+          "cls": 0.012456098542390045,
+          "events": [
+            16, 16, 16, 32, 32, 32, 16, 16, 16, 16, 16, 16, 32, 32, 32, 16, 16,
+            16
+          ],
+          "longTasks": [71, 106, 57, 93, 53]
+        }
+      },
+      {
+        "size": 1000,
+        "measurements": [
+          {
+            "name": "workspace-cold",
+            "visibleMs": 400,
+            "settledMs": 1004,
+            "requests": [
+              {
+                "path": "/rest/v1/workspaces",
+                "ms": 5.662,
+                "bytes": 857
+              },
+              {
+                "path": "/rest/v1/notes",
+                "ms": 8.69,
+                "bytes": 13834
+              },
+              {
+                "path": "/rest/v1/workspaces",
+                "ms": 7.802,
+                "bytes": 857
+              },
+              {
+                "path": "/rest/v1/activities",
+                "ms": 15.707,
+                "bytes": 389857
+              },
+              {
+                "path": "/rest/v1/workspace_observations",
+                "ms": 8.974,
+                "bytes": 892
+              },
+              {
+                "path": "/rest/v1/activities",
+                "ms": 14.753,
+                "bytes": 389859
+              },
+              {
+                "path": "/rest/v1/rpc/observation_counts",
+                "ms": 61.415,
+                "bytes": 33998
+              },
+              {
+                "path": "/rest/v1/activities",
+                "ms": 9.764,
+                "bytes": 2
+              },
+              {
+                "path": "/rest/v1/rpc/observation_counts",
+                "ms": 55.225,
+                "bytes": 33998
+              },
+              {
+                "path": "/rest/v1/rpc/observation_counts",
+                "ms": 52.923,
+                "bytes": 2
+              }
+            ],
+            "dom": 483,
+            "heapBytes": 24754572,
+            "taskMs": null
+          },
+          {
+            "name": "activities",
+            "visibleMs": 1712,
+            "settledMs": 2328,
+            "requests": [
+              {
+                "path": "/rest/v1/workspaces",
+                "ms": 6.129,
+                "bytes": 857
+              },
+              {
+                "path": "/rest/v1/notes",
+                "ms": 9.629,
+                "bytes": 13834
+              },
+              {
+                "path": "/rest/v1/activities",
+                "ms": 15.089,
+                "bytes": 389857
+              },
+              {
+                "path": "/rest/v1/rpc/observation_counts",
+                "ms": 52.685,
+                "bytes": 33998
+              },
+              {
+                "path": "/rest/v1/activities",
+                "ms": 11.457,
+                "bytes": 389859
+              },
+              {
+                "path": "/rest/v1/rpc/observation_counts",
+                "ms": 55.857,
+                "bytes": 33998
+              },
+              {
+                "path": "/rest/v1/activities",
+                "ms": 8.093,
+                "bytes": 2
+              },
+              {
+                "path": "/rest/v1/rpc/observation_counts",
+                "ms": 55.896,
+                "bytes": 2
+              }
+            ],
+            "dom": 22314,
+            "heapBytes": 57821676,
+            "taskMs": 2275
+          },
+          {
+            "name": "detail",
+            "visibleMs": 254,
+            "settledMs": 869,
+            "requests": [
+              {
+                "path": "/rest/v1/notes",
+                "ms": 8.149,
+                "bytes": 13834
+              },
+              {
+                "path": "/rest/v1/priority_history",
+                "ms": 12.511,
+                "bytes": 2
+              },
+              {
+                "path": "/rest/v1/activity_events",
+                "ms": 12.354,
+                "bytes": 2
+              },
+              {
+                "path": "/rest/v1/attachments",
+                "ms": 12.675,
+                "bytes": 2
+              },
+              {
+                "path": "/rest/v1/workspaces",
+                "ms": 13.972,
+                "bytes": 857
+              },
+              {
+                "path": "/rest/v1/activities",
+                "ms": 17.869,
+                "bytes": 389857
+              },
+              {
+                "path": "/rest/v1/activities",
+                "ms": 12.313,
+                "bytes": 389859
+              },
+              {
+                "path": "/rest/v1/activities",
+                "ms": 8.942,
+                "bytes": 2
+              },
+              {
+                "path": "/rest/v1/rpc/observation_counts",
+                "ms": 57.301,
+                "bytes": 33998
+              },
+              {
+                "path": "/rest/v1/rpc/observation_counts",
+                "ms": 51.767,
+                "bytes": 33998
+              },
+              {
+                "path": "/rest/v1/rpc/observation_counts",
+                "ms": 53.754,
+                "bytes": 2
+              }
+            ],
+            "dom": 314,
+            "heapBytes": 47407736,
+            "taskMs": 284
+          },
+          {
+            "name": "activities-return",
+            "visibleMs": 1590,
+            "settledMs": 2196,
+            "requests": [
+              {
+                "path": "/rest/v1/notes",
+                "ms": 7.005,
+                "bytes": 13834
+              },
+              {
+                "path": "/rest/v1/workspaces",
+                "ms": 9.197,
+                "bytes": 857
+              },
+              {
+                "path": "/rest/v1/activities",
+                "ms": 15.563,
+                "bytes": 389857
+              },
+              {
+                "path": "/rest/v1/rpc/observation_counts",
+                "ms": 50.24,
+                "bytes": 33998
+              },
+              {
+                "path": "/rest/v1/activities",
+                "ms": 19.178,
+                "bytes": 389859
+              },
+              {
+                "path": "/rest/v1/activities",
+                "ms": 7.206,
+                "bytes": 2
+              },
+              {
+                "path": "/rest/v1/rpc/observation_counts",
+                "ms": 51.064,
+                "bytes": 33998
+              },
+              {
+                "path": "/rest/v1/rpc/observation_counts",
+                "ms": 50.064,
+                "bytes": 2
+              }
+            ],
+            "dom": 22315,
+            "heapBytes": 74123744,
+            "taskMs": 2089
+          },
+          {
+            "name": "notes",
+            "visibleMs": 197,
+            "settledMs": 801,
+            "requests": [
+              {
+                "path": "/rest/v1/notes",
+                "ms": 6.681,
+                "bytes": 13834
+              },
+              {
+                "path": "/rest/v1/workspaces",
+                "ms": 5.903,
+                "bytes": 857
+              },
+              {
+                "path": "/rest/v1/activities",
+                "ms": 12.91,
+                "bytes": 389857
+              },
+              {
+                "path": "/rest/v1/activities",
+                "ms": 12.743,
+                "bytes": 389859
+              },
+              {
+                "path": "/rest/v1/activities",
+                "ms": 5.615,
+                "bytes": 2
+              },
+              {
+                "path": "/rest/v1/rpc/observation_counts",
+                "ms": 51.965,
+                "bytes": 33998
+              },
+              {
+                "path": "/rest/v1/rpc/observation_counts",
+                "ms": 51.108,
+                "bytes": 33998
+              },
+              {
+                "path": "/rest/v1/rpc/observation_counts",
+                "ms": 49.818,
+                "bytes": 2
+              }
+            ],
+            "dom": 824,
+            "heapBytes": 89820676,
+            "taskMs": 206
+          },
+          {
+            "name": "note-open",
+            "visibleMs": 135,
+            "settledMs": 750,
+            "requests": [
+              {
+                "path": "/rest/v1/attachments",
+                "ms": 13.363,
+                "bytes": 2
+              },
+              {
+                "path": "/rest/v1/note_entries",
+                "ms": 14.43,
+                "bytes": 21268
+              },
+              {
+                "path": "/rest/v1/workspaces",
+                "ms": 13.415,
+                "bytes": 857
+              },
+              {
+                "path": "/rest/v1/notes",
+                "ms": 14.403,
+                "bytes": 13834
+              },
+              {
+                "path": "/rest/v1/activities",
+                "ms": 18.156,
+                "bytes": 389857
+              },
+              {
+                "path": "/rest/v1/activities",
+                "ms": 14.465,
+                "bytes": 389859
+              },
+              {
+                "path": "/rest/v1/rpc/observation_counts",
+                "ms": 61.749,
+                "bytes": 33998
+              },
+              {
+                "path": "/rest/v1/activities",
+                "ms": 7.273,
+                "bytes": 2
+              },
+              {
+                "path": "/rest/v1/rpc/observation_counts",
+                "ms": 52.424,
+                "bytes": 33998
+              },
+              {
+                "path": "/rest/v1/rpc/observation_counts",
+                "ms": 48.972,
+                "bytes": 2
+              }
+            ],
+            "dom": 854,
+            "heapBytes": 78560556,
+            "taskMs": 141
+          },
+          {
+            "name": "dashboard-return",
+            "visibleMs": 83,
+            "settledMs": 685,
+            "requests": [
+              {
+                "path": "/rest/v1/notes",
+                "ms": 7.086,
+                "bytes": 13834
+              },
+              {
+                "path": "/rest/v1/workspaces",
+                "ms": 7.184,
+                "bytes": 857
+              },
+              {
+                "path": "/rest/v1/workspace_observations",
+                "ms": 8.487,
+                "bytes": 892
+              },
+              {
+                "path": "/rest/v1/activities",
+                "ms": 14.654,
+                "bytes": 389857
+              },
+              {
+                "path": "/rest/v1/activities",
+                "ms": 10.206,
+                "bytes": 389859
+              },
+              {
+                "path": "/rest/v1/activities",
+                "ms": 5.877,
+                "bytes": 2
+              },
+              {
+                "path": "/rest/v1/rpc/observation_counts",
+                "ms": 50.531,
+                "bytes": 33998
+              },
+              {
+                "path": "/rest/v1/rpc/observation_counts",
+                "ms": 50.909,
+                "bytes": 33998
+              },
+              {
+                "path": "/rest/v1/rpc/observation_counts",
+                "ms": 49.312,
+                "bytes": 2
+              }
+            ],
+            "dom": 484,
+            "heapBytes": 86317688,
+            "taskMs": 94
+          }
+        ],
+        "browser": {
+          "lcp": 168,
+          "cls": 0.1187424003243152,
+          "events": [
+            16, 16, 16, 56, 56, 56, 16, 32, 32, 32, 32, 32, 32, 16, 16, 16
+          ],
+          "longTasks": [461, 888, 154, 701, 143, 445, 800, 514, 61]
+        }
+      }
+    ],
+    "errors": [],
+    "login": {
+      "name": "login",
+      "visibleMs": 389,
+      "settledMs": 992,
+      "requests": [
+        {
+          "path": "/rest/v1/workspaces",
+          "ms": 43.756,
+          "bytes": 857
+        },
+        {
+          "path": "/rest/v1/notes",
+          "ms": 48.036,
+          "bytes": 13890
+        },
+        {
+          "path": "/rest/v1/workspaces",
+          "ms": 50.757,
+          "bytes": 857
+        },
+        {
+          "path": "/rest/v1/activities",
+          "ms": 55.992,
+          "bytes": 389870
+        },
+        {
+          "path": "/rest/v1/rpc/observation_counts",
+          "ms": 73.553,
+          "bytes": 33998
+        },
+        {
+          "path": "/rest/v1/workspace_observations",
+          "ms": 12.547,
+          "bytes": 892
+        },
+        {
+          "path": "/rest/v1/activities",
+          "ms": 17.576,
+          "bytes": 389865
+        },
+        {
+          "path": "/rest/v1/activities",
+          "ms": 14.82,
+          "bytes": 389849
+        },
+        {
+          "path": "/rest/v1/activities",
+          "ms": 16.046,
+          "bytes": 389836
+        },
+        {
+          "path": "/rest/v1/rpc/observation_counts",
+          "ms": 63.556,
+          "bytes": 33998
+        },
+        {
+          "path": "/rest/v1/activities",
+          "ms": 15.638,
+          "bytes": 389858
+        },
+        {
+          "path": "/rest/v1/activities",
+          "ms": 16.703,
+          "bytes": 389872
+        },
+        {
+          "path": "/rest/v1/activities",
+          "ms": 15.126,
+          "bytes": 389845
+        },
+        {
+          "path": "/rest/v1/activities",
+          "ms": 13.761,
+          "bytes": 389871
+        },
+        {
+          "path": "/rest/v1/rpc/observation_counts",
+          "ms": 64.358,
+          "bytes": 33998
+        },
+        {
+          "path": "/rest/v1/activities",
+          "ms": 14.632,
+          "bytes": 389860
+        },
+        {
+          "path": "/rest/v1/activities",
+          "ms": 16.021,
+          "bytes": 389883
+        },
+        {
+          "path": "/rest/v1/activities",
+          "ms": 31.492,
+          "bytes": 389843
+        },
+        {
+          "path": "/rest/v1/rpc/observation_counts",
+          "ms": 61.558,
+          "bytes": 33998
+        },
+        {
+          "path": "/rest/v1/activities",
+          "ms": 32.456,
+          "bytes": 389855
+        },
+        {
+          "path": "/rest/v1/rpc/observation_counts",
+          "ms": 63.694,
+          "bytes": 33998
+        },
+        {
+          "path": "/rest/v1/activities",
+          "ms": 41.414,
+          "bytes": 389855
+        },
+        {
+          "path": "/rest/v1/activities",
+          "ms": 29.717,
+          "bytes": 389861
+        },
+        {
+          "path": "/rest/v1/rpc/observation_counts",
+          "ms": 60.609,
+          "bytes": 33998
+        },
+        {
+          "path": "/rest/v1/activities",
+          "ms": 32.923,
+          "bytes": 389856
+        },
+        {
+          "path": "/rest/v1/activities",
+          "ms": 17.08,
+          "bytes": 389876
+        },
+        {
+          "path": "/rest/v1/activities",
+          "ms": 16.634,
+          "bytes": 389865
+        },
+        {
+          "path": "/rest/v1/rpc/observation_counts",
+          "ms": 65.389,
+          "bytes": 33998
+        },
+        {
+          "path": "/rest/v1/activities",
+          "ms": 17.286,
+          "bytes": 389875
+        },
+        {
+          "path": "/rest/v1/activities",
+          "ms": 15.954,
+          "bytes": 389869
+        },
+        {
+          "path": "/rest/v1/activities",
+          "ms": 17.915,
+          "bytes": 389850
+        },
+        {
+          "path": "/rest/v1/rpc/observation_counts",
+          "ms": 62.127,
+          "bytes": 33998
+        },
+        {
+          "path": "/rest/v1/activities",
+          "ms": 18.306,
+          "bytes": 389868
+        },
+        {
+          "path": "/rest/v1/activities",
+          "ms": 17.712,
+          "bytes": 389875
+        },
+        {
+          "path": "/rest/v1/activities",
+          "ms": 13.41,
+          "bytes": 77972
+        },
+        {
+          "path": "/rest/v1/rpc/observation_counts",
+          "ms": 60.5,
+          "bytes": 33998
+        },
+        {
+          "path": "/rest/v1/rpc/observation_counts",
+          "ms": 62.864,
+          "bytes": 33998
+        },
+        {
+          "path": "/rest/v1/rpc/observation_counts",
+          "ms": 61.653,
+          "bytes": 33998
+        }
+      ],
+      "dom": 263,
+      "heapBytes": 17014948,
+      "taskMs": 305
+    }
+  },
+  "after": {
+    "recordedAt": "2026-11-14T18:52:34.370Z",
+    "environment": "local production Next build, Edge headless, local Supabase; synthetic data only",
+    "public": {
+      "name": "public",
+      "visibleMs": 415,
+      "settledMs": 1022,
+      "requests": [],
+      "dom": 286,
+      "heapBytes": 5773932,
+      "taskMs": 360,
+      "browser": {
+        "lcp": 460,
+        "cls": 0,
+        "events": [],
+        "longTasks": [99],
+        "ttfb": 14.900000005960464,
+        "loadMs": 333.70000000298023,
+        "jsBytes": 272021
+      }
+    },
+    "scenarios": [
+      {
+        "size": 100,
+        "measurements": [
+          {
+            "name": "workspace-cold",
+            "visibleMs": 245,
+            "settledMs": 849,
+            "requests": [
+              {
+                "path": "/rest/v1/workspaces",
+                "ms": 5.097,
+                "bytes": 709
+              },
+              {
+                "path": "/rest/v1/rpc/activity_total",
+                "ms": 12.774,
+                "bytes": 1
+              },
+              {
+                "path": "/rest/v1/workspace_observations",
+                "ms": 20.457,
+                "bytes": 492
+              },
+              {
+                "path": "/rest/v1/rpc/activity_page",
+                "ms": 47.074,
+                "bytes": 4622
+              },
+              {
+                "path": "/rest/v1/rpc/activity_summary",
+                "ms": 50.694,
+                "bytes": 47
+              },
+              {
+                "path": "/rest/v1/rpc/activity_page",
+                "ms": 48.727,
+                "bytes": 2
+              },
+              {
+                "path": "/rest/v1/rpc/activity_page",
+                "ms": 50.169,
+                "bytes": 2
+              },
+              {
+                "path": "/rest/v1/rpc/activity_total",
+                "ms": 54.999,
+                "bytes": 1
+              },
+              {
+                "path": "/rest/v1/rpc/observation_counts_for",
+                "ms": 47.77,
+                "bytes": 406
+              }
+            ],
+            "dom": 359,
+            "heapBytes": 14035136,
+            "taskMs": 240
+          },
+          {
+            "name": "activities",
+            "visibleMs": 145,
+            "settledMs": 747,
+            "requests": [
+              {
+                "path": "/rest/v1/rpc/activity_page",
+                "ms": 48.513,
+                "bytes": 33695
+              },
+              {
+                "path": "/rest/v1/rpc/activity_total",
+                "ms": 52.58,
+                "bytes": 3
+              },
+              {
+                "path": "/rest/v1/rpc/observation_counts_for",
+                "ms": 49.126,
+                "bytes": 3398
+              }
+            ],
+            "dom": 1336,
+            "heapBytes": 17005800,
+            "taskMs": 119
+          },
+          {
+            "name": "detail",
+            "visibleMs": 107,
+            "settledMs": 716,
+            "requests": [
+              {
+                "path": "/rest/v1/activities",
+                "ms": 8.926,
+                "bytes": 726
+              },
+              {
+                "path": "/rest/v1/priority_history",
+                "ms": 7.459,
+                "bytes": 2
+              },
+              {
+                "path": "/rest/v1/attachments",
+                "ms": 7.542,
+                "bytes": 2
+              },
+              {
+                "path": "/rest/v1/activity_events",
+                "ms": 7.491,
+                "bytes": 2
+              }
+            ],
+            "dom": 190,
+            "heapBytes": 16091588,
+            "taskMs": 64
+          },
+          {
+            "name": "activities-return",
+            "visibleMs": 75,
+            "settledMs": 681,
+            "requests": [],
+            "dom": 1337,
+            "heapBytes": 16469860,
+            "taskMs": 57
+          },
+          {
+            "name": "notes",
+            "visibleMs": 58,
+            "settledMs": 678,
+            "requests": [
+              {
+                "path": "/rest/v1/notes",
+                "ms": 13.058,
+                "bytes": 1128
+              }
+            ],
+            "dom": 210,
+            "heapBytes": 18998624,
+            "taskMs": 50
+          },
+          {
+            "name": "note-open",
+            "visibleMs": 115,
+            "settledMs": 728,
+            "requests": [
+              {
+                "path": "/rest/v1/attachments",
+                "ms": 11.746,
+                "bytes": 2
+              },
+              {
+                "path": "/rest/v1/note_entries",
+                "ms": 11.842,
+                "bytes": 21218
+              },
+              {
+                "path": "/rest/v1/notes",
+                "ms": 11.664,
+                "bytes": 224
+              }
+            ],
+            "dom": 242,
+            "heapBytes": 21060644,
+            "taskMs": 50
+          },
+          {
+            "name": "dashboard-return",
+            "visibleMs": 75,
+            "settledMs": 690,
+            "requests": [],
+            "dom": 361,
+            "heapBytes": 16809240,
+            "taskMs": 45
+          }
+        ],
+        "browser": {
+          "lcp": 252,
+          "cls": 0.010860847228250385,
+          "events": [
+            16, 16, 16, 32, 32, 32, 16, 16, 16, 16, 16, 16, 32, 32, 32
+          ],
+          "longTasks": []
+        }
+      },
+      {
+        "size": 1000,
+        "measurements": [
+          {
+            "name": "workspace-cold",
+            "visibleMs": 210,
+            "settledMs": 824,
+            "requests": [
+              {
+                "path": "/rest/v1/workspaces",
+                "ms": 11.006,
+                "bytes": 709
+              },
+              {
+                "path": "/rest/v1/rpc/activity_page",
+                "ms": 52.568,
+                "bytes": 4625
+              },
+              {
+                "path": "/rest/v1/rpc/activity_summary",
+                "ms": 57.696,
+                "bytes": 48
+              },
+              {
+                "path": "/rest/v1/workspace_observations",
+                "ms": 37.733,
+                "bytes": 742
+              },
+              {
+                "path": "/rest/v1/rpc/activity_page",
+                "ms": 53.216,
+                "bytes": 2
+              },
+              {
+                "path": "/rest/v1/rpc/activity_page",
+                "ms": 54.681,
+                "bytes": 2
+              },
+              {
+                "path": "/rest/v1/rpc/activity_total",
+                "ms": 59.435,
+                "bytes": 1
+              },
+              {
+                "path": "/rest/v1/rpc/activity_total",
+                "ms": 62.273,
+                "bytes": 1
+              },
+              {
+                "path": "/rest/v1/rpc/observation_counts_for",
+                "ms": 50.328,
+                "bytes": 406
+              }
+            ],
+            "dom": 365,
+            "heapBytes": 23544360,
+            "taskMs": 197
+          },
+          {
+            "name": "activities",
+            "visibleMs": 145,
+            "settledMs": 752,
+            "requests": [
+              {
+                "path": "/rest/v1/rpc/activity_page",
+                "ms": 50.174,
+                "bytes": 33692
+              },
+              {
+                "path": "/rest/v1/rpc/activity_total",
+                "ms": 55.236,
+                "bytes": 4
+              },
+              {
+                "path": "/rest/v1/rpc/observation_counts_for",
+                "ms": 48.94,
+                "bytes": 3398
+              }
+            ],
+            "dom": 1336,
+            "heapBytes": 19865448,
+            "taskMs": 158
+          },
+          {
+            "name": "detail",
+            "visibleMs": 111,
+            "settledMs": 723,
+            "requests": [
+              {
+                "path": "/rest/v1/activities",
+                "ms": 9.391,
+                "bytes": 728
+              },
+              {
+                "path": "/rest/v1/priority_history",
+                "ms": 9.77,
+                "bytes": 2
+              },
+              {
+                "path": "/rest/v1/attachments",
+                "ms": 9.726,
+                "bytes": 2
+              },
+              {
+                "path": "/rest/v1/activity_events",
+                "ms": 9.695,
+                "bytes": 2
+              }
+            ],
+            "dom": 190,
+            "heapBytes": 22279320,
+            "taskMs": 64
+          },
+          {
+            "name": "activities-return",
+            "visibleMs": 88,
+            "settledMs": 704,
+            "requests": [],
+            "dom": 1337,
+            "heapBytes": 25724792,
+            "taskMs": 60
+          },
+          {
+            "name": "notes",
+            "visibleMs": 48,
+            "settledMs": 654,
+            "requests": [
+              {
+                "path": "/rest/v1/notes",
+                "ms": 8.538,
+                "bytes": 11322
+              }
+            ],
+            "dom": 750,
+            "heapBytes": 21714868,
+            "taskMs": 46
+          },
+          {
+            "name": "note-open",
+            "visibleMs": 109,
+            "settledMs": 716,
+            "requests": [
+              {
+                "path": "/rest/v1/attachments",
+                "ms": 7.97,
+                "bytes": 2
+              },
+              {
+                "path": "/rest/v1/notes",
+                "ms": 8.298,
+                "bytes": 225
+              },
+              {
+                "path": "/rest/v1/note_entries",
+                "ms": 8.577,
+                "bytes": 21218
+              }
+            ],
+            "dom": 782,
+            "heapBytes": 24691908,
+            "taskMs": 51
+          },
+          {
+            "name": "dashboard-return",
+            "visibleMs": 60,
+            "settledMs": 662,
+            "requests": [
+              {
+                "path": "/rest/v1/rpc/activity_page",
+                "ms": 47.53,
+                "bytes": 2
+              },
+              {
+                "path": "/rest/v1/rpc/activity_total",
+                "ms": 52.06,
+                "bytes": 1
+              }
+            ],
+            "dom": 367,
+            "heapBytes": 26270972,
+            "taskMs": 36
+          }
+        ],
+        "browser": {
+          "lcp": 84,
+          "cls": 0.010798532594280479,
+          "events": [
+            16, 16, 16, 32, 32, 32, 16, 16, 16, 16, 16, 16, 32, 32, 32, 16, 16,
+            16
+          ],
+          "longTasks": []
+        }
+      },
+      {
+        "size": 10000,
+        "measurements": [
+          {
+            "name": "workspace-cold",
+            "visibleMs": 192,
+            "settledMs": 797,
+            "requests": [
+              {
+                "path": "/rest/v1/workspaces",
+                "ms": 9.242,
+                "bytes": 709
+              },
+              {
+                "path": "/rest/v1/rpc/activity_page",
+                "ms": 51.091,
+                "bytes": 4619
+              },
+              {
+                "path": "/rest/v1/rpc/activity_summary",
+                "ms": 55.923,
+                "bytes": 49
+              },
+              {
+                "path": "/rest/v1/workspace_observations",
+                "ms": 37.265,
+                "bytes": 742
+              },
+              {
+                "path": "/rest/v1/rpc/activity_page",
+                "ms": 58.509,
+                "bytes": 2
+              },
+              {
+                "path": "/rest/v1/rpc/activity_page",
+                "ms": 61.826,
+                "bytes": 2
+              },
+              {
+                "path": "/rest/v1/rpc/activity_total",
+                "ms": 73.046,
+                "bytes": 1
+              },
+              {
+                "path": "/rest/v1/rpc/activity_total",
+                "ms": 78.058,
+                "bytes": 1
+              },
+              {
+                "path": "/rest/v1/rpc/observation_counts_for",
+                "ms": 50.273,
+                "bytes": 406
+              }
+            ],
+            "dom": 365,
+            "heapBytes": 19492688,
+            "taskMs": 202
+          },
+          {
+            "name": "activities",
+            "visibleMs": 156,
+            "settledMs": 772,
+            "requests": [
+              {
+                "path": "/rest/v1/rpc/activity_page",
+                "ms": 47.718,
+                "bytes": 33689
+              },
+              {
+                "path": "/rest/v1/rpc/activity_total",
+                "ms": 65.199,
+                "bytes": 5
+              },
+              {
+                "path": "/rest/v1/rpc/observation_counts_for",
+                "ms": 47.509,
+                "bytes": 3398
+              }
+            ],
+            "dom": 1336,
+            "heapBytes": 28124472,
+            "taskMs": 108
+          },
+          {
+            "name": "detail",
+            "visibleMs": 123,
+            "settledMs": 727,
+            "requests": [
+              {
+                "path": "/rest/v1/activities",
+                "ms": 7.958,
+                "bytes": 726
+              },
+              {
+                "path": "/rest/v1/attachments",
+                "ms": 7.807,
+                "bytes": 2
+              },
+              {
+                "path": "/rest/v1/priority_history",
+                "ms": 8.107,
+                "bytes": 2
+              },
+              {
+                "path": "/rest/v1/activity_events",
+                "ms": 7.861,
+                "bytes": 2
+              }
+            ],
+            "dom": 190,
+            "heapBytes": 30632868,
+            "taskMs": 54
+          },
+          {
+            "name": "activities-return",
+            "visibleMs": 86,
+            "settledMs": 698,
+            "requests": [],
+            "dom": 1337,
+            "heapBytes": 21193004,
+            "taskMs": 56
+          },
+          {
+            "name": "notes",
+            "visibleMs": 56,
+            "settledMs": 671,
+            "requests": [
+              {
+                "path": "/rest/v1/notes",
+                "ms": 8.525,
+                "bytes": 11626
+              }
+            ],
+            "dom": 751,
+            "heapBytes": 23337284,
+            "taskMs": 42
+          },
+          {
+            "name": "note-open",
+            "visibleMs": 109,
+            "settledMs": 725,
+            "requests": [
+              {
+                "path": "/rest/v1/attachments",
+                "ms": 8.648,
+                "bytes": 2
+              },
+              {
+                "path": "/rest/v1/notes",
+                "ms": 8.377,
+                "bytes": 226
+              },
+              {
+                "path": "/rest/v1/note_entries",
+                "ms": 8.713,
+                "bytes": 21218
+              }
+            ],
+            "dom": 783,
+            "heapBytes": 26401024,
+            "taskMs": 52
+          },
+          {
+            "name": "dashboard-return",
+            "visibleMs": 58,
+            "settledMs": 663,
+            "requests": [],
+            "dom": 367,
+            "heapBytes": 27821504,
+            "taskMs": 33
+          }
+        ],
+        "browser": {
+          "lcp": 152,
+          "cls": 0.010723755033516589,
+          "events": [
+            16, 16, 16, 32, 32, 32, 16, 16, 16, 16, 16, 16, 32, 32, 32, 16, 16,
+            16
+          ],
+          "longTasks": []
+        }
+      }
+    ],
+    "errors": [],
+    "login": {
+      "name": "login",
+      "visibleMs": 923,
+      "settledMs": 1534,
+      "requests": [
+        {
+          "path": "/rest/v1/workspaces",
+          "ms": 33.207,
+          "bytes": 709
+        },
+        {
+          "path": "/rest/v1/rpc/activity_page",
+          "ms": 49.57,
+          "bytes": 4619
+        },
+        {
+          "path": "/rest/v1/rpc/activity_summary",
+          "ms": 58.067,
+          "bytes": 49
+        },
+        {
+          "path": "/rest/v1/workspace_observations",
+          "ms": 10.872,
+          "bytes": 742
+        },
+        {
+          "path": "/rest/v1/rpc/activity_total",
+          "ms": 38.324,
+          "bytes": 1
+        },
+        {
+          "path": "/rest/v1/rpc/activity_page",
+          "ms": 52.725,
+          "bytes": 2
+        },
+        {
+          "path": "/rest/v1/rpc/activity_page",
+          "ms": 56.397,
+          "bytes": 2
+        },
+        {
+          "path": "/rest/v1/rpc/activity_total",
+          "ms": 63.947,
+          "bytes": 1
+        },
+        {
+          "path": "/rest/v1/rpc/observation_counts_for",
+          "ms": 50.003,
+          "bytes": 406
+        }
+      ],
+      "dom": 337,
+      "heapBytes": 7665172,
+      "taskMs": 205
+    }
+  }
+}
