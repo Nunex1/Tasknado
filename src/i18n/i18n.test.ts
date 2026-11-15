@@ -1,15 +1,22 @@
+import ptBR from "./pt-BR.json";
+import enUS from "./en-US.json";
+const resources = {
+  "pt-BR": { translation: ptBR },
+  "en-US": { translation: enUS },
+};
+const createI18n = (locale: "pt-BR" | "en-US" = "pt-BR") =>
+  createBaseI18n(locale, resources);
 import { describe, expect, it } from "vitest";
 import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import ts from "typescript";
 import {
-  createI18n,
+  createI18n as createBaseI18n,
   formatBytes,
   formatDate,
   isLocale,
   preferenceKey,
   readLocale,
-  resources,
 } from "./core";
 import {
   dateFromValue,

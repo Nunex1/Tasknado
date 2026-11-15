@@ -1,4 +1,8 @@
 "use client";
+import { useQueryClient } from "@tanstack/react-query";
+import { columns } from "@/lib/data-queries";
+import { timeCursor } from "@/lib/record-queries";
+import { WindowedList } from "./windowed-list";
 import { useI18n } from "@/i18n/provider";
 import { useEffect, useId, useRef, useState } from "react";
 import {
@@ -21,12 +25,14 @@ import { Files } from "./files";
 export function NoteEntry({
   entry,
   deleting,
+  onSaved,
   onDelete,
   onDirty,
   report,
 }: {
   entry: Entry;
   deleting: boolean;
+  onSaved: (entry: Entry) => void;
   onDelete: (entry: Entry, opener: HTMLElement) => void;
   onDirty: (id: string, dirty: boolean) => void;
   report: (s: string) => void;
@@ -61,6 +67,7 @@ export function NoteEntry({
             p_revision: revision,
           }),
         ) as Entry;
+        onSaved(next);
         setRevision(next.revision);
         setSaved(content);
         setStatus(latest.current === content ? "Salvo" : "Aguardando…");
@@ -138,7 +145,7 @@ export function NoteEntry({
                 const current = check(
                   await client()
                     .from("note_entries")
-                    .select("*")
+                    .select(columns.entries)
                     .eq("id", entry.id)
                     .single(),
                 ) as Entry;
@@ -279,6 +286,10 @@ function NoteMenu({
 type DeleteTarget =
   { kind: "entry"; entry: Entry } | { kind: "note"; note: Note };
 export function Notes({
+  query,
+  onQuery,
+  order,
+  onOrder,
   notes,
   selectedId,
   onSelect,
@@ -288,6 +299,10 @@ export function Notes({
   onDirty,
   report,
 }: {
+  query: string;
+  onQuery: (value: string) => void;
+  order: string;
+  onOrder: (value: string) => void;
   notes: Note[];
   selectedId: string | null;
   onSelect: (id: string) => void;
@@ -298,9 +313,11 @@ export function Notes({
   report: (s: string) => void;
 }) {
   const { t, date, locale } = useI18n();
-  const [query, setQuery] = useState(""),
-    [order, setOrder] = useState("updated_at"),
-    [entries, setEntries] = useState<Entry[]>([]),
+  const cache = useQueryClient();
+  const dirtyEntries = useRef(new Set<string>());
+  const controller = useRef<AbortController | null>(null);
+  const sequence = useRef(0);
+  const [entries, setEntries] = useState<Entry[]>([]),
     [busy, setBusy] = useState(false),
     [more, setMore] = useState(false),
     [loadedCount, setLoadedCount] = useState(0),
@@ -317,38 +334,73 @@ export function Notes({
     opener = useRef<HTMLElement | null>(null),
     heading = useRef<HTMLHeadingElement>(null),
     menuTrigger = useRef<HTMLButtonElement>(null);
+  const pageCursor = useRef<Entry | undefined>(undefined);
+  const [revealId, setRevealId] = useState<string>();
+  const [loadingEntries, setLoadingEntries] = useState(false);
   async function load(offset = 0) {
     if (!selectedId) {
       setEntries([]);
       return;
     }
-    const result = check(
-      await client()
-        .from("note_entries")
-        .select("*")
-        .eq("note_id", selectedId)
-        .order("created_at")
-        .order("id")
-        .range(offset, offset + 49),
-    ) as Entry[];
-    if (activeId.current !== selectedId) return;
-    setEntries((prev) =>
-      mergeEntries(prev, result, offset > 0, removed.current),
-    );
-    setLoadedCount(offset + result.length);
-    setMore(result.length === 50);
+    controller.current?.abort();
+    const request = new AbortController();
+    controller.current = request;
+    const seq = ++sequence.current;
+    const cursor = offset ? pageCursor.current : undefined;
+    setLoadingEntries(true);
+    try {
+      const result = await cache.fetchQuery({
+        queryKey: ["entries", selectedId, cursor?.id ?? null],
+        queryFn: async () => {
+          let q = client()
+            .from("note_entries")
+            .select(columns.entries)
+            .eq("note_id", selectedId)
+            .order("created_at")
+            .order("id")
+            .limit(51);
+          if (cursor) q = q.or(timeCursor(cursor, false));
+          return check(await q.abortSignal(request.signal));
+        },
+      });
+      if (request.signal.aborted || seq !== sequence.current) return;
+      if (activeId.current !== selectedId) return;
+      setEntries((prev) =>
+        mergeEntries(prev, result.slice(0, 50), offset > 0, removed.current),
+      );
+      setLoadedCount(offset + Math.min(result.length, 50));
+      setMore(result.length > 50);
+      pageCursor.current = result.slice(0, 50).at(-1);
+    } catch (error) {
+      if (!request.signal.aborted && seq === sequence.current) throw error;
+    } finally {
+      if (seq === sequence.current) setLoadingEntries(false);
+    }
   }
   function startLoad(offset = 0) {
-    pending.current = load(offset).catch((e) => report(errorMessage(e)));
+    pending.current = load(offset).catch((e) => {
+      if (!controller.current?.signal.aborted) report(errorMessage(e));
+    });
   }
   useEffect(() => {
     setEntries([]);
+    dirtyEntries.current.clear();
+    pageCursor.current = undefined;
+    setRevealId(undefined);
     // A confirmation left open belongs to the note that was on screen.
     if (!deleteLock.current) setTarget(null);
     startLoad();
+    return () => {
+      controller.current?.abort();
+      sequence.current++;
+    };
   }, [selectedId]);
   async function add() {
     if (!selectedId) return;
+    if (dirtyEntries.current.size) {
+      report("Há alterações não salvas. Salve ou cancele antes de sair.");
+      return;
+    }
     setBusy(true);
     try {
       const entry = check(
@@ -358,8 +410,14 @@ export function Notes({
           .select()
           .single(),
       ) as Entry;
-      if (activeId.current === selectedId)
+      await cache.invalidateQueries({
+        queryKey: ["entries", selectedId],
+        refetchType: "none",
+      });
+      if (activeId.current === selectedId) {
         setEntries((prev) => [...prev, entry]);
+        setRevealId(entry.id);
+      }
     } catch (e) {
       report(errorMessage(e));
     } finally {
@@ -385,6 +443,11 @@ export function Notes({
           gone = true;
         }
         removed.current.add(entry.id);
+        await cache.invalidateQueries({
+          queryKey: ["entries", entry.note_id],
+          refetchType: "none",
+        });
+        dirtyEntries.current.delete(entry.id);
         onDirty(entry.id, false);
         if (activeId.current === entry.note_id) {
           setEntries((prev) => prev.filter((item) => item.id !== entry.id));
@@ -397,8 +460,11 @@ export function Notes({
       } else {
         const { note } = target;
         await onDelete(note, nextNoteId(filtered, note.id));
+        await cache.cancelQueries({ queryKey: ["entries", note.id] });
+        cache.removeQueries({ queryKey: ["entries", note.id] });
         for (const entry of shown.current) {
           removed.current.add(entry.id);
+          dirtyEntries.current.delete(entry.id);
           onDirty(entry.id, false);
         }
         setEntries([]);
@@ -412,15 +478,7 @@ export function Notes({
       setTarget(null);
     }
   }
-  const filtered = notes
-    .filter((n) => n.title.toLowerCase().includes(query.toLowerCase()))
-    .sort((a, b) =>
-      order === "title"
-        ? a.title.localeCompare(b.title, locale)
-        : b[order as "created_at" | "updated_at"].localeCompare(
-            a[order as "created_at" | "updated_at"],
-          ),
-    );
+  const filtered = notes;
   return (
     <>
       <div className="page-heading">
@@ -441,33 +499,37 @@ export function Notes({
               aria-label={t("Pesquisar notas")}
               placeholder={t("Pesquisar títulos…")}
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => onQuery(e.target.value)}
             />
           </label>
           <select
             aria-label={t("Ordenar notas")}
             value={order}
-            onChange={(e) => setOrder(e.target.value)}
+            onChange={(e) => onOrder(e.target.value)}
           >
             <option value="updated_at">{t("Última atualização")}</option>
             <option value="created_at">{t("Criação")}</option>
             <option value="title">{t("Nome")}</option>
           </select>
-          {filtered.map((note) => (
-            <button
-              key={note.id}
-              onClick={() => onSelect(note.id)}
-              className={
-                "note-list-item " + (selectedId === note.id ? "active" : "")
-              }
-            >
-              <NotebookPen size={18} />
-              <span>
-                <strong>{note.title}</strong>
-                <small>{date(note.updated_at)}</small>
-              </span>
-            </button>
-          ))}
+          <WindowedList
+            rows={filtered}
+            label={t("Notas")}
+            render={(note) => (
+              <button
+                key={note.id}
+                onClick={() => onSelect(note.id)}
+                className={
+                  "note-list-item " + (selectedId === note.id ? "active" : "")
+                }
+              >
+                <NotebookPen size={18} />
+                <span>
+                  <strong>{note.title}</strong>
+                  <small>{date(note.updated_at)}</small>
+                </span>
+              </button>
+            )}
+          />
           {!filtered.length && (
             <p className="empty-inline">{t("Nenhuma nota encontrada.")}</p>
           )}
@@ -498,23 +560,57 @@ export function Notes({
                 </div>
               </div>
               <div className="note-entries">
-                {entries.map((entry) => (
-                  <NoteEntry
-                    key={entry.id}
-                    entry={entry}
-                    deleting={
-                      deleting &&
-                      !!target &&
-                      (target.kind === "note" || target.entry.id === entry.id)
+                <WindowedList
+                  key={selectedId}
+                  rows={entries}
+                  mode="pages"
+                  revealId={revealId}
+                  label={t("Notas")}
+                  canChange={() => {
+                    if (dirtyEntries.current.size) {
+                      report(
+                        "Há alterações não salvas. Salve ou cancele antes de sair.",
+                      );
+                      return false;
                     }
-                    onDelete={(item, element) => {
-                      opener.current = element;
-                      setTarget({ kind: "entry", entry: item });
-                    }}
-                    onDirty={onDirty}
-                    report={report}
-                  />
-                ))}
+                    return true;
+                  }}
+                  render={(entry) => (
+                    <NoteEntry
+                      key={entry.id}
+                      entry={entry}
+                      deleting={
+                        deleting &&
+                        !!target &&
+                        (target.kind === "note" || target.entry.id === entry.id)
+                      }
+                      onDelete={(item, element) => {
+                        opener.current = element;
+                        setTarget({ kind: "entry", entry: item });
+                      }}
+                      onSaved={(saved) => {
+                        setEntries((old) =>
+                          old.map((e) => (e.id === saved.id ? saved : e)),
+                        );
+                        cache.setQueriesData<Entry[]>(
+                          { queryKey: ["entries", saved.note_id] },
+                          (old) =>
+                            old?.map((e) => (e.id === saved.id ? saved : e)),
+                        );
+                        void cache.invalidateQueries({
+                          queryKey: ["notes"],
+                          refetchType: "none",
+                        });
+                      }}
+                      onDirty={(id, value) => {
+                        if (value) dirtyEntries.current.add(id);
+                        else dirtyEntries.current.delete(id);
+                        onDirty(id, value);
+                      }}
+                      report={report}
+                    />
+                  )}
+                />
                 {!entries.length && (
                   <div className="empty">
                     <NotebookPen />
@@ -529,6 +625,7 @@ export function Notes({
                 {more && (
                   <Button
                     variant="ghost"
+                    disabled={loadingEntries}
                     onClick={() => startLoad(loadedCount)}
                   >
                     {t("Carregar próximas entradas")}

@@ -1,4 +1,12 @@
 "use client";
+import {
+  useInfiniteQuery,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { eventPages } from "@/lib/record-queries";
+import { columns } from "@/lib/data-queries";
+import { WindowedList } from "./windowed-list";
 import { useI18n } from "@/i18n/provider";
 import { useEffect, useState, useRef } from "react";
 import {
@@ -47,9 +55,7 @@ export function ActivityDetail({
 }) {
   const { t, date } = useI18n();
   const observationTrigger = useRef<HTMLButtonElement | null>(null);
-  const [events, setEvents] = useState<ActivityEvent[]>([]),
-    [more, setMore] = useState(false),
-    [busy, setBusy] = useState(false),
+  const [busy, setBusy] = useState(false),
     [type, setType] = useState<EventType>(actions(activity.status)[0]),
     [content, setContent] = useState("");
   const [observation, setObservation] = useState<ActivityEvent | null>(null);
@@ -57,37 +63,52 @@ export function ActivityDetail({
   const [onlyObservations, setOnlyObservations] = useState(false);
   const [newest, setNewest] = useState(true);
   const [request, setRequest] = useState(crypto.randomUUID());
-  async function load(offset = 0) {
-    let query = client()
-      .from("activity_events")
-      .select("*")
-      .eq("activity_id", activity.id);
-    if (onlyObservations) query = query.eq("type", "observation");
-    const rows = check(
-      await query
-        .order("created_at", { ascending: !newest })
-        .order("id", { ascending: !newest })
-        .range(offset, offset + 49),
-    ) as ActivityEvent[];
-    const full = rows.length === 50;
-    if (focusId && !offset && !rows.some((e) => e.id === focusId)) {
-      const found = check(
+  const cache = useQueryClient();
+  const list = useInfiniteQuery(
+    eventPages(activity.id, onlyObservations, newest),
+  );
+  const focused = useQuery({
+    queryKey: ["event", activity.id, focusId],
+    enabled: !!focusId,
+    queryFn: async ({ signal }) =>
+      check(
         await client()
           .from("activity_events")
-          .select("*")
+          .select(columns.events)
           .eq("activity_id", activity.id)
-          .eq("id", focusId)
+          .eq("id", focusId!)
+          .abortSignal(signal)
           .maybeSingle(),
-      );
-      if (found) rows.unshift(found);
+      ),
+  });
+  const loaded = list.data?.pages.flatMap((p) => p.rows) ?? [];
+  const events =
+    focused.data && !loaded.some((e) => e.id === focused.data.id)
+      ? [focused.data, ...loaded]
+      : loaded;
+  const more = list.hasNextPage;
+  async function load(offset = 0) {
+    if (offset) {
+      await list.fetchNextPage();
+      return;
     }
-    setEvents((prev) => (offset ? [...prev, ...rows] : rows));
-    setMore(full);
+    await cache.cancelQueries({ queryKey: ["events", activity.id] });
+    cache.setQueriesData<{ pages: unknown[]; pageParams: unknown[] }>(
+      { queryKey: ["events", activity.id] },
+      (old) =>
+        old && {
+          pages: old.pages.slice(0, 1),
+          pageParams: old.pageParams.slice(0, 1),
+        },
+    );
+    await Promise.all([
+      cache.invalidateQueries({ queryKey: ["events", activity.id] }),
+      cache.invalidateQueries({ queryKey: ["event", activity.id] }),
+    ]);
   }
   useEffect(() => {
-    void load().catch((e) => report(errorMessage(e)));
-    setType(actions(activity.status)[0]);
-  }, [activity.id, onlyObservations, newest, focusId]);
+    if (list.error) report(errorMessage(list.error));
+  }, [list.error, report]);
   useEffect(() => {
     if (focusId)
       document
@@ -294,55 +315,60 @@ export function ActivityDetail({
             </div>
           ) : (
             <div className="timeline">
-              {events.map((event) => {
-                const Icon = icons[event.type];
-                return (
-                  <article
-                    id={`event-${event.id}`}
-                    className={`timeline-item ${focusId === event.id ? "highlighted" : ""}`}
-                    key={event.id}
-                  >
-                    <span className={"timeline-dot " + event.type}>
-                      <Icon size={16} />
-                    </span>
-                    <div className="row between">
-                      <strong>{t(eventNames[event.type])}</strong>
-                      <time>{date(event.created_at)}</time>
-                    </div>
-                    <p className="preserve">{event.content}</p>
-                    {event.edited_at && (
-                      <small>
-                        {t("Editada em")}{" "}
-                        <time dateTime={event.edited_at}>
-                          {date(event.edited_at)}
-                        </time>
-                      </small>
-                    )}
-                    {event.type === "observation" && (
-                      <div className="row">
-                        <Button
-                          variant="ghost"
-                          disabled={busy}
-                          onClick={(e) => {
-                            observationTrigger.current = e.currentTarget;
-                            setObservation(event);
-                            setDraft(event.content);
-                          }}
-                        >
-                          {t("Editar observação")}
-                        </Button>
-                        <Button
-                          variant="danger"
-                          disabled={busy}
-                          onClick={() => void deleteObservation(event)}
-                        >
-                          {t("Excluir observação")}
-                        </Button>
+              <WindowedList
+                rows={events}
+                label={t("Histórico")}
+                estimate={150}
+                render={(event) => {
+                  const Icon = icons[event.type];
+                  return (
+                    <article
+                      id={`event-${event.id}`}
+                      className={`timeline-item ${focusId === event.id ? "highlighted" : ""}`}
+                      key={event.id}
+                    >
+                      <span className={"timeline-dot " + event.type}>
+                        <Icon size={16} />
+                      </span>
+                      <div className="row between">
+                        <strong>{t(eventNames[event.type])}</strong>
+                        <time>{date(event.created_at)}</time>
                       </div>
-                    )}
-                  </article>
-                );
-              })}
+                      <p className="preserve">{event.content}</p>
+                      {event.edited_at && (
+                        <small>
+                          {t("Editada em")}{" "}
+                          <time dateTime={event.edited_at}>
+                            {date(event.edited_at)}
+                          </time>
+                        </small>
+                      )}
+                      {event.type === "observation" && (
+                        <div className="row">
+                          <Button
+                            variant="ghost"
+                            disabled={busy}
+                            onClick={(e) => {
+                              observationTrigger.current = e.currentTarget;
+                              setObservation(event);
+                              setDraft(event.content);
+                            }}
+                          >
+                            {t("Editar observação")}
+                          </Button>
+                          <Button
+                            variant="danger"
+                            disabled={busy}
+                            onClick={() => void deleteObservation(event)}
+                          >
+                            {t("Excluir observação")}
+                          </Button>
+                        </div>
+                      )}
+                    </article>
+                  );
+                }}
+              />
             </div>
           )}
           {more && (

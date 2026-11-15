@@ -1,5 +1,6 @@
 "use client";
 import { useI18n } from "@/i18n/provider";
+import { useSearch } from "@/hooks/use-search";
 import { useEffect, useState } from "react";
 import { Search as SearchIcon, ArrowUpRight } from "lucide-react";
 import { SearchResult, Workspace, statuses, mimeTypes } from "@/lib/domain";
@@ -24,49 +25,34 @@ export function GlobalSearch({
     [from, setFrom] = useState(""),
     [to, setTo] = useState(""),
     [mime, setMime] = useState("");
-  const [results, setResults] = useState<SearchResult[]>([]),
-    [loading, setLoading] = useState(false),
-    [more, setMore] = useState(false),
-    [offset, setOffset] = useState(0);
+  const scope = JSON.stringify([
+    query,
+    workspace,
+    kind,
+    status,
+    from,
+    to,
+    mime,
+  ]);
+  const [page, setPage] = useState({ scope, offset: 0 });
+  const offset = page.scope === scope ? page.offset : 0;
+  const setOffset = (update: (old: number) => number) =>
+    setPage({ scope, offset: update(offset) });
+  const list = useSearch(query, {
+    workspace,
+    kind,
+    status,
+    from,
+    to,
+    mime,
+    offset,
+  });
+  const results = list.data ?? [],
+    loading = list.isFetching,
+    more = results.length === 50;
   useEffect(() => {
-    setOffset(0);
-  }, [query, workspace, kind, status, from, to, mime]);
-  useEffect(() => {
-    let active = true;
-    if (!query.trim()) {
-      setResults([]);
-      return;
-    }
-    setLoading(true);
-    const timer = setTimeout(async () => {
-      try {
-        const data = check(
-          await client().rpc("search_all", {
-            p_query: query,
-            p_workspace: workspace || null,
-            p_kind: kind || null,
-            p_status: status || null,
-            p_from: from ? new Date(from + "T00:00:00").toISOString() : null,
-            p_to: to ? new Date(to + "T23:59:59.999").toISOString() : null,
-            p_mime: mime || null,
-            p_offset: offset,
-          }),
-        ) as SearchResult[];
-        if (active) {
-          setResults(data);
-          setMore(data.length === 50);
-        }
-      } catch (e) {
-        if (active) report(errorMessage(e));
-      } finally {
-        if (active) setLoading(false);
-      }
-    }, 350);
-    return () => {
-      active = false;
-      clearTimeout(timer);
-    };
-  }, [query, workspace, kind, status, from, to, mime, offset]);
+    if (list.error) report(errorMessage(list.error));
+  }, [list.error, report]);
   const kinds: Record<string, string> = {
     workspace: t("Workspace"),
     activity: t("Atividade"),

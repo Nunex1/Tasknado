@@ -1,3 +1,4 @@
+import { dateFormatter } from "./core";
 import type { Locale } from "./core";
 
 export function dateValue(date: Date) {
@@ -12,7 +13,7 @@ export function dateFromValue(value: string): Date | null {
 export function inputDate(value: string, locale: Locale) {
   const date = dateFromValue(value);
   return date
-    ? new Intl.DateTimeFormat(locale, {
+    ? dateFormatter(locale, {
         day: "2-digit",
         month: "2-digit",
         year: "numeric",

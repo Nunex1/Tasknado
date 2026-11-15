@@ -10,7 +10,8 @@ const { chromium } = require(
       ".cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright",
     ),
 );
-const root = "http://127.0.0.1:3400";
+const root = process.env.TASKNADO_TEST_URL || "http://127.0.0.1:3400";
+assert.match(root, /^http:\/\/(127\.0\.0\.1|localhost):\d+$/);
 const browser = await chromium.launch({ headless: true, channel: "msedge" });
 try {
   const page = await browser.newPage();
@@ -38,11 +39,16 @@ try {
   assert.ok(scripts.every((value) => value === nonce));
   // The theme bootstrap must run before hydration, under the same nonce.
   const themeContext = await browser.newContext();
-  await themeContext.addInitScript(() => localStorage.setItem("tasknado.theme", "dark"));
+  await themeContext.addInitScript(() =>
+    localStorage.setItem("tasknado.theme", "dark"),
+  );
   await themeContext.route("**/_next/static/**/*.js", (route) => route.abort());
   const themePage = await themeContext.newPage();
   await themePage.goto(root, { waitUntil: "domcontentloaded" });
-  assert.equal(await themePage.locator("html").getAttribute("data-theme"), "dark");
+  assert.equal(
+    await themePage.locator("html").getAttribute("data-theme"),
+    "dark",
+  );
   await themeContext.close();
   // Parser-inserted untrusted HTML models an injection. DevTools evaluation is
   // privileged and is not a faithful attacker context for CSP enforcement.

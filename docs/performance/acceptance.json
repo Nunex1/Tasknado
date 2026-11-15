@@ -1,0 +1,199 @@
+{
+  "desktop": {
+    "recordedAt": "2026-11-14T18:50:07.259Z",
+    "checks": [
+      "Real UI authentication, Workspace creation and dedicated route; Work schedule/date/time and Q1 persist",
+      "Home counts across workspaces and another workspace excludes completed tasks outside its scope",
+      "Completed indicator, archive inclusion, URL filter reload and recorded reopening",
+      "Activity start and observation creation/editing survive reload with original creation and separate edit timestamp",
+      "Ctrl/Command K, grouped suggestions, term highlighting, arrow/Enter navigation, Escape and exact observation deep link",
+      "Matrix keyboard selector and real mouse drag/drop persist priority, record history and preserve schedule/status",
+      "Workspace observations create/edit/search/order/reload and exact search navigation; operational history contains observations and priority changes",
+      "University requires an explicit Canvas choice; false persists independently of status and Canvas filters work",
+      "Workspace category changes hide specialized fields and restore them without changing any activity attributes",
+      "Profile nickname/letter/custom color preview, cancel, save, global avatar, reload, menu outside click and Escape focus restoration",
+      "Immediate EN translation, reload preference and real profile/language persistence in a fresh independent browser session",
+      "Original notebook creation, autosave and persistent entry routes preserved",
+      "Global navigation from the top bar (four links, search panel, account menu), no side navigation, synchronized Notes tabs and workspace menu, history and centered short/long titles at all desktop widths",
+      "Both brand links return Home across all modules without full reload; browser Back restores routes; Home has exactly three indicators and no mobile navigation",
+      "Work schedule can be removed; local search, overdue/date filters and date ordering operate independently of status",
+      "Search network failure produces a localized error and retry recovers without reloading",
+      "All five required desktop resolutions: activity tables and matrix in a centred column with nothing docked beside it, the top bar across the window, the workspace menu over the page without moving the content, and search, all without horizontal overflow",
+      "Desktop 200% effective viewport (960 CSS px from Full HD) keeps the top bar, the matrix and keyboard classification",
+      "Reduced motion disables the wave; explicit deletion removes both observation types while operational snapshots remain",
+      "No browser runtime errors throughout the desktop suite",
+      "Automated WCAG A/AA checks on eleven authenticated desktop screens report no violations; manual-review items recorded separately",
+      "Sign Out from the account menu ends the authenticated UI session"
+    ],
+    "failure": null,
+    "errors": [],
+    "scope": "Real local Supabase + Microsoft Edge Chromium, temporary account"
+  },
+  "professional-live": {
+    "recordedAt": "2026-11-14T18:51:42.666Z",
+    "checks": [
+      "Home does not query either professional table before visiting the modules",
+      "Brazil/abroad companies, custom country, region filter, individual direct route, editing, manual order and exact multiline requirements survive reload",
+      "PDI creation pairs both texts, saves optional fields and link, supports edit/status and preserves creation time after reload",
+      "Escape asks before discard, reload is guarded, and browser Back retains the open unsaved editor",
+      "A stale form preserves user text and concurrent authenticated HTTP updates admit exactly one revision",
+      "Real API RLS isolates owners/workspaces; incompatible category hides routes and rows, owner export includes preserved data, and Work restores them",
+      "Logout and a new real Auth login preserve the career requirements and opportunities",
+      "PDI/career pages and editors pass no-overflow and axe at 375/768/1024/1440 in light/dark; paired fields stack on phone and mobile drawer navigates",
+      "English UI translates modules/forms while preserving Portuguese user-authored text and whitespace",
+      "Server pagination returns 25 then 2 filtered records; priority change resets the page and filters all records",
+      "UI deletion confirms both record types; target deletion preserves/unlinks PDI; workspace deletion removes every new row",
+      "No browser runtime exceptions throughout professional acceptance"
+    ],
+    "failure": null,
+    "errors": [],
+    "scope": "Real local Supabase Auth/PostgREST + Edge Chromium; temporary users removed"
+  },
+  "notes-deletion": {
+    "recordedAt": "2026-11-14T18:52:30.530Z",
+    "checks": [
+      "Each block has a compact delete action aligned with date and status; row height, centered title and two-column layout preserved; no WCAG violations",
+      "Cancelling a block deletion (Escape, Cancel, close, overlay) sends nothing, changes nothing and restores focus; focus is trapped in the dialog",
+      "Deleting a block with a pending autosave removes only that block, keeps order and the note, sends one request on double click, issues no later save, ignores a save that was already in flight, never recreates the block and survives reload",
+      "Autosave still persists edits on the remaining blocks",
+      "A failed block deletion shows a localized error, keeps the block and resumes the autosave of its unsaved text",
+      "Deleting the last block (and one already deleted elsewhere) leaves the note in place, ready for new content that persists",
+      "Note menu offers Edit Note and Delete Note, works by keyboard (arrows, End, Escape, focus return) and outside click; the existing edit flow is intact",
+      "English tooltip, menu and both confirmations follow the selected language; cancelling a note deletion changes nothing",
+      "Deleting a note with unsaved text removes it and its blocks with one request on double click, updates the list, selects the neighbouring note, issues no later save, ignores a save that was already in flight and survives reload; other notes untouched",
+      "Opening the address of a deleted or invalid note explains it is unavailable and replaces the route with the notes list",
+      "Deleting the last note of a workspace shows the empty state with a working create action; the workspace and other workspaces' notes remain",
+      "No browser runtime errors during the deletion journeys"
+    ],
+    "failure": null,
+    "errors": [],
+    "scope": "Real local Supabase + Microsoft Edge Chromium, temporary account"
+  },
+  "performance-browser": {
+    "checks": [
+      "First page remains usable at 200 ms latency and 1 Mbit/s download throughput",
+      "Server pages reach all 160 tasks; final sentinel, bounded DOM, End key focus and accessible pages work",
+      "Filter finds a record beyond page one; warm detail return issues zero REST requests and no unrelated resource reload",
+      "Rapid filters cancel old transport; delayed stale response cannot replace the current task",
+      "Reconnect refreshes active resource queries",
+      "105 large entries load progressively; pending drafts survive page append and adding an entry cannot skip unread server rows",
+      "Real export contains every task and all 106 entries with valid relationships (549 ms, lab)",
+      "Logout clears private state; the next account sees no previous workspace or note"
+    ],
+    "errors": [],
+    "scope": "Loopback Supabase, real Auth and Edge, synthetic temporary accounts; 200ms/1Mbit/s CDP condition included"
+  },
+  "responsive": {
+    "recordedAt": "2026-11-14T19:04:00.789Z",
+    "checks": [
+      "Landing page at 375, 768, 1024 and 1440 px: no horizontal overflow, access fields at least 44 px tall, no WCAG A/AA violations",
+      "Landing keyboard path: skip link is the first stop and moves focus to the content; header actions switch the access form and focus its first field; language switch works signed out",
+      "Sign in from the landing page opens the application",
+      "Twelve authenticated screens at 375, 768, 1024 and 1440 px: no horizontal overflow or clipped content; no WCAG A/AA violations at 375, 768 and 1024 px",
+      "The same twelve screens at 320, 390 and 1280 px: no horizontal overflow or clipped content",
+      "Navigation at 320, 375, 390, 768, 1024, 1280 and 1440 px: one fixed bar across the top that stays while scrolling, nothing docked to the sides and content centred; from 768 px the brand, four links in one row marking the current place and the account controls fit without overlapping; below it no link is on screen and the menu button is the last control, in the top right corner",
+      "Dark theme following the system preference: twelve authenticated screens at 375 and 1440 px keep the dark surface, do not overflow and report no WCAG A/AA violations (contrast included)",
+      "Phone (375 px): no navigation on screen until asked for and content at full width; the drawer enters from the right edge over a dimmed page, takes 80 to 90% of the width, does not move or scroll the page, traps focus, hides the page from assistive technology, has 44 px targets and no WCAG A/AA violations; its groups come in order (everywhere, this workspace, account) and offer nothing twice; Escape, the close button, a tap outside and choosing a destination close it; focus returns to the menu button; reduced motion removes the animation; the language changes from inside it; the brand leads home",
+      "Workspace switching on the phone: the drawer lists exactly the account's workspaces, marks the active one, keeps the current module on the target, updates the header, the list, the counter and a live announcement, and the list equals what the API returns for that workspace; activity requests carry the workspace filter",
+      "Phone task flow: the header action opens the form as a bottom sheet with Save in reach, an empty required field is reported on the field, the task is created with its priority, edited, checked in and listed under Priorities",
+      "Themes on the phone: Dark applies at once without changing the address, the filter or the list; after a reload the choice is on <html> before <body> is parsed; it follows through navigation and into a new browser context; System stores no override and follows the device live",
+      "Tablet (768 px): the compact bar instead of the drawer, indicators in three columns; the workspace menu opens as a sheet under the bar without moving the content, offers the workspaces, the modules of the category, settings and recent tasks, has no WCAG A/AA violations and closes with Escape (focus back on the switcher), a press outside or navigation; search rests as an icon, opens over the bar, keeps its results on screen and leads to the search page; forms open as a centred dialog; the header switches workspace and the account menu switches theme",
+      "Desktop (1440 px): nothing beside the content, which takes the centred 1200 px column; the four links of the bar navigate and mark the current place; tasks are a six-column table; the workspace menu and the account menu work by keyboard alone, with arrow keys through workspaces, modules and recent tasks; the tab order follows the bar from the brand to the account; the language changes from the bar; Light, Dark and System apply from Settings, Light overrides a dark device and survives a reload, System follows it",
+      "Landscape phone (667×375): drawer from the right at full height with its last control reachable by scrolling; 200% zoom of a 1280 px window keeps the phone layout and of a 1920 px window the compact bar, without overflow, with the workspace menu inside the short window",
+      "Isolation: another account's workspace is not listed or offered, its address answers 'unavailable' and no response carries its data; reads, updates and inserts against it are refused by the database; each workspace lists only its own tasks",
+      "No browser runtime or console errors throughout the responsive suite"
+    ],
+    "failure": null,
+    "errors": [],
+    "scope": "Real local Supabase + Microsoft Edge Chromium, temporary account with demonstration content"
+  },
+  "database": {
+    "recordedAt": "2026-11-14T23:53:38.685Z",
+    "checks": [
+      "All migrations execute in real embedded PostgreSQL (Supabase auth/storage schema harness)",
+      "RLS isolates users and composite foreign keys reject cross-account parents",
+      "State machine, idempotency, chronology, archive and immutable history enforced",
+      "Reopening preserves authorization, idempotency and history; completion includes archives",
+      "Explicit boolean Canvas choice, category preservation, schedule validation and independent audited priority",
+      "Observation editing preserves creation time, detects conflicts and isolates owners while execution events remain immutable",
+      "Optimistic note revision prevents stale overwrite",
+      "Direct deletes, wrong-note, other-owner, anonymous and session-less deletions leave notes and blocks untouched",
+      "Block deletion removes one block, keeps order, the note and its other blocks, touches the note, rejects repeats and late saves; an emptied note accepts new blocks",
+      "Note deletion removes the note with its blocks and file records in one step, queues storage cleanup, audits it, blocks late writes and preserves every other record",
+      "Workspace observations preserve timestamps, search updates, history snapshots and ownership; forged history and timestamps rejected",
+      "Quarantine hides pending bytes, denies client verdicts, replacement/deletion and RLS-bypassing privileges",
+      "Permanent tombstones prevent path reuse; deleted/rejected-byte reservations cannot be bypassed by declared size=1",
+      "Storage policies, RPCs and search reject another owner",
+      "Portuguese full text search, filters and immutable audit logs",
+      "Deletion cascades records and immediately revokes file visibility; cleanup queued",
+      "Anonymous writes and search denied",
+      "Account deletion cascades data without orphan audit references",
+      "Account write rate: 1201 audited changes in a minute block inserts, updates, deletes and RPCs for that account only; reads, other accounts, backends and account deletion continue",
+      "Account row ceiling: 200 workspaces per account, enforced within one bulk statement, released by deletion and independent between accounts",
+      "Professional plans obey the account limits: 1000 career targets per account, exact inside one bulk statement, and the shared write rate",
+      "Security metrics return aggregate counters to service_role only; clients and anonymous callers are denied",
+      "Privilege snapshot: anon reaches nothing, authenticated reaches exactly the reviewed tables and 21 routines, nothing is granted through PUBLIC, every table has RLS and every definer function pins search_path"
+    ],
+    "scope": "Embedded real PostgreSQL with Supabase schema harness; does not test live Auth or Storage HTTP",
+    "execution": "Same package script, Node --wasm-num-compilation-tasks=1 on memory-constrained Windows host"
+  },
+  "professional-database": {
+    "recordedAt": "2026-11-14T23:53:49.815Z",
+    "checks": [
+      "Required pairs, optional fields, custom countries, exact whitespace, status/date/priority/URL constraints",
+      "Column grants protect identity, chronology, revision and TRUNCATE; composite links reject another workspace",
+      "CRUD updates preserve creation time; revisions reject stale edits and deletes; manual order persists",
+      "A second authenticated user cannot read, export, modify, delete, insert into, or link the owner's records",
+      "Category changes hide and deny writes without deleting data; owner-only export retains inactive records; Work restores visibility",
+      "Deleting a target unlinks and preserves the PDI; explicit PDI deletion removes both associated texts",
+      "Existing workspace deletion cascades both modules even while category is incompatible",
+      "Export pagination includes all 501 records once in bounded 500-row pages",
+      "Account deletion cascades new tables and audit rows; anonymous/session-less access is denied"
+    ],
+    "scope": "All migrations in real embedded PostgreSQL with Supabase schema harness",
+    "execution": "Same package script, Node --wasm-num-compilation-tasks=1 on memory-constrained Windows host"
+  },
+  "integration": {
+    "recordedAt": "2026-11-14T23:55:52.645Z",
+    "checks": [
+      "Two real accounts authenticate",
+      "Server enforces initial state",
+      "RLS blocks cross-account reads, forged ownership and status bypass",
+      "Atomic lifecycle, chronology, idempotency and immutable events",
+      "History persists after logout and login",
+      "All five categories persist editable observations across sessions; Canvas validation, scheduling, all quadrants, priority history and category changes work through real authenticated APIs",
+      "Autosave persists and rejects stale concurrent writes",
+      "Direct deletes, other accounts, anonymous clients and wrong-note requests cannot delete blocks or notes, and reveal nothing",
+      "Block deletion wins a concurrent autosave, cannot be undone by a late save, runs once under duplicate requests and leaves an emptied note usable",
+      "Note deletion wins a concurrent autosave, removes its blocks and file record, revokes file access at once, queues cleanup, blocks late writes and preserves other notes and activities",
+      "Private Storage roundtrip preserves bytes and blocks unauthorized access",
+      "Portuguese FTS includes files and activities with private filtered results",
+      "Workspace observation CRUD timestamps, stale-edit detection, substring search and two-user isolation; profile and preferred language persist through a new auth session",
+      "Operational history contains real creation/status/observation snapshots, survives deletion and rejects direct writes and other owners",
+      "Audit logs are populated and isolated",
+      "Archiving retains history",
+      "Workspace deletion cascades only its records",
+      "Unauthenticated search rejected"
+    ],
+    "passed": 18
+  },
+  "unit": {
+    "tests": 93,
+    "files": 17,
+    "result": "passed"
+  },
+  "typecheck": {
+    "result": "passed"
+  },
+  "build": {
+    "next": "16.4.6",
+    "result": "passed"
+  },
+  "security-postgres": {
+    "groupsPassed": 7,
+    "latestLocalRerun": "Windows commit-memory limit while spawning 40 Docker clients",
+    "ciResult": "passed",
+    "ciSourceCommit": "08375ffb6c6fd834050ab715bfbd7585969a754a",
+    "jobUrl": "https://github.com/Nunex1/Tasknado/actions/runs/43655776877/job/132633840652"
+  }
+}

@@ -1,7 +1,8 @@
 import { PGlite } from "@electric-sql/pglite";
 import { readFileSync, readdirSync, mkdirSync, writeFileSync } from "node:fs";
 import assert from "node:assert/strict";
-const pg = new PGlite();
+import { pg_trgm } from "@electric-sql/pglite/contrib/pg_trgm";
+const pg = new PGlite({ extensions: { pg_trgm } });
 const checks = [];
 const pass = (s) => {
   checks.push(s);
@@ -944,6 +945,9 @@ const executable = async (role) =>
   ).rows.map((row) => row.proname);
 assert.deepEqual(await executable("anon"), []);
 assert.deepEqual(await executable("authenticated"), [
+  "activity_page",
+  "activity_summary",
+  "activity_total",
   "add_event",
   "delete_entry",
   "delete_my_account",
@@ -951,12 +955,17 @@ assert.deepEqual(await executable("authenticated"), [
   "delete_observation",
   "delete_workspace",
   "edit_observation",
+  "export_professional_page",
   "export_professional_plans",
+  "export_revision",
+  "literal_pattern",
   "observation_counts",
+  "observation_counts_for",
   "save_entry",
   "search_all",
   "set_priority",
   "workspace_timeline",
+  "workspace_timeline_page"
 ]);
 assert.equal(
   (
@@ -1020,7 +1029,7 @@ assert.deepEqual(grants, {
   workspaces: "SELECT,INSERT,UPDATE",
 });
 pass(
-  "Privilege snapshot: anon reaches nothing, authenticated reaches exactly the reviewed tables and 13 RPCs, nothing is granted through PUBLIC, every table has RLS and every definer function pins search_path",
+  "Privilege snapshot: anon reaches nothing, authenticated reaches exactly the reviewed tables and 21 routines, nothing is granted through PUBLIC, every table has RLS and every definer function pins search_path",
 );
 await pg.close();
 mkdirSync("test-results", { recursive: true });

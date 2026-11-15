@@ -1,0 +1,18 @@
+{
+  "symbol": {
+    "originalDimensions": [1254, 1254],
+    "finalDimensions": [320, 320],
+    "originalBytes": 835834,
+    "finalBytes": 58564,
+    "equalVisibleRgb": true,
+    "equalAlpha": true
+  },
+  "wordmark-mask": {
+    "originalDimensions": [2172, 724],
+    "finalDimensions": [720, 240],
+    "originalBytes": 290146,
+    "finalBytes": 18692,
+    "equalVisibleRgb": true,
+    "equalAlpha": true
+  }
+}

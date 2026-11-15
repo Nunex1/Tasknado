@@ -668,6 +668,7 @@ try {
   assert.equal(await plan().locator(".plan-card").count(), 25);
   await plan().getByRole("button", { name: "Next Page", exact: true }).click();
   await page.waitForLoadState("networkidle");
+  await plan().locator(".plan-card").nth(1).waitFor();
   assert.equal(await plan().locator(".plan-card").count(), 2);
   await plan()
     .getByLabel("Priority", { exact: true })

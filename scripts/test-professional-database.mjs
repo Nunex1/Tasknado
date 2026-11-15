@@ -2,7 +2,8 @@
 import { PGlite } from "@electric-sql/pglite";
 import { readFileSync, readdirSync, mkdirSync, writeFileSync } from "node:fs";
 import assert from "node:assert/strict";
-const pg = new PGlite();
+import { pg_trgm } from "@electric-sql/pglite/contrib/pg_trgm";
+const pg = new PGlite({ extensions: { pg_trgm } });
 const checks = [];
 const pass = (label) => {
   checks.push(label);

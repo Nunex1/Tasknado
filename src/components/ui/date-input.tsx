@@ -1,4 +1,5 @@
 "use client";
+import { dateFormatter } from "@/i18n/core";
 
 import { useEffect, useId, useRef, useState } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
@@ -78,8 +79,8 @@ export function DateInput({
         12,
       ),
   );
-  const fullDate = new Intl.DateTimeFormat(locale, { dateStyle: "full" });
-  const monthName = new Intl.DateTimeFormat(locale, {
+  const fullDate = dateFormatter(locale, { dateStyle: "full" });
+  const monthName = dateFormatter(locale, {
     month: "long",
     year: "numeric",
   }).format(focused);
@@ -166,13 +167,11 @@ export function DateInput({
                 <span
                   role="columnheader"
                   key={day.getDay()}
-                  aria-label={new Intl.DateTimeFormat(locale, {
+                  aria-label={dateFormatter(locale, {
                     weekday: "long",
                   }).format(day)}
                 >
-                  {new Intl.DateTimeFormat(locale, { weekday: "short" }).format(
-                    day,
-                  )}
+                  {dateFormatter(locale, { weekday: "short" }).format(day)}
                 </span>
               ))}
             </div>

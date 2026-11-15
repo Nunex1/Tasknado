@@ -582,22 +582,19 @@ try {
       .from("attachments")
       .upload(path, file, { contentType: "text/plain" }),
   );
-  // On a database with the upload quarantine, the owner cannot read the bytes
-  // until a trusted verdict exists. The update below stands in for the scanner
-  // on the local stack only; the real engine has its own suite.
-  const stored = ok(
-    await a.from("attachments").select("*").eq("id", fid).single(),
+  assert.ok((await a.storage.from("attachments").download(path)).error);
+  assert.ok(
+    (await a.from("attachments").update({ scan_status: "clean" }).eq("id", fid))
+      .error,
   );
-  if ("scan_status" in stored) {
-    assert.equal(stored.scan_status, "pending");
-    assert.ok((await a.storage.from("attachments").download(path)).error);
-    ok(
-      await admin
-        .from("attachments")
-        .update({ scan_status: "clean" })
-        .eq("id", fid),
-    );
-  }
+  // Synthetic scanner verdict in the loopback fixture only; this does not validate ClamAV.
+  ok(
+    await admin
+      .from("attachments")
+      .update({ scan_status: "clean", scanned_at: new Date().toISOString() })
+      .eq("id", fid),
+  );
+
   const downloaded = ok(await a.storage.from("attachments").download(path));
   assert.equal(await downloaded.text(), "Evidência do rateio");
   assert.ok((await b.storage.from("attachments").download(path)).error);
@@ -757,14 +754,12 @@ try {
   );
   assert.ok(
     (
-      await a
-        .from("workspace_events")
-        .insert({
-          workspace_id: workspace.id,
-          owner_id: ua.id,
-          source_id: observation.id,
-          action: "forged",
-        })
+      await a.from("workspace_events").insert({
+        workspace_id: workspace.id,
+        owner_id: ua.id,
+        source_id: observation.id,
+        action: "forged",
+      })
     ).error,
   );
   assert.ok(

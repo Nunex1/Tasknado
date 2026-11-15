@@ -1,4 +1,5 @@
 import Image from "next/image";
+import symbol from "@/assets/brand/symbol.webp";
 
 type BrandSize = "sm" | "md" | "lg";
 type BrandTone = "white" | "blue";
@@ -16,14 +17,11 @@ export function BrandSymbol({
 }: BrandProps) {
   return (
     <Image
-      src="/brand/symbol.png"
-      width={1280}
-      height={1280}
+      src={symbol}
+      sizes={size === "lg" ? "80px" : size === "sm" ? "34px" : "56px"}
       alt={decorative ? "" : "Tasknado"}
       aria-hidden={decorative || undefined}
       className={`brand-symbol brand-symbol--${size} ${className}`}
-      unoptimized
-      loading="eager"
     />
   );
 }

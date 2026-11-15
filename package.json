@@ -26,11 +26,19 @@
     "test:security:clamav": "node scripts/test-security-clamav.mjs",
     "security:health": "node scripts/security-health.mjs",
     "security:probe": "node scripts/probe-deployment.mjs",
-    "backup:storage": "node scripts/backup-storage.mjs"
+    "backup:storage": "node scripts/backup-storage.mjs",
+    "test:performance": "node scripts/test-performance-postgres.mjs",
+    "test:performance:browser": "node scripts/test-performance-browser.mjs",
+    "performance:benchmark": "node scripts/benchmark-performance.mjs",
+    "performance:budget": "node scripts/check-performance-budgets.mjs",
+    "performance:analyze": "next analyze --output --snapshot performance",
+    "performance:export": "node scripts/benchmark-export.mjs"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.0",
     "@supabase/supabase-js": "^2.80.0",
+    "@tanstack/react-query": "^5.107.1",
+    "@tanstack/react-virtual": "^3.14.26",
     "clsx": "^2.1.1",
     "fflate": "0.8.3",
     "file-type": "22.3.0",

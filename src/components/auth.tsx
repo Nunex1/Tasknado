@@ -15,9 +15,11 @@ export type AuthMode = "login" | "signup" | "reset" | "password";
  */
 export function Auth({
   recovery = false,
+  pending = false,
   onRecovered,
 }: {
   recovery?: boolean;
+  pending?: boolean;
   onRecovered: () => void;
 }) {
   const [mode, setMode] = useState<AuthMode>(recovery ? "password" : "login");
@@ -43,7 +45,9 @@ export function Auth({
         );
       }}
     >
-      <AuthCard mode={mode} onMode={setMode} onRecovered={onRecovered} />
+      <fieldset disabled={pending} className="auth-pending">
+        <AuthCard mode={mode} onMode={setMode} onRecovered={onRecovered} />
+      </fieldset>
     </Landing>
   );
 }

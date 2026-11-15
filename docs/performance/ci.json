@@ -1,0 +1,335 @@
+{
+  "sourceCommit": "08375ffb6c6fd834050ab715bfbd7585969a754a",
+  "note": "Snapshot of completed GitHub checks before the documentation-only evidence update.",
+  "workflows": [
+    {
+      "name": "Security and regression",
+      "url": "https://github.com/Nunex1/Tasknado/actions/runs/43655776877",
+      "jobs": [
+        {
+          "name": "static-analysis",
+          "result": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "result": "success"
+            },
+            {
+              "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+              "result": "success"
+            },
+            {
+              "name": "Run docker run --rm --network none -v \"$GITHUB_WORKSPACE:/src:ro\" semgrep/semgrep@sha256:b68f9b68483955b85042dac7b4533757779625a02dcf91e470da4c2df1b430be semgrep scan --config /src/.semgrep.yml --no-git-ignore --error --metrics=off /src",
+              "result": "success"
+            },
+            {
+              "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+              "result": "success"
+            },
+            {
+              "name": "Complete job",
+              "result": "success"
+            }
+          ]
+        },
+        {
+          "name": "antivirus",
+          "result": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "result": "success"
+            },
+            {
+              "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+              "result": "success"
+            },
+            {
+              "name": "Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+              "result": "success"
+            },
+            {
+              "name": "Run npm install --global pnpm@11.25.0",
+              "result": "success"
+            },
+            {
+              "name": "Run pnpm install --frozen-lockfile",
+              "result": "success"
+            },
+            {
+              "name": "Run pnpm security:stack start",
+              "result": "success"
+            },
+            {
+              "name": "Run pnpm test:security:clamav",
+              "result": "success"
+            },
+            {
+              "name": "Post Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+              "result": "success"
+            },
+            {
+              "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+              "result": "success"
+            },
+            {
+              "name": "Complete job",
+              "result": "success"
+            }
+          ]
+        },
+        {
+          "name": "isolation",
+          "result": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "result": "success"
+            },
+            {
+              "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+              "result": "success"
+            },
+            {
+              "name": "Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+              "result": "success"
+            },
+            {
+              "name": "Run npm install --global pnpm@11.25.0",
+              "result": "success"
+            },
+            {
+              "name": "Run pnpm install --frozen-lockfile",
+              "result": "success"
+            },
+            {
+              "name": "Run pnpm security:stack start",
+              "result": "success"
+            },
+            {
+              "name": "Run pnpm test:security:http",
+              "result": "success"
+            },
+            {
+              "name": "Run pnpm test:security:backup",
+              "result": "success"
+            },
+            {
+              "name": "Post Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+              "result": "success"
+            },
+            {
+              "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+              "result": "success"
+            },
+            {
+              "name": "Complete job",
+              "result": "success"
+            }
+          ]
+        },
+        {
+          "name": "secrets",
+          "result": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "result": "success"
+            },
+            {
+              "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+              "result": "success"
+            },
+            {
+              "name": "Run gitleaks/gitleaks-action@dcedce43c6f43de0b836d1fe38946645c9c638dc",
+              "result": "success"
+            },
+            {
+              "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+              "result": "success"
+            },
+            {
+              "name": "Complete job",
+              "result": "success"
+            }
+          ]
+        },
+        {
+          "name": "regression",
+          "result": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "result": "success"
+            },
+            {
+              "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+              "result": "success"
+            },
+            {
+              "name": "Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+              "result": "success"
+            },
+            {
+              "name": "Run npm install --global pnpm@11.25.0",
+              "result": "success"
+            },
+            {
+              "name": "Run pnpm install --frozen-lockfile",
+              "result": "success"
+            },
+            {
+              "name": "Run pnpm audit --audit-level=moderate",
+              "result": "success"
+            },
+            {
+              "name": "Run pnpm typecheck",
+              "result": "success"
+            },
+            {
+              "name": "Run pnpm test",
+              "result": "success"
+            },
+            {
+              "name": "Run pnpm test:database",
+              "result": "success"
+            },
+            {
+              "name": "Run pnpm test:professional:database",
+              "result": "success"
+            },
+            {
+              "name": "Run pnpm test:security:postgres",
+              "result": "success"
+            },
+            {
+              "name": "Run pnpm test:performance",
+              "result": "success"
+            },
+            {
+              "name": "Run pnpm build",
+              "result": "success"
+            },
+            {
+              "name": "Run pnpm performance:budget",
+              "result": "success"
+            },
+            {
+              "name": "Post Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+              "result": "success"
+            },
+            {
+              "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+              "result": "success"
+            },
+            {
+              "name": "Complete job",
+              "result": "success"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "CodeQL",
+      "url": "https://github.com/Nunex1/Tasknado/actions/runs/43655776847",
+      "jobs": [
+        {
+          "name": "analyze (javascript-typescript)",
+          "result": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "result": "success"
+            },
+            {
+              "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+              "result": "success"
+            },
+            {
+              "name": "Run github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066",
+              "result": "success"
+            },
+            {
+              "name": "Run github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066",
+              "result": "success"
+            },
+            {
+              "name": "Post Run github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066",
+              "result": "success"
+            },
+            {
+              "name": "Post Run github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066",
+              "result": "success"
+            },
+            {
+              "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+              "result": "success"
+            },
+            {
+              "name": "Complete job",
+              "result": "success"
+            }
+          ]
+        },
+        {
+          "name": "analyze (actions)",
+          "result": "success",
+          "steps": [
+            {
+              "name": "Set up job",
+              "result": "success"
+            },
+            {
+              "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+              "result": "success"
+            },
+            {
+              "name": "Run github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066",
+              "result": "success"
+            },
+            {
+              "name": "Run github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066",
+              "result": "success"
+            },
+            {
+              "name": "Post Run github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066",
+              "result": "success"
+            },
+            {
+              "name": "Post Run github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066",
+              "result": "success"
+            },
+            {
+              "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+              "result": "success"
+            },
+            {
+              "name": "Complete job",
+              "result": "success"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "isolationChecks": [
+    "PASS real HTTP rejects anonymous writes and cross-owner reads/deletes",
+    "PASS pending bytes cannot be downloaded/signed, including by owner; client cannot forge scan verdict",
+    "PASS clean owner download works; replacement, cross-owner signing and deleted-path reuse are denied",
+    "PASS physical cleanup releases quota and a late scanner cannot resurrect the charge",
+    "PASS invalid JWT rejected and global logout revokes refresh token",
+    "PASS ten missing objects back off and leave the next account's upload first in line",
+    "PASS unreachable, approve-everything, unconfigured and untrusted-network scanners keep bytes quarantined and unreadable",
+    "PASS with a detecting scanner: clean file released to its owner with its real size reserved; spoofed type, antivirus test file and day-old missing upload rejected",
+    "PASS bulk insert beyond the account ceiling is refused atomically; metrics are service-role only and feed the health check",
+    "PASS export wrote 2 encrypted objects and an encrypted manifest; names and bytes disclose no identifier or content",
+    "PASS offline verification accepts the intact backup, detects a single flipped bit and refuses a different key",
+    "PASS a deleted object is recovered byte for byte, existing objects are never overwritten, a repeated restore changes nothing and quarantine still applies"
+  ],
+  "antivirusChecks": [
+    "PASS real ClamAV 1.5.4 answers on loopback with signature database 28183 (18 h old) and detects the standard test file",
+    "PASS real engine: clean text, image and Office document are released to their owner only; the test file is rejected as text and inside an Office archive, and neither can be downloaded or signed",
+    "PASS with the ClamAV daemon stopped the worker approves nothing and the waiting upload stays quarantined and unreadable"
+  ]
+}

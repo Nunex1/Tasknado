@@ -123,23 +123,34 @@ await context.addInitScript(() => {
     attributeFilter: ["data-theme"],
   });
 });
-const page = await context.newPage();
-page.setDefaultTimeout(15000);
+let page;
 const checks = [],
   screens = [],
   accessibility = [],
   errors = [],
   vitals = [];
 let failure = null;
-page.on("pageerror", (e) => errors.push(e.message));
-page.on("console", (m) => {
-  // Failed requests are reported below with their address.
-  if (m.type() === "error" && !m.text().startsWith("Failed to load resource"))
-    errors.push(m.text());
-});
-page.on("response", (r) => {
-  if (r.status() >= 400) errors.push(`${r.status()} ${r.url()}`);
-});
+async function layoutPage(width, height, colorScheme = "light") {
+  // Each layout batch starts a fresh renderer, retaining the authenticated
+  // context. Avoid retaining dozens of full-document axe/screenshot runs in
+  // one renderer; the interactive navigation journeys below stay on one page.
+  await page?.close();
+  page = await context.newPage();
+  page.setDefaultTimeout(15000);
+  await page.setViewportSize({ width, height });
+  await page.emulateMedia({ colorScheme });
+  page.on("crash", () => errors.push("Browser renderer crashed"));
+  page.on("pageerror", (e) => errors.push(e.message));
+  page.on("console", (m) => {
+    // Failed requests are reported below with their address.
+    if (m.type() === "error" && !m.text().startsWith("Failed to load resource"))
+      errors.push(m.text());
+  });
+  page.on("response", (r) => {
+    if (r.status() >= 400) errors.push(`${r.status()} ${r.url()}`);
+  });
+}
+await layoutPage(1440, 900);
 const pass = (s) => {
   checks.push(s);
   console.log("PASS " + s);
@@ -360,7 +371,7 @@ try {
   ];
   const appViolations = [];
   for (const [width, height] of sizes) {
-    await page.setViewportSize({ width, height });
+    await layoutPage(width, height);
     for (const [name, path, selector] of routes) {
       await page.goto(root + path);
       await page.locator(selector).first().waitFor();
@@ -382,7 +393,7 @@ try {
     [390, 844],
     [1280, 720],
   ]) {
-    await page.setViewportSize({ width, height });
+    await layoutPage(width, height);
     for (const [name, path, selector] of routes) {
       await page.goto(root + path);
       await page.locator(selector).first().waitFor();
@@ -535,7 +546,7 @@ try {
     [375, 812],
     [1440, 900],
   ]) {
-    await page.setViewportSize({ width, height });
+    await layoutPage(width, height, "dark");
     for (const [name, path, selector] of routes) {
       await page.goto(root + path);
       await page.locator(selector).first().waitFor();
@@ -747,8 +758,14 @@ try {
   await drawer.getByRole("button", { name: "Fechar menu" }).click();
   await drawer.waitFor({ state: "detached" });
   drawer = await openDrawer();
-  await drawer.getByRole("radio", { name: "English", exact: true }).check();
+  // The first English selection loads its catalog asynchronously. Wait for
+  // the translated UI, then assert the controlled radio's committed state.
+  await drawer.getByRole("radio", { name: "English", exact: true }).click();
   await page.getByRole("dialog", { name: "Navigation menu" }).waitFor();
+  assert.equal(
+    await page.getByRole("radio", { name: "English", exact: true }).isChecked(),
+    true,
+  );
   assert.equal(
     await page.evaluate(() => document.documentElement.lang),
     "en-US",
@@ -756,9 +773,15 @@ try {
   await page
     .getByRole("dialog", { name: "Navigation menu" })
     .getByRole("radio", { name: "Português", exact: true })
-    .check();
+    .click();
   drawer = page.getByRole("dialog", { name: "Menu de navegação" });
   await drawer.waitFor();
+  assert.equal(
+    await drawer
+      .getByRole("radio", { name: "Português", exact: true })
+      .isChecked(),
+    true,
+  );
   // Profile and sign-out are in the account group; signing out is not tested here.
   assert.equal(await drawer.getByRole("button", { name: "Sair" }).count(), 1);
   await drawer.getByRole("link", { name: /Marina|Perfil/ }).click();
@@ -804,7 +827,18 @@ try {
   const activityRequests = [];
   const recordRequest = (request) => {
     const url = decodeURIComponent(request.url());
-    if (url.includes("/rest/v1/activities?")) activityRequests.push(url);
+    if (url.includes("/rest/v1/activities?"))
+      activityRequests.push({
+        url,
+        workspace: new URL(request.url()).searchParams
+          .get("workspace_id")
+          ?.replace(/^eq\./, ""),
+      });
+    if (url.includes("/rest/v1/rpc/activity_page"))
+      activityRequests.push({
+        url,
+        workspace: request.postDataJSON()?.p_workspace,
+      });
   };
   page.on("request", recordRequest);
   drawer = await openDrawer();
@@ -852,12 +886,11 @@ try {
     "Workspace ativo: Faculdade",
   );
   // The scope is applied by the query, not by hiding rows afterwards.
-  const scoped = activityRequests.filter((url) => !/[?&]id=eq./.test(url));
+  const scoped = activityRequests.filter(({ url }) => !/[?&]id=eq./.test(url));
   assert.ok(scoped.length > 0);
-  for (const url of scoped)
+  for (const { url, workspace } of scoped)
     assert.ok(
-      url.includes(`workspace_id=eq.${university.id}`) ||
-        url.includes(`workspace_id=eq.${work}`),
+      workspace === university.id || workspace === work,
       `Unscoped activities request inside a workspace: ${url}`,
     );
   page.off("request", recordRequest);

@@ -1,0 +1,9 @@
+{
+  "scope": "production HTML script references, gzip computed per script; not browser timing",
+  "scripts": 15,
+  "javascript": 1036059,
+  "gzip": 311473,
+  "symbol": 58564,
+  "mask": 18692,
+  "security": "nonce CSP, private no-store HTML, immutable hashed scripts, public brand assets"
+}

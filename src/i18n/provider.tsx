@@ -13,6 +13,9 @@ import { usePathname } from "next/navigation";
 import { db } from "@/lib/supabase";
 import {
   createI18n,
+  ensureLocale,
+  dateFormatter,
+  numberFormatter,
   defaultLocale,
   formatBytes,
   formatDate,
@@ -32,9 +35,22 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   // A separate instance per provider also keeps server renders isolated.
   const [instance] = useState(() => createI18n());
   const [storageError, setStorageError] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const account = useRef<string | null>(null);
   const pathname = usePathname();
+  const languageRequest = useRef(0);
+  const applyLocale = useCallback(
+    async (locale: Locale) => {
+      const request = ++languageRequest.current;
+      try {
+        await ensureLocale(instance, locale);
+        if (request === languageRequest.current)
+          await instance.changeLanguage(locale);
+      } catch {
+        if (request === languageRequest.current) setStorageError(true);
+      }
+    },
+    [instance],
+  );
   const saving = useRef(0);
   const queue = useRef(Promise.resolve());
 
@@ -50,15 +66,15 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         /* Storage can be disabled. */
       }
       if (id && isLocale(preferred)) locale = preferred;
-      void instance.changeLanguage(locale);
+      void applyLocale(locale);
     },
-    [instance],
+    [instance, applyLocale],
   );
 
   const setLocale = useCallback(
     (locale: Locale) => {
       if (!isLocale(locale)) return;
-      void instance.changeLanguage(locale);
+      void applyLocale(locale);
       try {
         window.localStorage.setItem(preferenceKey(account.current), locale);
         // The signed-out screen uses the last language on this browser. An account
@@ -86,22 +102,22 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
           });
       }
     },
-    [instance],
+    [instance, applyLocale],
   );
 
   useEffect(() => {
-    setAccount(account.current);
-    setMounted(true);
+    // App applies the saved preference after its Suspense boundary has hydrated.
+    // Changing language here could race hydration of the streamed public page.
     const sync = (event: StorageEvent) => {
       if (event.key === preferenceKey(account.current) || event.key === null) {
-        void instance.changeLanguage(
+        void applyLocale(
           isLocale(event.newValue) ? event.newValue : defaultLocale,
         );
       }
     };
     window.addEventListener("storage", sync);
     return () => window.removeEventListener("storage", sync);
-  }, [instance, setAccount]);
+  }, [instance, setAccount, applyLocale]);
 
   useEffect(() => {
     const updateDocument = () => {
@@ -190,13 +206,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   return (
     <I18nextProvider i18n={instance}>
       <Preferences.Provider value={{ setLocale, setAccount, storageError }}>
-        {mounted ? (
-          children
-        ) : (
-          <div className="setup" role="status">
-            {instance.t("Abrindo seu espaço…")}
-          </div>
-        )}
+        {children}
       </Preferences.Provider>
     </I18nextProvider>
   );
@@ -213,6 +223,7 @@ export function useI18n() {
     ...preferences,
     date: (value: string) => formatDate(value, locale),
     bytes: (value: number) => formatBytes(value, locale),
-    number: (value: number) => new Intl.NumberFormat(locale).format(value),
+    number: (value: number) => numberFormatter(locale).format(value),
+    shortDate: (value: string) => dateFormatter(locale).format(new Date(value)),
   };
 }

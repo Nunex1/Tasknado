@@ -1,4 +1,6 @@
 "use client";
+import { useQuery } from "@tanstack/react-query";
+import { columns } from "@/lib/data-queries";
 import { useEffect, useState } from "react";
 import { Plus, ArrowUpRight } from "lucide-react";
 import {
@@ -82,29 +84,21 @@ export function RecentObservations({
   onOpen: (r: SearchResult) => void;
 }) {
   const { t, date } = useI18n();
-  const [rows, setRows] = useState<WorkspaceObservation[]>([]),
-    [error, setError] = useState("");
-  useEffect(() => {
-    let live = true;
-    let q = client()
-      .from("workspace_observations")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(3);
-    if (workspaceId) q = q.eq("workspace_id", workspaceId);
-    q.then((r) => {
-      if (live) {
-        try {
-          setRows(check(r));
-        } catch (e) {
-          setError(errorMessage(e));
-        }
-      }
-    });
-    return () => {
-      live = false;
-    };
-  }, [workspaceId]);
+  const list = useQuery({
+    queryKey: ["recent-observations", workspaceId],
+    queryFn: async ({ signal }) => {
+      let q = client()
+        .from("workspace_observations")
+        .select(columns.observations)
+        .order("created_at", { ascending: false })
+        .order("id")
+        .limit(3);
+      if (workspaceId) q = q.eq("workspace_id", workspaceId);
+      return check(await q.abortSignal(signal));
+    },
+  });
+  const rows = list.data ?? [],
+    error = list.error ? errorMessage(list.error) : "";
   return (
     <section className="recent-observations">
       <h2>{t("Últimas observações gerais")}</h2>

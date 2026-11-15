@@ -17,6 +17,8 @@ import type {
   WorkspaceEvent,
 } from "./domain";
 import type { CareerValues, DevelopmentValues } from "./professional";
+import type { ActivityFilters, ActivityPageRow, Cursor } from "./data-queries";
+
 type Owned<T> = T & { owner_id: string };
 type Table<Row, Insert, Update = Partial<Insert>> = {
   Row: { [K in keyof Row]: Row[K] };
@@ -117,12 +119,55 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      export_revision: { Args: Record<string, never>; Returns: string };
+      export_professional_page: {
+        Args: {
+          p_table: "career_targets" | "professional_development_items";
+          p_after?: string | null;
+        };
+        Returns: (CareerTarget | DevelopmentItem)[];
+      };
+
+      activity_page: {
+        Args: {
+          p_workspace?: string | null;
+          p_filters?: ActivityFilters;
+          p_sort?: string;
+          p_after?: Cursor | null;
+          p_size?: number;
+        };
+        Returns: ActivityPageRow[];
+      };
+      activity_total: {
+        Args: {
+          p_workspace?: string | null;
+          p_filters?: ActivityFilters;
+        };
+        Returns: number;
+      };
+      activity_summary: {
+        Args: { p_workspace?: string | null };
+        Returns: { not_started: number; started: number; completed: number }[];
+      };
+      observation_counts_for: {
+        Args: { p_activities: string[] };
+        Returns: { activity_id: string; total: number }[];
+      };
+
       export_professional_plans: {
         Args: {
           p_table: "career_targets" | "professional_development_items";
           p_offset?: number;
         };
         Returns: (CareerTarget | DevelopmentItem)[];
+      };
+      workspace_timeline_page: {
+        Args: {
+          p_workspace: string;
+          p_after?: string | null;
+          p_id?: string | null;
+        };
+        Returns: WorkspaceEvent[];
       };
       workspace_timeline: {
         Args: { p_workspace: string; p_offset?: number };

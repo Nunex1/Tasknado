@@ -1,4 +1,5 @@
 "use client";
+import { dateFormatter } from "@/i18n/core";
 import { useState } from "react";
 import { useI18n } from "@/i18n/provider";
 import {
@@ -144,7 +145,7 @@ export function Schedule({ work }: { work?: WorkAttributes }) {
     <>
       {work?.hasScheduledDate && work.scheduledDate ? (
         <span>
-          {new Intl.DateTimeFormat(locale, { dateStyle: "short" }).format(
+          {dateFormatter(locale, { dateStyle: "short" }).format(
             new Date(`${work.scheduledDate}T12:00:00`),
           )}
           {work.scheduledTime ? ` · ${work.scheduledTime}` : ""}

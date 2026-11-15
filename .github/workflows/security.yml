@@ -29,7 +29,9 @@ jobs:
       - run: pnpm test:database
       - run: pnpm test:professional:database
       - run: pnpm test:security:postgres
+      - run: pnpm test:performance
       - run: pnpm build
+      - run: pnpm performance:budget
   # Real Supabase Auth, API and Storage, started inside the runner with
   # throwaway local keys: no project, secret or production data is involved.
   isolation:

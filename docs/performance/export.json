@@ -1,0 +1,30 @@
+{
+  "baseline": "44633c6",
+  "environment": "same migrated loopback Supabase; Node client; 100 ms added before every real request; one sample, not field latency",
+  "before": {
+    "ms": 2602,
+    "requests": 20,
+    "maxInFlight": 1
+  },
+  "after": {
+    "ms": 1272,
+    "requests": 23,
+    "maxInFlight": 3,
+    "bytes": 2178564
+  },
+  "rows": {
+    "workspaces": 1,
+    "activities": 1001,
+    "activity_events": 0,
+    "notes": 1,
+    "note_entries": 50,
+    "attachments": 0,
+    "audit_logs": 2055,
+    "priority_history": 0,
+    "workspace_observations": 0,
+    "workspace_events": 1001,
+    "career_targets": 0,
+    "professional_development_items": 0
+  },
+  "integrity": "Every exported row and field equals the sequential baseline, excluding derived search_document"
+}

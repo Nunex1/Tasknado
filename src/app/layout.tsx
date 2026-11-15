@@ -41,7 +41,13 @@ export const viewport: Viewport = {
   // of sheets and forms (honoured by Chromium and Firefox on Android).
   interactiveWidget: "resizes-content",
 };
-export default async function Layout({ children }: { children: React.ReactNode }) {
+export default async function Layout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  // Every current document shares a per-request CSP nonce. Static HTML would reuse
+  // that nonce; keep dynamic rendering while hashed assets use the CDN cache.
   await connection();
   const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
@@ -50,7 +56,10 @@ export default async function Layout({ children }: { children: React.ReactNode }
       <head>
         {/* Static, reviewed source constant; never user content. */}
         {/* nosemgrep: no-executable-user-html */}
-        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <script
+          nonce={nonce}
+          dangerouslySetInnerHTML={{ __html: themeScript }}
+        />
       </head>
       <body>
         <ThemeProvider>
