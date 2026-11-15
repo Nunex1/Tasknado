@@ -190,7 +190,10 @@
     "result": "passed"
   },
   "security-postgres": {
-    "previousGroupsPassed": 7,
-    "latestLocalRerun": "blocked by Windows commit-memory limit while spawning 40 concurrent Docker clients; CI rerun pending"
+    "groupsPassed": 7,
+    "latestLocalRerun": "Windows commit-memory limit while spawning 40 Docker clients",
+    "ciResult": "passed",
+    "ciSourceCommit": "08375ffb6c6fd834050ab715bfbd7585969a754a",
+    "jobUrl": "https://github.com/Nunex1/Tasknado/actions/runs/43655776877/job/132633840652"
   }
 }
