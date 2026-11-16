@@ -1,4 +1,6 @@
 "use client";
+import { QueryResult } from "./query-result";
+import type { ReadQuery } from "@/lib/query-state";
 import { useQueryClient } from "@tanstack/react-query";
 import { columns } from "@/lib/data-queries";
 import { timeCursor } from "@/lib/record-queries";
@@ -291,6 +293,7 @@ export function Notes({
   order,
   onOrder,
   notes,
+  listQuery,
   selectedId,
   onSelect,
   onCreate,
@@ -304,6 +307,7 @@ export function Notes({
   order: string;
   onOrder: (value: string) => void;
   notes: Note[];
+  listQuery: ReadQuery;
   selectedId: string | null;
   onSelect: (id: string) => void;
   onCreate: () => void;
@@ -511,28 +515,30 @@ export function Notes({
             <option value="created_at">{t("Criação")}</option>
             <option value="title">{t("Nome")}</option>
           </select>
-          <WindowedList
-            rows={filtered}
-            label={t("Notas")}
-            render={(note) => (
-              <button
-                key={note.id}
-                onClick={() => onSelect(note.id)}
-                className={
-                  "note-list-item " + (selectedId === note.id ? "active" : "")
-                }
-              >
-                <NotebookPen size={18} />
-                <span>
-                  <strong>{note.title}</strong>
-                  <small>{date(note.updated_at)}</small>
-                </span>
-              </button>
+          <QueryResult queries={[listQuery]}>
+            <WindowedList
+              rows={filtered}
+              label={t("Notas")}
+              render={(note) => (
+                <button
+                  key={note.id}
+                  onClick={() => onSelect(note.id)}
+                  className={
+                    "note-list-item " + (selectedId === note.id ? "active" : "")
+                  }
+                >
+                  <NotebookPen size={18} />
+                  <span>
+                    <strong>{note.title}</strong>
+                    <small>{date(note.updated_at)}</small>
+                  </span>
+                </button>
+              )}
+            />
+            {!filtered.length && (
+              <p className="empty-inline">{t("Nenhuma nota encontrada.")}</p>
             )}
-          />
-          {!filtered.length && (
-            <p className="empty-inline">{t("Nenhuma nota encontrada.")}</p>
-          )}
+          </QueryResult>
         </section>
         <section className="panel note-content">
           {selected ? (

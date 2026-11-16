@@ -1,0 +1,13 @@
+{
+  "environment": "isolated loopback security stack; real PostgreSQL/Auth/PostgREST; no Realtime",
+  "checks": [
+    "Authenticated reads return genuine counts without Realtime",
+    "Real missing SQL functions yield PGRST202/404, never zero or empty dashboard",
+    "Failure state remains localized and readable on mobile/dark theme",
+    "Activities and all matrix quadrants reject false empty states",
+    "Restoring actual SQL functions recovers genuine data",
+    "Actual PostgreSQL permission denial is distinguished from empty data",
+    "Network recovery preserves original records"
+  ],
+  "errors": []
+}

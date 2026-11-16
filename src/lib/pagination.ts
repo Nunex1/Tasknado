@@ -1,3 +1,4 @@
+import { check } from "./supabase";
 /** Read bounded API pages without silently truncating at PostgREST's row cap. */
 export async function fetchPages<T>(
   read: (
@@ -5,7 +6,8 @@ export async function fetchPages<T>(
     to: number,
   ) => PromiseLike<{
     data: T[] | null;
-    error: { message: string } | null;
+    error: { message: string; code?: string } | null;
+    status?: number;
   }>,
   limit = Infinity,
 ): Promise<T[]> {
@@ -13,8 +15,7 @@ export async function fetchPages<T>(
   while (rows.length < limit) {
     const size = Math.min(500, limit - rows.length);
     const result = await read(rows.length, rows.length + size - 1);
-    if (result.error) throw new Error(result.error.message);
-    const page = result.data || [];
+    const page = check(result) || [];
     rows.push(...page);
     if (page.length < size) break;
   }

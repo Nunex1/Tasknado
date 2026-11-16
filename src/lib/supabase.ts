@@ -8,13 +8,40 @@ export function client() {
   if (!db) throw new Error("Configure as variáveis do Supabase.");
   return db;
 }
+export class ServiceError extends Error {
+  constructor(
+    message: string,
+    readonly code?: string,
+    readonly status?: number,
+  ) {
+    super(message);
+    this.name = "ServiceError";
+  }
+}
 export function check<
-  T extends { error: { message: string } | null; data?: unknown },
+  T extends {
+    error: { message: string; code?: string } | null;
+    data?: unknown;
+    status?: number;
+  },
 >(result: T): NonNullable<T["data"]> {
-  if (result.error) throw new Error(result.error.message);
+  if (result.error)
+    throw new ServiceError(
+      result.error.message,
+      result.error.code,
+      result.status,
+    );
   return result.data as NonNullable<T["data"]>;
 }
 export function errorMessage(e: unknown): string {
+  if (e instanceof ServiceError) {
+    if (e.status === 401 || e.code === "PGRST301" || e.code === "PGRST302")
+      return "Sessão expirada";
+    if (e.status === 403 || e.code === "42501")
+      return "Você não tem permissão para executar esta ação.";
+    if (["PGRST202", "42883", "42P01"].includes(e.code ?? ""))
+      return "Serviço temporariamente indisponível. Não foi possível consultar os dados.";
+  }
   const message =
     e instanceof Error ? e.message : "Não foi possível concluir a operação.";
   // Return a catalog key, not a translated string, so visible errors can also
