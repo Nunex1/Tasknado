@@ -1,4 +1,6 @@
 "use client";
+import { QueryResult } from "./query-result";
+import { readState } from "@/lib/query-state";
 import { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { client, check } from "@/lib/supabase";
@@ -145,29 +147,36 @@ export function DashboardFocus({
               <h2 id="focus-priority">
                 <Flag size={18} aria-hidden="true" />
                 {t("Prioridades")}
-                <span className="count">{number(priorityTotal.data ?? 0)}</span>
+                <span className="count">
+                  {readState([priorityTotal]).status === "success" &&
+                  priorityTotal.data !== undefined
+                    ? number(priorityTotal.data)
+                    : "—"}
+                </span>
               </h2>
               <p>{t("Atrasadas ou importantes e urgentes.")}</p>
             </div>
           </header>
-          {priorities.slice(0, limit).map((a) =>
-            row(
-              a,
-              <>
-                {isOverdue(a) && (
-                  <span className="badge overdue-badge">{t("Atrasada")}</span>
-                )}
-                {quadrant(a.category_attributes.work) === "q1" && (
-                  <span className="badge">
-                    {t(quadrants.q1).split(" · ").slice(0, 2).join(" · ")}
-                  </span>
-                )}
-              </>,
-            ),
-          )}
-          {!priorities.length && (
-            <p className="focus-empty">{t("Nenhuma prioridade pendente.")}</p>
-          )}
+          <QueryResult queries={[prioritiesQuery, priorityTotal]}>
+            {priorities.slice(0, limit).map((a) =>
+              row(
+                a,
+                <>
+                  {isOverdue(a) && (
+                    <span className="badge overdue-badge">{t("Atrasada")}</span>
+                  )}
+                  {quadrant(a.category_attributes.work) === "q1" && (
+                    <span className="badge">
+                      {t(quadrants.q1).split(" · ").slice(0, 2).join(" · ")}
+                    </span>
+                  )}
+                </>,
+              ),
+            )}
+            {!priorities.length && (
+              <p className="focus-empty">{t("Nenhuma prioridade pendente.")}</p>
+            )}
+          </QueryResult>
         </section>
       )}
       <section className="panel focus-panel" aria-labelledby="focus-started">
@@ -176,7 +185,12 @@ export function DashboardFocus({
             <h2 id="focus-started">
               <Timer size={18} aria-hidden="true" />
               {t("Em andamento")}
-              <span className="count">{number(startedTotal.data ?? 0)}</span>
+              <span className="count">
+                {readState([startedTotal]).status === "success" &&
+                startedTotal.data !== undefined
+                  ? number(startedTotal.data)
+                  : "—"}
+              </span>
             </h2>
             <p>{t("Iniciadas e ainda não concluídas.")}</p>
           </div>
@@ -186,19 +200,23 @@ export function DashboardFocus({
             </button>
           )}
         </header>
-        {started
-          .slice(0, limit)
-          .map((a) =>
-            row(
-              a,
-              <span className={`badge ${a.status}`}>
-                {t(statuses[a.status])}
-              </span>,
-            ),
+        <QueryResult queries={[startedQuery, startedTotal]}>
+          {started
+            .slice(0, limit)
+            .map((a) =>
+              row(
+                a,
+                <span className={`badge ${a.status}`}>
+                  {t(statuses[a.status])}
+                </span>,
+              ),
+            )}
+          {!started.length && (
+            <p className="focus-empty">
+              {t("Nenhuma atividade em andamento.")}
+            </p>
           )}
-        {!started.length && (
-          <p className="focus-empty">{t("Nenhuma atividade em andamento.")}</p>
-        )}
+        </QueryResult>
       </section>
     </div>
   );

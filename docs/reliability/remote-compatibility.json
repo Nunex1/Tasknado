@@ -1,0 +1,156 @@
+{
+  "checked_at": "2026-11-16T13:16:08.304075-03:00",
+  "migration_versions": [
+    "202610150001",
+    "202610150002",
+    "202610150003",
+    "202610150004",
+    "202610150005",
+    "20261016110000",
+    "202610210001",
+    "202610220001",
+    "202610220002",
+    "202611090001",
+    "202611090002"
+  ],
+  "public_rls": [
+    {
+      "enabled": true,
+      "table": "workspaces"
+    },
+    {
+      "enabled": true,
+      "table": "notes"
+    },
+    {
+      "enabled": true,
+      "table": "note_entries"
+    },
+    {
+      "enabled": true,
+      "table": "attachments"
+    },
+    {
+      "enabled": true,
+      "table": "activities"
+    },
+    {
+      "enabled": true,
+      "table": "activity_events"
+    },
+    {
+      "enabled": true,
+      "table": "storage_cleanup"
+    },
+    {
+      "enabled": true,
+      "table": "audit_logs"
+    },
+    {
+      "enabled": true,
+      "table": "priority_history"
+    },
+    {
+      "enabled": true,
+      "table": "workspace_observations"
+    },
+    {
+      "enabled": true,
+      "table": "workspace_events"
+    }
+  ],
+  "routine_gate_passed": false,
+  "routines": [
+    {
+      "anon_execute": null,
+      "arguments": null,
+      "authenticated_execute": null,
+      "overloads": 0,
+      "present": false,
+      "result": null,
+      "security_definer": null,
+      "settings": null,
+      "signature": "public.activity_page(uuid,jsonb,text,jsonb,integer)"
+    },
+    {
+      "anon_execute": null,
+      "arguments": null,
+      "authenticated_execute": null,
+      "overloads": 0,
+      "present": false,
+      "result": null,
+      "security_definer": null,
+      "settings": null,
+      "signature": "public.activity_total(uuid,jsonb)"
+    },
+    {
+      "anon_execute": null,
+      "arguments": null,
+      "authenticated_execute": null,
+      "overloads": 0,
+      "present": false,
+      "result": null,
+      "security_definer": null,
+      "settings": null,
+      "signature": "public.activity_summary(uuid)"
+    },
+    {
+      "anon_execute": null,
+      "arguments": null,
+      "authenticated_execute": null,
+      "overloads": 0,
+      "present": false,
+      "result": null,
+      "security_definer": null,
+      "settings": null,
+      "signature": "public.observation_counts_for(uuid[])"
+    },
+    {
+      "anon_execute": false,
+      "arguments": "p_query text, p_workspace uuid DEFAULT NULL::uuid, p_kind text DEFAULT NULL::text, p_status text DEFAULT NULL::text, p_from timestamp with time zone DEFAULT NULL::timestamp with time zone, p_to timestamp with time zone DEFAULT NULL::timestamp with time zone, p_mime text DEFAULT NULL::text, p_offset integer DEFAULT 0",
+      "authenticated_execute": true,
+      "overloads": 1,
+      "present": true,
+      "result": "TABLE(id uuid, workspace_id uuid, parent_id uuid, kind text, title text, excerpt text, created_at timestamp with time zone, status text, mime text)",
+      "security_definer": false,
+      "settings": [
+        "search_path=public"
+      ],
+      "signature": "public.search_all(text,uuid,text,text,timestamp with time zone,timestamp with time zone,text,integer)"
+    },
+    {
+      "anon_execute": null,
+      "arguments": null,
+      "authenticated_execute": null,
+      "overloads": 0,
+      "present": false,
+      "result": null,
+      "security_definer": null,
+      "settings": null,
+      "signature": "public.export_revision()"
+    },
+    {
+      "anon_execute": null,
+      "arguments": null,
+      "authenticated_execute": null,
+      "overloads": 0,
+      "present": false,
+      "result": null,
+      "security_definer": null,
+      "settings": null,
+      "signature": "public.export_professional_page(text,uuid)"
+    },
+    {
+      "anon_execute": null,
+      "arguments": null,
+      "authenticated_execute": null,
+      "overloads": 0,
+      "present": false,
+      "result": null,
+      "security_definer": null,
+      "settings": null,
+      "signature": "public.workspace_timeline_page(uuid,timestamp with time zone,uuid)"
+    }
+  ],
+  "search_documents": null
+}

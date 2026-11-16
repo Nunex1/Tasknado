@@ -1,4 +1,6 @@
 "use client";
+import { QueryResult } from "./query-result";
+import { readState } from "@/lib/query-state";
 import { WindowedList } from "./windowed-list";
 import { useState } from "react";
 import { useI18n } from "@/i18n/provider";
@@ -138,58 +140,66 @@ function MatrixColumn({
       <h3>
         {code && <span className="matrix-code">{code}</span>}
         <span>{name}</span>
-        <span className="count">{number(total.data ?? rows.length)}</span>
+        <span className="count">
+          {readState([total]).status === "success" && total.data !== undefined
+            ? number(total.data)
+            : "—"}
+        </span>
       </h3>
       {action && <p className="matrix-action">{action}</p>}
-      <WindowedList
-        rows={rows}
-        label={name}
-        estimate={180}
-        render={(a) => (
-          <article
-            className="matrix-card"
-            key={a.id}
-            draggable={!busy}
-            onDragStart={(e) => e.dataTransfer.setData("text/plain", a.id)}
-            onDragEnd={onDragEnd}
-          >
-            <button className="text-button" onClick={() => onOpen(a.id)}>
-              {a.title}
-            </button>
-            <span className={`badge ${a.status}`}>{t(statuses[a.status])}</span>
-            <p className={isOverdue(a) ? "overdue" : "hint"}>
-              <Schedule work={a.category_attributes.work} />
-              {isOverdue(a) && ` · ${t("Atrasada")}`}
-            </p>
-            <select
-              aria-label={t("Quadrante de {{title}}", { title: a.title })}
-              value={q}
-              disabled={busy}
-              onChange={(e) => void move(a.id, e.target.value as Quadrant)}
+      <QueryResult queries={[list, total]}>
+        <WindowedList
+          rows={rows}
+          label={name}
+          estimate={180}
+          render={(a) => (
+            <article
+              className="matrix-card"
+              key={a.id}
+              draggable={!busy}
+              onDragStart={(e) => e.dataTransfer.setData("text/plain", a.id)}
+              onDragEnd={onDragEnd}
             >
-              {(Object.keys(quadrants) as Quadrant[]).map((k) => (
-                <option key={k} value={k}>
-                  {t(quadrants[k])}
-                </option>
-              ))}
-            </select>
-          </article>
+              <button className="text-button" onClick={() => onOpen(a.id)}>
+                {a.title}
+              </button>
+              <span className={`badge ${a.status}`}>
+                {t(statuses[a.status])}
+              </span>
+              <p className={isOverdue(a) ? "overdue" : "hint"}>
+                <Schedule work={a.category_attributes.work} />
+                {isOverdue(a) && ` · ${t("Atrasada")}`}
+              </p>
+              <select
+                aria-label={t("Quadrante de {{title}}", { title: a.title })}
+                value={q}
+                disabled={busy}
+                onChange={(e) => void move(a.id, e.target.value as Quadrant)}
+              >
+                {(Object.keys(quadrants) as Quadrant[]).map((k) => (
+                  <option key={k} value={k}>
+                    {t(quadrants[k])}
+                  </option>
+                ))}
+              </select>
+            </article>
+          )}
+        />
+        {!rows.length && (
+          <p className="hint">{t("Nenhuma atividade neste quadrante")}</p>
         )}
-      />
-      {!rows.length && (
-        <p className="hint">{t("Nenhuma atividade neste quadrante")}</p>
-      )}
 
-      {list.hasNextPage && (
-        <Button
-          variant="ghost"
-          disabled={list.isFetchingNextPage}
-          onClick={() => void list.fetchNextPage()}
-        >
-          {t("Carregar mais")}
-        </Button>
-      )}
-      {list.error && <p role="alert">{t(errorMessage(list.error))}</p>}
+        {list.hasNextPage && (
+          <Button
+            variant="ghost"
+            disabled={list.isFetchingNextPage}
+            onClick={() => void list.fetchNextPage()}
+          >
+            {t("Carregar mais")}
+          </Button>
+        )}
+        {list.error && <p role="alert">{t(errorMessage(list.error))}</p>}
+      </QueryResult>
     </>
   );
 }

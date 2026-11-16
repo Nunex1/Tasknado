@@ -32,7 +32,8 @@
     "performance:benchmark": "node scripts/benchmark-performance.mjs",
     "performance:budget": "node scripts/check-performance-budgets.mjs",
     "performance:analyze": "next analyze --output --snapshot performance",
-    "performance:export": "node scripts/benchmark-export.mjs"
+    "performance:export": "node scripts/benchmark-export.mjs",
+    "test:reliability": "node scripts/test-reliability-browser.mjs"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.0",

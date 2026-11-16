@@ -152,8 +152,8 @@ Objetivos propostos, **ainda não medidos em produção**: RPO de 24 horas e RTO
 2. Banco, em host confiável com a CLI vinculada ao projeto:
    ```bash
    pnpm exec supabase db dump --role-only -f roles.sql
-   pnpm exec supabase db dump -f schema.sql
-   pnpm exec supabase db dump --data-only --use-copy -f data.sql
+   pnpm exec supabase db dump --schema public,auth,storage,supabase_migrations -f schema.sql
+   pnpm exec supabase db dump --data-only --use-copy --schema public,auth,storage,supabase_migrations -f data.sql
    ```
    Cifre cada arquivo e apague o original: `BACKUP_KEY_FILE=... pnpm backup:storage seal data.sql data.sql.enc`. O dump contém notas, e-mails e hashes de senha.
 3. Storage, em diretório vazio por execução: `BACKUP_DIR=/backups/2026-11-13 BACKUP_KEY_FILE=... pnpm backup:storage export`. O relatório traz contagens; `failed` diferente de zero significa cópia incompleta e o comando termina com erro. `absent` são reservas cujo upload nunca terminou.
@@ -166,7 +166,7 @@ Faça a cópia do banco e a do Storage na mesma janela. Objetos enviados ou apag
 ### Restauração (sempre em ambiente isolado primeiro)
 
 1. Crie um projeto Supabase novo, sem SMTP real, sem domínio de produção e sem tráfego.
-2. Aplique as migrações deste repositório e restaure `roles.sql`, `schema.sql` e `data.sql` (decifre com `pnpm backup:storage open`).
+2. Decifre as cópias com `pnpm backup:storage open`. Em banco isolado vazio e compatível, revise as roles e restaure primeiro o schema capturado e seus dados. Não aplique todas as migrações antes de restaurar um dump que já cria esses objetos. Em projeto Supabase hospedado, concilie previamente os schemas/roles gerenciados com o ambiente de destino; não sobrescreva seus serviços. Só depois da conferência da restauração, aplique e teste as migrações posteriores ao snapshot.
 3. Restaure os bytes apontando as variáveis do worker para o projeto isolado: `pnpm backup:storage restore`. O comando envia apenas objetos ausentes, nunca sobrescreve nem apaga, e pode ser repetido.
 4. Valide com duas contas de teste: login, isolamento entre contas, tarefas, notas, histórico, download de anexos limpos, quarentena dos demais. Compare contagens de linhas e uma amostra de hashes.
 5. Registre data, responsável, duração e perda de janela observada. Só então planeje, com aprovação, a troca de produção.
@@ -175,7 +175,7 @@ Exclusão acidental de objetos: `restore` contra o próprio projeto recoloca som
 
 Nunca execute `db reset`, `restore` de dump completo ou qualquer operação destrutiva em produção como ensaio.
 
-O que foi testado: exportação, verificação, detecção de corrupção, chave errada e recuperação de objeto apagado, com dados sintéticos no stack isolado (`pnpm test:security:backup`); dump e restauração sintéticos de PostgreSQL (`pnpm test:security:postgres`). **Não** foi testado: backup e restauração do projeto de produção, restauração de `auth` em projeto hospedado, tempos reais.
+O que foi testado: exportação, verificação, detecção de corrupção, chave errada e recuperação de objeto apagado, com dados sintéticos no stack isolado (`pnpm test:security:backup`); dump e restauração sintéticos de PostgreSQL (`pnpm test:security:postgres`). Em 16/11/2026 também foi ensaiada a restauração lógica de uma cópia de produção em banco local separado (47 tabelas, 826 registros) e dos dois objetos em Storage local, com comparação integral; veja [relatório do incidente](INCIDENT-2026-11-16.md). **Não** foi testado: restauração de `auth` em projeto hospedado, recuperação completa de configurações/serviços e RTO de desastre.
 
 ## 6. Monitoramento e alertas
 

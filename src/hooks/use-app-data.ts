@@ -174,6 +174,16 @@ export function useAppData({
     ...(view === "notes" ? [noteList, ...(noteId ? [note] : [])] : []),
   ];
   return {
+    reads: {
+      spaces,
+      summary,
+      total,
+      counts,
+      list: view === "dashboard" ? recent : list,
+      noteList,
+      note,
+      detail,
+    },
     cache,
     workspace,
     workspaceMap,

@@ -1,0 +1,41 @@
+{
+  "verifiedAt": "2026-11-16T16:11:36.465Z",
+  "environment": "Separate PostgreSQL 17 database in isolated local security stack, loopback port 56432; no app/Auth/SMTP connected to restored database",
+  "tables": 47,
+  "records": 826,
+  "allCopyRowsIdentical": true,
+  "storage": {
+    "verifiedAt": "2026-11-16T16:16:07.441Z",
+    "environment": "Isolated local Storage on port 56431; temporary private bucket; actual upload/download",
+    "objects": 2,
+    "byteIdentical": true
+  },
+  "encryptedFiles": [
+    {
+      "file": "data.sql.enc",
+      "bytes": 235124,
+      "sha256": "c752d47fb9b6e5292e8fecf0277e1f5b3f9fd030019ca6d508b05762330555e2"
+    },
+    {
+      "file": "recovery-schema.sql.enc",
+      "bytes": 225128,
+      "sha256": "c536bc4d7634cc1f9d0e791103f1f65af7d1242ff601a08bb38765b2b5423523"
+    },
+    {
+      "file": "roles.sql.enc",
+      "bytes": 402,
+      "sha256": "335882412afd67414d3a869fb1def950a4b33e897818bb2f3d8b840924735035"
+    },
+    {
+      "file": "schema.sql.enc",
+      "bytes": 55466,
+      "sha256": "23347e60748014e712a76fc46d6af7f92b18b6637be589c4090de31f55ca5693"
+    }
+  ],
+  "limitations": [
+    "No second off-device copy verified",
+    "No hosted Supabase Auth login after restoring production identities",
+    "Database and Storage exported separately; not a shared snapshot",
+    "Netlify/Auth secret configuration not exported"
+  ]
+}

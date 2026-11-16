@@ -1,4 +1,6 @@
 "use client";
+import { QueryResult } from "./query-result";
+import { readState } from "@/lib/query-state";
 import { WindowedList } from "./windowed-list";
 import { useI18n } from "@/i18n/provider";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -497,7 +499,7 @@ function AuthenticatedContent({
   const counts = (["not_started", "in_progress", "completed"] as const).map(
     (status) => ({
       status,
-      count: data.counts?.[status === "in_progress" ? "started" : status] ?? 0,
+      count: data.counts?.[status === "in_progress" ? "started" : status],
     }),
   );
   const advancedFilters = [
@@ -658,6 +660,8 @@ function AuthenticatedContent({
             onOpen={(r) => void openResult(r)}
             report={report}
           />
+        ) : readState([data.reads.spaces]).status !== "success" ? (
+          <QueryResult queries={[data.reads.spaces]}>{null}</QueryResult>
         ) : view === "settings" ? (
           <>
             <div className="page-heading">
@@ -821,6 +825,7 @@ function AuthenticatedContent({
               order={noteSort}
               onOrder={setNoteSort}
               notes={notes}
+              listQuery={data.reads.noteList}
               selectedId={noteId && uuid.test(noteId) ? noteId : null}
               onSelect={(id) => {
                 if (canLeave()) setNoteId(id);
@@ -889,42 +894,46 @@ function AuthenticatedContent({
             </div>
             {view === "dashboard" && (
               <>
-                <div className="stats-grid">
-                  {counts.map(({ status, count }) => {
-                    const Icon = statusIcons[status];
-                    return (
-                      <button
-                        key={status}
-                        className={"panel stat " + status}
-                        onClick={() => {
-                          setFilter(
-                            status === "in_progress" ? "started" : status,
-                          );
-                          setArchived(false);
-                        }}
-                      >
-                        <div className="row between">
-                          <span>
-                            {t(
-                              status === "not_started"
-                                ? "Atividades em aberto"
-                                : status === "completed"
-                                  ? "Tarefas finalizadas"
-                                  : "Em andamento",
-                            )}
-                          </span>
-                          <span className="stat-icon" aria-hidden="true">
-                            <Icon size={15} />
-                          </span>
-                        </div>
-                        <strong>{number(count)}</strong>
-                        <small>
-                          {t("Ver atividades")} <ArrowUpRight size={13} />
-                        </small>
-                      </button>
-                    );
-                  })}
-                </div>
+                <QueryResult queries={[data.reads.summary]}>
+                  <div className="stats-grid">
+                    {counts.map(({ status, count }) => {
+                      const Icon = statusIcons[status];
+                      return (
+                        <button
+                          key={status}
+                          className={"panel stat " + status}
+                          onClick={() => {
+                            setFilter(
+                              status === "in_progress" ? "started" : status,
+                            );
+                            setArchived(false);
+                          }}
+                        >
+                          <div className="row between">
+                            <span>
+                              {t(
+                                status === "not_started"
+                                  ? "Atividades em aberto"
+                                  : status === "completed"
+                                    ? "Tarefas finalizadas"
+                                    : "Em andamento",
+                              )}
+                            </span>
+                            <span className="stat-icon" aria-hidden="true">
+                              <Icon size={15} />
+                            </span>
+                          </div>
+                          <strong>
+                            {count === undefined ? "—" : number(count)}
+                          </strong>
+                          <small>
+                            {t("Ver atividades")} <ArrowUpRight size={13} />
+                          </small>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </QueryResult>
                 <DashboardFocus
                   workspaceId={workspaceId}
                   workspaces={workspaces}
@@ -947,7 +956,10 @@ function AuthenticatedContent({
                   </h2>
                   {view !== "dashboard" && (
                     <span className="count">
-                      {number(data.total ?? shown.length)}
+                      {readState([data.reads.total]).status === "success" &&
+                      data.total !== undefined
+                        ? number(data.total)
+                        : "—"}
                     </span>
                   )}
                 </div>
@@ -1107,136 +1119,157 @@ function AuthenticatedContent({
                   )}
                 </>
               )}
-              <div className="activity-table">
-                <div className="table-head">
-                  <span>{t("ATIVIDADE")}</span>
-                  <span>{t("STATUS")}</span>
-                  <span>{t("Classificação")}</span>
-                  <span>{t("Criação")}</span>
-                  <span>{t("ATUALIZADA EM")}</span>
-                  <span title={t("Observações")}>
-                    <MessageSquare size={14} aria-hidden="true" />
-                    <span className="visually-hidden">{t("Observações")}</span>
-                  </span>
-                </div>
-                <WindowedList
-                  rows={shown.slice(0, view === "dashboard" ? 6 : undefined)}
-                  label={t("Atividades")}
-                  render={(a) => {
-                    const Icon = statusIcons[a.status];
-                    return (
-                      <button
-                        className="activity-row"
-                        key={a.id}
-                        onClick={() => {
-                          setActivityId(a.id);
-                        }}
-                      >
-                        <div className="activity-title">
-                          <span className="activity-symbol">
-                            <Icon size={17} />
-                          </span>
-                          <div>
-                            <strong>{a.title}</strong>
-                            {workspace?.category === "work" && (
-                              <span
-                                className={isOverdue(a) ? "overdue" : "hint"}
+              <QueryResult
+                queries={[
+                  data.reads.list,
+                  ...(view === "activities" ? [data.reads.total] : []),
+                ]}
+              >
+                <div className="activity-table">
+                  <div className="table-head">
+                    <span>{t("ATIVIDADE")}</span>
+                    <span>{t("STATUS")}</span>
+                    <span>{t("Classificação")}</span>
+                    <span>{t("Criação")}</span>
+                    <span>{t("ATUALIZADA EM")}</span>
+                    <span title={t("Observações")}>
+                      <MessageSquare size={14} aria-hidden="true" />
+                      <span className="visually-hidden">
+                        {t("Observações")}
+                      </span>
+                    </span>
+                  </div>
+                  <WindowedList
+                    rows={shown.slice(0, view === "dashboard" ? 6 : undefined)}
+                    label={t("Atividades")}
+                    render={(a) => {
+                      const Icon = statusIcons[a.status];
+                      return (
+                        <button
+                          className="activity-row"
+                          key={a.id}
+                          onClick={() => {
+                            setActivityId(a.id);
+                          }}
+                        >
+                          <div className="activity-title">
+                            <span className="activity-symbol">
+                              <Icon size={17} />
+                            </span>
+                            <div>
+                              <strong>{a.title}</strong>
+                              {workspace?.category === "work" && (
+                                <span
+                                  className={isOverdue(a) ? "overdue" : "hint"}
+                                >
+                                  <Schedule work={a.category_attributes.work} />
+                                  {isOverdue(a) && ` · ${t("Atrasada")}`}
+                                </span>
+                              )}
+                              <p
+                                className={
+                                  a.description ? undefined : "placeholder"
+                                }
                               >
-                                <Schedule work={a.category_attributes.work} />
-                                {isOverdue(a) && ` · ${t("Atrasada")}`}
-                              </span>
-                            )}
-                            <p
-                              className={
-                                a.description ? undefined : "placeholder"
-                              }
-                            >
-                              {a.description ||
-                                t("Seu próximo registro começa aqui.")}
-                            </p>
+                                {a.description ||
+                                  t("Seu próximo registro começa aqui.")}
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                        <span className={"badge " + a.status}>
-                          <Icon size={12} />
-                          {t(statuses[a.status])}
-                        </span>
-                        <span className="classification">
-                          {(workspace || workspaceMap.get(a.workspace_id))
-                            ?.category === "work"
-                            ? t(quadrants[quadrant(a.category_attributes.work)])
-                                .split(" · ")
-                                .slice(0, 2)
-                                .join(" · ")
-                            : (workspace || workspaceMap.get(a.workspace_id))
-                                  ?.category === "university"
-                              ? "Canvas: " +
-                                t(
-                                  a.category_attributes.university
-                                    ?.openedInCanvas === true
-                                    ? "Sim"
-                                    : a.category_attributes.university
-                                          ?.openedInCanvas === false
-                                      ? "Não"
-                                      : "Não definida",
+                          <span className={"badge " + a.status}>
+                            <Icon size={12} />
+                            {t(statuses[a.status])}
+                          </span>
+                          <span className="classification">
+                            {(workspace || workspaceMap.get(a.workspace_id))
+                              ?.category === "work"
+                              ? t(
+                                  quadrants[
+                                    quadrant(a.category_attributes.work)
+                                  ],
                                 )
+                                  .split(" · ")
+                                  .slice(0, 2)
+                                  .join(" · ")
+                              : (workspace || workspaceMap.get(a.workspace_id))
+                                    ?.category === "university"
+                                ? "Canvas: " +
+                                  t(
+                                    a.category_attributes.university
+                                      ?.openedInCanvas === true
+                                      ? "Sim"
+                                      : a.category_attributes.university
+                                            ?.openedInCanvas === false
+                                        ? "Não"
+                                        : "Não definida",
+                                  )
+                                : "—"}
+                          </span>
+                          <time title={date(a.created_at)}>
+                            <span className="cell-label">{t("Criação")}</span>{" "}
+                            {shortDate(a.created_at)}
+                          </time>
+                          <time title={date(a.updated_at)}>
+                            <span className="cell-label">
+                              {t("Atualização")}
+                            </span>{" "}
+                            {shortDate(a.updated_at)}
+                          </time>
+                          <span className="observation-count">
+                            <MessageSquare size={13} aria-hidden="true" />
+                            <span className="visually-hidden">
+                              {t("Observações")}
+                            </span>{" "}
+                            {readState([data.reads.counts]).status === "success"
+                              ? number(observationCounts[a.id] ?? 0)
                               : "—"}
-                        </span>
-                        <time title={date(a.created_at)}>
-                          <span className="cell-label">{t("Criação")}</span>{" "}
-                          {shortDate(a.created_at)}
-                        </time>
-                        <time title={date(a.updated_at)}>
-                          <span className="cell-label">{t("Atualização")}</span>{" "}
-                          {shortDate(a.updated_at)}
-                        </time>
-                        <span className="observation-count">
-                          <MessageSquare size={13} aria-hidden="true" />
-                          <span className="visually-hidden">
-                            {t("Observações")}
-                          </span>{" "}
-                          {number(observationCounts[a.id] || 0)}
-                        </span>
-                      </button>
-                    );
-                  }}
-                />
-              </div>
-              {!shown.length && (
-                <div className="empty">
-                  <ListTodo size={32} />
-                  <h3>
-                    {query || filter
-                      ? t("Nenhuma atividade neste filtro")
-                      : t("Dê espaço ao seu próximo projeto")}
-                  </h3>
-                  <p>
-                    {query || filter
-                      ? t("Ajuste os filtros para encontrar suas atividades.")
-                      : t(
-                          "Crie uma atividade e mantenha cada etapa da sua jornada registrada.",
-                        )}
-                  </p>
-                  {!query && !filter && (
-                    <Button
-                      variant="secondary"
-                      onClick={() => setEditor({ kind: "activity" })}
-                    >
-                      <Plus size={16} /> {t("Criar atividade")}
-                    </Button>
-                  )}
+                          </span>
+                        </button>
+                      );
+                    }}
+                  />
                 </div>
-              )}
+                {!shown.length && (
+                  <div className="empty">
+                    <ListTodo size={32} />
+                    <h3>
+                      {query || filter
+                        ? t("Nenhuma atividade neste filtro")
+                        : t("Dê espaço ao seu próximo projeto")}
+                    </h3>
+                    <p>
+                      {query || filter
+                        ? t("Ajuste os filtros para encontrar suas atividades.")
+                        : t(
+                            "Crie uma atividade e mantenha cada etapa da sua jornada registrada.",
+                          )}
+                    </p>
+                    {!query && !filter && (
+                      <Button
+                        variant="secondary"
+                        onClick={() => setEditor({ kind: "activity" })}
+                      >
+                        <Plus size={16} /> {t("Criar atividade")}
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </QueryResult>
               <div className="table-footer">
                 <span>
-                  {loading
-                    ? t("Atualizando…")
-                    : view === "dashboard"
-                      ? t("Atualizações recentes")
-                      : t("taskCount", {
-                          count: data.total ?? shown.length,
-                          workspace:
-                            workspace?.name || t("Todos os workspaces"),
-                        })}
+                  {loadError
+                    ? t(loadError)
+                    : loading ||
+                        data.reads.list.isPending ||
+                        (view === "activities" && data.reads.total.isPending)
+                      ? t("Atualizando…")
+                      : view === "dashboard"
+                        ? t("Atualizações recentes")
+                        : t("taskCount", {
+                            count: data.total ?? shown.length,
+                            workspace:
+                              workspace?.name || t("Todos os workspaces"),
+                          })}
                 </span>
                 {view !== "dashboard" && hasMore ? (
                   <Button
