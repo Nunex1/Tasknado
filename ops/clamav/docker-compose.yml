@@ -9,7 +9,7 @@ services:
     # Official image, pinned by digest. Signatures are updated at run time by
     # freshclam into the volume below; the engine changes only when this
     # digest is changed in a reviewed commit.
-    image: clamav/clamav:stable@sha256:45fe5149fbee5a46509c9848ef20d0c354b7b2323c9369f285939a37cf33422a
+    image: clamav/clamav:stable@sha256:64e30c0bf976198024deb3dc6d5cfe2485fb969c0f73549ba0fdb364b9469614
     restart: unless-stopped
     # clamd has no authentication and accepts SHUTDOWN from any client that
     # reaches it. Publish it on loopback only; never on a public interface.
